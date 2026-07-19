@@ -407,12 +407,18 @@
                                     const nowSeconds = Math.floor(Date.now() / 1000);
                                     const rippleNow = nowSeconds - RIPPLE_EPOCH_OFFSET;
 
+                                    const currentOwner = mintedOwners[tokenIdNum];
                                     const activeSell = (nft.sell || []).filter(offer => {
+                                        // 1. Expiration check
                                         if (offer.Expiration) {
                                             const exp = parseInt(offer.Expiration);
                                             if (!isNaN(exp) && exp <= rippleNow) {
                                                 return false;
                                             }
+                                        }
+                                        // 2. Stale owner check: the offer owner must be the current actual owner of the NFT
+                                        if (currentOwner && offer.Owner !== currentOwner) {
+                                            return false;
                                         }
                                         return true;
                                     });
