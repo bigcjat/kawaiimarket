@@ -1,0 +1,3326 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dropchan - Rarity & Price Explorer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Rarity Rank Data (Exempt from local file protocol CORS blocks) -->
+    <script src="dropchan_ranks.js"></script>
+    <!-- Rarity Trait Database (Exempt from local file protocol CORS blocks) -->
+    <script src="rarities.js"></script>
+    <!-- Precompiled attributes database -->
+    <script src="dropchan_metadata.js"></script>
+    <!-- Xaman SDK -->
+    <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & Quicksand -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        kawaii: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c084fc',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            darkBg: '#080914',
+                            cardBg: '#111322',
+                            accentAqua: '#81e6d9',
+                            accentPink: '#f472b6',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        kawaii: ['Quicksand', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #080914;
+            background-image:
+                radial-gradient(circle at 5% 10%, rgba(139, 92, 246, 0.08) 0%, transparent 35%),
+                radial-gradient(circle at 95% 90%, rgba(129, 230, 217, 0.06) 0%, transparent 35%);
+        }
+        .kawaii-title {
+            font-family: 'Quicksand', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(17, 19, 34, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+        }
+        .nft-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nft-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+        }
+        .legendary-glow {
+            border: 2px solid #fbbf24;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.25);
+        }
+        .mythic-glow {
+            border: 2px solid #c084fc;
+            box-shadow: 0 0 15px rgba(192, 132, 252, 0.25);
+        }
+        .rare-glow {
+            border: 2px solid #60a5fa;
+            box-shadow: 0 0 15px rgba(96, 165, 250, 0.25);
+        }
+        .common-border {
+            border: 1px solid rgba(139, 92, 246, 0.15);
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 bg-kawaii-darkBg/95 backdrop-blur-md border-b border-purple-900/40 px-4 py-3 lg:px-8">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-kawaii-500 to-kawaii-accentPink flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <i class="fa-solid fa-droplet text-white text-md"></i>
+                </div>
+                <div>
+                    <span class="kawaii-title font-bold text-lg tracking-wide bg-gradient-to-r from-kawaii-accentAqua via-kawaii-300 to-kawaii-accentPink bg-clip-text text-transparent">
+                        KawaiiMarket
+                    </span>
+                    <span class="block text-[8px] text-purple-300 font-semibold tracking-wider uppercase">Rarity Dashboard</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 text-xs font-semibold text-purple-300">
+                <!-- Language Selector -->
+                <select id="langSelector" onchange="changeLanguage(this.value)" class="bg-purple-950/50 border border-purple-800/30 text-purple-300 text-[10px] rounded-lg px-1.5 py-0.5 focus:outline-none cursor-pointer font-bold">
+                    <option value="en">EN</option>
+                    <option value="ja">日本語</option>
+                    <option value="ko">한국어</option>
+                </select>
+                <div class="h-4 w-[1px] bg-purple-900/40"></div>
+                <!-- Xaman Wallet Connection Dropdown Container -->
+                <div class="relative">
+                    <button id="xamanConnectBtn" onclick="toggleXamanWallet()" class="px-3 py-1.5 bg-gradient-to-r from-purple-800 to-kawaii-600 hover:from-purple-700 hover:to-kawaii-500 text-white font-extrabold text-[10px] rounded-xl shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-1">
+                        <i class="fa-solid fa-wallet"></i> Connect Xaman
+                    </button>
+                    <div id="walletDropdown" class="absolute right-0 mt-2 w-44 bg-kawaii-cardBg border border-purple-800/40 rounded-xl shadow-2xl p-1 hidden z-50 flex flex-col gap-0.5">
+                        <button onclick="filterByConnectedWallet()" class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
+                            <i class="fa-solid fa-filter text-kawaii-accentAqua"></i> Filter by My Wallet
+                        </button>
+                        <button onclick="filterByOffersToAccept()" class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
+                            <i class="fa-solid fa-hand-holding-dollar text-green-400"></i> View Offers to Accept
+                        </button>
+                        <div class="h-[1px] bg-purple-900/20 my-0.5"></div>
+                        <button onclick="disconnectXamanWallet()" class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-red-400 hover:text-red-300 hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer w-full font-bold">
+                            <i class="fa-solid fa-power-off text-red-500"></i> Disconnect
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 md:py-10 flex flex-col gap-6">
+        
+        <!-- Dashboard Intro -->
+        <div class="flex flex-col gap-2">
+            <h1 class="kawaii-title font-extrabold text-3xl text-white tracking-wide" data-i18n="explore_title">
+                dropchan Rarity & Listings Explorer
+            </h1>
+            <p class="text-sm text-purple-300" data-i18n="explore_subtitle">
+                Verify collection rarity ranks in real-time, view live on-ledger listing prices, and filter by wallet inventory.
+            </p>
+        </div>
+
+        <!-- Stats Overview Row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="glass-panel p-4 rounded-2xl flex flex-col gap-1">
+                <span class="text-[10px] text-purple-300 uppercase font-bold tracking-wider" data-i18n="stat_total_minted">Total Minted</span>
+                <span id="statTotalMinted" class="text-xl font-bold text-white">-- / 10,000</span>
+            </div>
+            <div class="glass-panel p-4 rounded-2xl flex flex-col gap-1">
+                <span class="text-[10px] text-purple-300 uppercase font-bold tracking-wider" data-i18n="stat_active_listings">Active Listings</span>
+                <span id="statActiveListings" class="text-xl font-bold text-kawaii-accentAqua">-- Listings</span>
+            </div>
+            <div class="glass-panel p-4 rounded-2xl flex flex-col gap-1">
+                <span class="text-[10px] text-purple-300 uppercase font-bold tracking-wider" data-i18n="stat_floor_price">Floor Price</span>
+                <span id="statFloorPrice" class="text-xl font-bold text-kawaii-accentPink">-- XRP</span>
+            </div>
+            <div class="glass-panel p-4 rounded-2xl flex flex-col gap-1">
+                <span class="text-[10px] text-purple-300 uppercase font-bold tracking-wider" data-i18n="stat_active_filter">Active Wallet Filter</span>
+                <span id="statWalletHolding" class="text-sm font-semibold text-purple-200 truncate">None (Full Collection)</span>
+            </div>
+        </div>
+
+        <!-- Top 3 Deals Row (Hidden by default, shown when listings load) -->
+        <div id="topDealsContainer" class="hidden flex flex-col gap-2.5">
+            <h3 class="text-[10px] text-purple-400 uppercase font-black tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-fire-flame-curved text-kawaii-accentPink animate-pulse"></i> <span data-i18n="top_deals_header">Top 3 On-Ledger Deals</span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div id="cardCheapestDeal"></div>
+                <div id="cardRarestDeal"></div>
+                <div id="cardBestValueDeal"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard Controls Panel -->
+        <div class="glass-panel p-5 rounded-3xl flex flex-col gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+                
+                <!-- Wallet Filter Address -->
+                <div class="lg:col-span-4 flex flex-col gap-1.5">
+                    <label class="text-[11px] font-bold text-purple-300 uppercase tracking-wide" data-i18n="filter_wallet_label">Filter by Wallet Address</label>
+                    <div class="relative flex">
+                        <input type="text" id="walletInput" data-i18n-placeholder="search_placeholder" placeholder="Paste XRPL Wallet Address..." 
+                            class="w-full bg-purple-950/30 border border-purple-900/40 rounded-l-xl py-2 px-3 pl-8 text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-kawaii-300">
+                        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-purple-400">
+                            <i class="fa-solid fa-wallet text-xs"></i>
+                        </span>
+                        <button onclick="loadInputWalletFilter()" data-i18n="filter_btn" class="px-3 bg-gradient-to-r from-purple-800 to-kawaii-600 hover:from-purple-700 hover:to-kawaii-500 rounded-r-xl text-[10px] font-bold text-white transition-all whitespace-nowrap">
+                            Filter
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Rarity Model Selection -->
+                <div class="lg:col-span-3 flex flex-col gap-1.5">
+                    <label class="text-[11px] font-bold text-purple-300 uppercase tracking-wide" data-i18n="rarity_model_label">Rarity Ranking Model</label>
+                    <select id="rarityModel" onchange="onControlChange()" 
+                        class="w-full bg-purple-950/40 border border-purple-900/40 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-300">
+                        <option value="standard" data-i18n="rarity_model_standard">Standard Rarity (Rarity Score)</option>
+                        <option value="statistical" data-i18n="rarity_model_statistical">Statistical Rarity (z-score/Probability)</option>
+                        <option value="average" data-i18n="rarity_model_average">Average Rarity (Average Trait Freq)</option>
+                    </select>
+                </div>
+
+                <!-- Sort Mode -->
+                <div class="lg:col-span-3 flex flex-col gap-1.5">
+                    <label class="text-[11px] font-bold text-purple-300 uppercase tracking-wide" data-i18n="sort_label">Sort Orders</label>
+                    <select id="sortOrder" onchange="onControlChange()" 
+                        class="w-full bg-purple-950/40 border border-purple-900/40 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-300">
+                        <option value="rarity_asc" data-i18n="sort_rarity_asc">Rarity Rank: Rarest First</option>
+                        <option value="rarity_desc" data-i18n="sort_rarity_desc">Rarity Rank: Common First</option>
+                        <option value="price_asc" data-i18n="sort_price_asc">Price: Low to High</option>
+                        <option value="price_desc" data-i18n="sort_price_desc">Price: High to Low</option>
+                    </select>
+                </div>
+
+                <!-- Filter listed toggle -->
+                <div class="lg:col-span-2 flex items-center justify-center lg:justify-end pb-1.5">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="listedOnly" onchange="onControlChange()" class="w-4 h-4 rounded accent-kawaii-500 bg-purple-950/50 border-purple-900/50">
+                        <span class="text-xs font-bold text-purple-300 uppercase tracking-wide" data-i18n="listed_only">Listed Only</span>
+                    </label>
+                </div>
+
+            </div>
+            
+            <!-- Trait Filters Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-purple-900/20 pt-3">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[11px] font-bold text-purple-300 uppercase tracking-wide">Filter by Trait Category</label>
+                    <select id="traitTypeFilter" onchange="onTraitTypeChange()" 
+                        class="w-full bg-purple-950/40 border border-purple-900/40 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-300">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-[11px] font-bold text-purple-300 uppercase tracking-wide">Filter by Trait Value</label>
+                    <select id="traitValueFilter" onchange="onControlChange()" 
+                        class="w-full bg-purple-950/40 border border-purple-900/40 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-300">
+                        <option value="">All Values</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Quick Clear Button -->
+            <div id="filterStatus" class="hidden flex justify-between items-center text-xs text-kawaii-accentAqua bg-kawaii-accentAqua/10 border border-kawaii-accentAqua/20 px-4 py-2 rounded-xl">
+                <span id="filterLabel">Filtering 71 NFTs owned by active address.</span>
+                <button onclick="clearAllFilters()" data-i18n="clear_filter" class="font-extrabold hover:text-white transition-colors underline">Clear Filter</button>
+            </div>
+        </div>
+
+        <!-- Grid Container -->
+        <div id="loadingIndicator" class="flex flex-col items-center justify-center py-20 gap-3 text-purple-400 text-sm">
+            <div class="spinner border-4 border-purple-900/20 border-t-purple-400 w-12 h-12 rounded-full animate-spin"></div>
+            <span data-i18n="loading_database">Loading database...</span>
+        </div>
+
+        <div id="emptyState" class="hidden glass-panel p-20 rounded-3xl text-center text-purple-300 italic text-sm" data-i18n="empty_state">
+            No matching NFTs found. Try adjusting your filters.
+        </div>
+
+        <div id="nftGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- Lazy Loading Control -->
+        <div class="flex justify-center py-6">
+            <button id="loadMoreBtn" onclick="loadNextBatch()" 
+                class="hidden px-8 py-3.5 bg-purple-900/40 hover:bg-purple-900/60 border border-purple-500/20 rounded-2xl text-xs font-black text-purple-200 tracking-wider hover:text-white transition-all shadow-md active:scale-95" data-i18n="load_more">
+                LOAD MORE ITEMS
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-kawaii-cardBg border-t border-purple-900/40 py-8 px-4 mt-12 text-center text-xs text-purple-300">
+        <p data-i18n="footer_copy">KawaiiMarket Rarity Explorer &copy; 2026. Powered by XRPL Native XLS-20.</p>
+    </footer>
+
+    <!-- App Logic -->
+    <script>
+        const ISSUER = "rDropCHANEgmG7FBz1nzPpG27BGzWjnCnn";
+        const TAXON = 0;
+        const MY_WALLET = "raMenv8MTe6nBk9C5iFk6Gh6vZLs5MoYcg";
+        const IMAGE_CID = "bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy";
+        // Host the 982 MB image cache on your own fast server/CDN and configure the URL below.
+        // E.g. "https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/"
+        const IMAGE_BASE_URL = `https://favicon.bot/ipfs/${IMAGE_CID}/`;
+        const IPFS_GATEWAYS = [
+            'https://favicon.bot/ipfs/',
+            'http://127.0.0.1:8080/ipfs/',
+            'https://gateway.pinata.cloud/ipfs/',
+            'https://ipfs.io/ipfs/',
+            'https://dweb.link/ipfs/',
+            'https://nftstorage.link/ipfs/',
+            'https://w3s.link/ipfs/'
+        ];
+
+        let fullCollection = [];   // Loaded from dropchan_ranks.json
+        let activeListings = {};   // NFTokenID -> lowestSellPrice (XRP)
+        let tokenToIdMap = {};     // Collection token number -> NFTokenID
+        let mintedOwners = {};     // Collection token number -> Owner Address
+        let activeOffersDetails = {}; // Collection token number -> Active Sell Offer details
+        let activeBuyOffersMap = {};  // Collection token number -> Array of active buy offers
+        let activeSellOffersMap = {}; // Collection token number -> Array of active sell offers
+        let activeNftId = null;       // Current NFT ID being acted upon
+        let ownedNftsSet = null;   // Set of owned collection token numbers (if filtering)
+        let activeFilteredAddress = null;
+        let filterOffersToAcceptOnly = false;
+        
+        let xummAuth = null;
+        let connectedWallet = null;
+        let activePollInterval = null;
+        
+        let processedList = [];    // Filtered and sorted ready to display
+        let displayedCount = 0;
+        const BATCH_SIZE = 10;
+
+        // Decodes HEX URIs to ASCII
+        function hexToString(hex) {
+            let str = '';
+            for (let i = 0; i < hex.length; i += 2) {
+                str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+            }
+            return str;
+        }
+
+        function checkDisclaimer() {
+            const acknowledged = localStorage.getItem('rarity_disclaimer_accepted');
+            if (!acknowledged) {
+                const modal = document.getElementById('disclaimerModal');
+                if (modal) modal.classList.remove('hidden');
+            }
+        }
+
+        function dismissDisclaimer() {
+            localStorage.setItem('rarity_disclaimer_accepted', 'true');
+            const modal = document.getElementById('disclaimerModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        // Initialize App
+        window.onload = async function() {
+            changeLanguage(currentLang);
+            initXaman();
+            checkDisclaimer();
+            try {
+                // 1. Load compiled rarities from global script (bypasses CORS restrictions on file://)
+                if (typeof window.DROPCHAN_RANKS === 'undefined') {
+                    throw new Error("dropchan_ranks.js database not loaded. Ensure it is in the same directory.");
+                }
+                fullCollection = Object.values(window.DROPCHAN_RANKS);
+                initializeTraitFilters();
+                
+                // 2. Fetch all minted NFTs to check owners & mint status
+                let mintedCount = 0;
+                try {
+                    const mintedResponse = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/issuer/${ISSUER}/taxon/${TAXON}`);
+                    if (mintedResponse.ok) {
+                        const resJson = await mintedResponse.json();
+                        const nftsList = resJson.data?.nfts || [];
+                        mintedCount = nftsList.length;
+                        nftsList.forEach(nft => {
+                            if (nft.URI) {
+                                try {
+                                    const decodedUri = hexToString(nft.URI);
+                                    const tokenIdNum = parseInt(decodedUri.split('/').pop().split('.')[0]);
+                                    if (!isNaN(tokenIdNum)) {
+                                        mintedOwners[tokenIdNum] = nft.Owner;
+                                        tokenToIdMap[tokenIdNum] = nft.NFTokenID;
+                                    }
+                                } catch(e) {}
+                            }
+                        });
+                    }
+                } catch(e) {
+                    console.warn("Failed to load minted owners list:", e);
+                }
+                document.getElementById('statTotalMinted').innerText = `${mintedCount.toLocaleString()} / 10,000`;
+
+                // 3. Fetch live listings
+                const offersResponse = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/offers/issuer/${ISSUER}/taxon/${TAXON}`);
+                if (offersResponse.ok) {
+                    const resJson = await offersResponse.json();
+                    const offersList = resJson.data?.offers || [];
+                    
+                    let lowestOverallFloor = Infinity;
+                    let listingCount = 0;
+
+                    offersList.forEach(nft => {
+                        // Decode token ID number
+                        if (nft.URI) {
+                            try {
+                                const decodedUri = hexToString(nft.URI);
+                                const tokenIdNum = parseInt(decodedUri.split('/').pop().split('.')[0]);
+                                if (!isNaN(tokenIdNum)) {
+                                    const RIPPLE_EPOCH_OFFSET = 946684800;
+                                    const nowSeconds = Math.floor(Date.now() / 1000);
+                                    const rippleNow = nowSeconds - RIPPLE_EPOCH_OFFSET;
+
+                                    const activeSell = (nft.sell || []).filter(offer => {
+                                        if (offer.Expiration) {
+                                            const exp = parseInt(offer.Expiration);
+                                            if (!isNaN(exp) && exp <= rippleNow) {
+                                                return false;
+                                            }
+                                        }
+                                        return true;
+                                    });
+
+                                    const activeBuy = (nft.buy || []).filter(offer => {
+                                        if (offer.Expiration) {
+                                            const exp = parseInt(offer.Expiration);
+                                            if (!isNaN(exp) && exp <= rippleNow) {
+                                                return false;
+                                            }
+                                        }
+                                        return true;
+                                    });
+
+                                    tokenToIdMap[tokenIdNum] = nft.NFTokenID;
+                                    activeBuyOffersMap[tokenIdNum] = activeBuy;
+                                    activeSellOffersMap[tokenIdNum] = activeSell;
+                                    
+                                    if (activeSell.length > 0) {
+                                        let lowestSell = Infinity;
+                                        let bestOffer = null;
+                                        activeSell.forEach(offer => {
+                                            const priceXrp = parseFloat(offer.Amount) / 1000000;
+                                            if (priceXrp > 0 && priceXrp < lowestSell) {
+                                                lowestSell = priceXrp;
+                                                bestOffer = offer;
+                                            }
+                                        });
+                                        if (lowestSell !== Infinity) {
+                                            activeListings[tokenIdNum] = lowestSell;
+                                            activeOffersDetails[tokenIdNum] = bestOffer;
+                                            listingCount++;
+                                            if (lowestSell < lowestOverallFloor) {
+                                                lowestOverallFloor = lowestSell;
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch(e) {}
+                        }
+                    });
+
+                    const activeLabel = currentLang === 'ja' ? '点出品中' : (currentLang === 'ko' ? '개 판매 중' : ' Active');
+                    document.getElementById('statActiveListings').innerText = `${listingCount}${activeLabel}`;
+                    document.getElementById('statFloorPrice').innerText = lowestOverallFloor !== Infinity ? `${lowestOverallFloor.toFixed(2)} XRP` : 'N/A';
+                }
+
+                document.getElementById('loadingIndicator').style.display = 'none';
+                
+                // Set default display list
+                updateProcessList();
+                updateWalletButtonLabel();
+                changeLanguage(currentLang);
+                
+            } catch(e) {
+                console.error(e);
+                document.getElementById('loadingIndicator').innerHTML = `<p class="text-red-500 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> Error loading collection metadata: ${e.message}</p>`;
+            }
+        };
+
+        // Queries xrpldata API for Account NFTs (CORS-friendly for local file:// protocols)
+        async function fetchWalletNfts(walletAddress) {
+            try {
+                const response = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/owner/${walletAddress}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                const rawNfts = data.data?.nfts || [];
+                
+                const ownedNumbers = new Set();
+                rawNfts.forEach(nft => {
+                    if (nft.Issuer === ISSUER && nft.URI) {
+                        try {
+                            const decoded = hexToString(nft.URI);
+                            const num = parseInt(decoded.split('/').pop().split('.')[0]);
+                            if (!isNaN(num)) {
+                                ownedNumbers.add(num);
+                            }
+                        } catch(e){}
+                    }
+                });
+                return ownedNumbers;
+            } catch(e) {
+                alert(`Error querying wallet from xrpldata: ${e.message}`);
+                return null;
+            }
+        }
+
+        // Apply Wallet filter from input
+        async function loadInputWalletFilter() {
+            const addr = document.getElementById('walletInput').value.trim();
+            if (addr) {
+                await applyWalletFilter(addr);
+            } else {
+                alert("Please enter a wallet address to filter by.");
+            }
+        }
+
+        document.getElementById('walletInput').addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const addr = e.target.value.trim();
+                if (addr) await applyWalletFilter(addr);
+            }
+        });
+
+        async function applyWalletFilter(address) {
+            document.getElementById('loadingIndicator').style.display = 'flex';
+            document.getElementById('nftGrid').innerHTML = '';
+            
+            const owned = await fetchWalletNfts(address);
+            document.getElementById('loadingIndicator').style.display = 'none';
+
+            if (owned !== null) {
+                ownedNftsSet = owned;
+                activeFilteredAddress = address;
+                
+                const ownedLabel = currentLang === 'ja' ? '個保有' : (currentLang === 'ko' ? '개 보유' : ' dropchans');
+                document.getElementById('statWalletHolding').innerText = `${owned.size}${ownedLabel}`;
+                
+                const shortAddr = `${address.substring(0, 8)}...${address.substring(address.length-6)}`;
+                if (currentLang === 'ja') {
+                    document.getElementById('filterLabel').innerText = `アクティブなアドレス (${shortAddr}) が保有する ${owned.size} 個の dropchan で絞り込み中。`;
+                } else if (currentLang === 'ko') {
+                    document.getElementById('filterLabel').innerText = `활성 주소 (${shortAddr})가 보유한 ${owned.size}개의 dropchan 필터링 중.`;
+                } else {
+                    document.getElementById('filterLabel').innerText = `Filtering ${owned.size} dropchans owned by active address (${shortAddr}).`;
+                }
+                document.getElementById('filterStatus').classList.remove('hidden');
+                
+                updateProcessList();
+            }
+        }
+
+        function clearWalletFilter() {
+            ownedNftsSet = null;
+            activeFilteredAddress = null;
+            filterOffersToAcceptOnly = false;
+            document.getElementById('walletInput').value = '';
+            
+            const dict = I18N_DICTS[currentLang];
+            document.getElementById('statWalletHolding').innerText = dict.none_full_collection;
+            document.getElementById('filterStatus').classList.add('hidden');
+            updateProcessList();
+        }
+
+        let allTraitsMap = {}; // "Background" -> Set of unique values
+
+        function initializeTraitFilters() {
+            if (!window.DROPCHAN_METADATA) return;
+            
+            // Build the map of traits
+            Object.values(window.DROPCHAN_METADATA).forEach(attrs => {
+                attrs.forEach(attr => {
+                    const type = attr.trait_type;
+                    const val = attr.value;
+                    if (type && val) {
+                        if (!allTraitsMap[type]) {
+                            allTraitsMap[type] = new Set();
+                        }
+                        allTraitsMap[type].add(val);
+                    }
+                });
+            });
+
+            // Populate the Trait Type filter
+            const typeSelect = document.getElementById('traitTypeFilter');
+            if (typeSelect) {
+                typeSelect.innerHTML = `<option value="">All Categories</option>`;
+                Object.keys(allTraitsMap).sort().forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.innerText = type;
+                    typeSelect.appendChild(option);
+                });
+            }
+        }
+
+        function onTraitTypeChange() {
+            const typeSelect = document.getElementById('traitTypeFilter');
+            const valSelect = document.getElementById('traitValueFilter');
+            if (!typeSelect || !valSelect) return;
+
+            const selectedType = typeSelect.value;
+            valSelect.innerHTML = `<option value="">All Values</option>`;
+
+            if (selectedType && allTraitsMap[selectedType]) {
+                Array.from(allTraitsMap[selectedType]).sort().forEach(val => {
+                    const option = document.createElement('option');
+                    option.value = val;
+                    option.innerText = val;
+                    valSelect.appendChild(option);
+                });
+            }
+
+            // Trigger grid update
+            onControlChange();
+        }
+
+        function selectTraitFilter(type, val) {
+            // Close NFT Details Modal
+            const modal = document.getElementById('detailsModal');
+            if (modal) {
+                closeDetailsModal();
+            }
+            
+            // Set values on the dropdowns
+            const typeSelect = document.getElementById('traitTypeFilter');
+            if (typeSelect) {
+                typeSelect.value = type;
+                onTraitTypeChange();
+                
+                const valSelect = document.getElementById('traitValueFilter');
+                if (valSelect) {
+                    valSelect.value = val;
+                }
+            }
+            
+            // Trigger grid update
+            onControlChange();
+        }
+
+        function clearAllFilters() {
+            clearWalletFilter();
+            const typeSelect = document.getElementById('traitTypeFilter');
+            if (typeSelect) {
+                typeSelect.value = "";
+                onTraitTypeChange();
+            }
+        }
+
+        // Processing filtering and sorting on change
+        function onControlChange() {
+            updateProcessList();
+            renderTopDeals();
+        }
+
+        function updateProcessList() {
+            const model = document.getElementById('rarityModel').value;
+            const sort = document.getElementById('sortOrder').value;
+            const onlyListed = document.getElementById('listedOnly').checked;
+
+            // 1. Filter
+            let list = [...fullCollection];
+            if (filterOffersToAcceptOnly) {
+                list = list.filter(item => {
+                    const isMyNft = mintedOwners[item.id] === connectedWallet;
+                    const hasBuyOffers = activeBuyOffersMap[item.id] && activeBuyOffersMap[item.id].length > 0;
+                    return isMyNft && hasBuyOffers;
+                });
+            } else if (ownedNftsSet !== null) {
+                list = list.filter(item => ownedNftsSet.has(item.id));
+            }
+            if (onlyListed) {
+                list = list.filter(item => item.id in activeListings);
+            }
+
+            // Trait Filtering
+            const selectedType = document.getElementById('traitTypeFilter') ? document.getElementById('traitTypeFilter').value : "";
+            const selectedVal = document.getElementById('traitValueFilter') ? document.getElementById('traitValueFilter').value : "";
+
+            if (selectedType) {
+                list = list.filter(item => {
+                    const itemAttrs = window.DROPCHAN_METADATA ? (window.DROPCHAN_METADATA[item.id] || []) : [];
+                    if (selectedVal) {
+                        return itemAttrs.some(attr => attr.trait_type === selectedType && attr.value === selectedVal);
+                    } else {
+                        return itemAttrs.some(attr => attr.trait_type === selectedType);
+                    }
+                });
+            }
+
+            // 2. Sort
+            list.sort((a, b) => {
+                const priceA = activeListings[a.id] !== undefined ? activeListings[a.id] : Infinity;
+                const priceB = activeListings[b.id] !== undefined ? activeListings[b.id] : Infinity;
+
+                const rankKey = `${model}_rank`;
+
+                if (sort === 'rarity_asc') {
+                    return a[rankKey] - b[rankKey];
+                } else if (sort === 'rarity_desc') {
+                    return b[rankKey] - a[rankKey];
+                } else if (sort === 'price_asc') {
+                    if (priceA === priceB) return a[rankKey] - b[rankKey]; // tie breaker
+                    return priceA - priceB;
+                } else if (sort === 'price_desc') {
+                    // Listed items should appear before unlisted items
+                    const isListedA = priceA !== Infinity;
+                    const isListedB = priceB !== Infinity;
+                    if (isListedA && !isListedB) return -1;
+                    if (!isListedA && isListedB) return 1;
+                    if (!isListedA && !isListedB) return a[rankKey] - b[rankKey];
+                    return priceB - priceA;
+                }
+                return 0;
+            });
+
+            // Update filter alert banner
+            const filterStatus = document.getElementById('filterStatus');
+            const filterLabel = document.getElementById('filterLabel');
+            if (filterStatus && filterLabel) {
+                let activeFilters = [];
+                if (activeFilteredAddress) {
+                    const shortAddr = `${activeFilteredAddress.substring(0, 8)}...${activeFilteredAddress.substring(activeFilteredAddress.length-6)}`;
+                    activeFilters.push(`wallet address (${shortAddr})`);
+                }
+                if (selectedType) {
+                    if (selectedVal) {
+                        activeFilters.push(`trait "${selectedType}: ${selectedVal}"`);
+                    } else {
+                        activeFilters.push(`category "${selectedType}"`);
+                    }
+                }
+                if (onlyListed) {
+                    activeFilters.push("listed only");
+                }
+
+                if (activeFilters.length > 0) {
+                    filterStatus.classList.remove('hidden');
+                    filterLabel.innerText = `Filtering by: ${activeFilters.join(', ')}. Found ${list.length} matches.`;
+                } else {
+                    filterStatus.classList.add('hidden');
+                }
+            }
+
+            processedList = list;
+            displayedCount = 0;
+            document.getElementById('nftGrid').innerHTML = '';
+            
+            if (processedList.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('loadMoreBtn').classList.add('hidden');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+                loadNextBatch();
+            }
+        }
+
+        // Render card
+        function createNftCard(item) {
+            const model = document.getElementById('rarityModel').value;
+            const rankKey = `${model}_rank`;
+            const scoreKey = `${model}_score`;
+            const rank = item[rankKey];
+            const score = item[scoreKey];
+            const price = activeListings[item.id];
+            
+            const buyOffers = activeBuyOffersMap[item.id] || [];
+            let bestBid = 0;
+            buyOffers.forEach(off => {
+                const amt = parseFloat(off.Amount) / 1000000;
+                if (amt > bestBid) bestBid = amt;
+            });
+
+            const dict = I18N_DICTS[currentLang];
+            let priceLabel = dict.list_price;
+            let priceVal = dict.not_listed;
+            let priceClass = 'text-slate-400';
+            
+            if (price !== undefined) {
+                priceLabel = dict.list_price;
+                priceVal = `${price.toLocaleString()} XRP`;
+                priceClass = 'text-kawaii-accentAqua';
+            } else if (bestBid > 0) {
+                priceLabel = dict.best_bid;
+                priceVal = `${bestBid.toLocaleString()} XRP`;
+                priceClass = 'text-green-400';
+            }
+            
+            // Format score output
+            let scoreStr = score.toFixed(1);
+            if (model === 'statistical') {
+                scoreStr = score.toExponential(2);
+            } else if (model === 'average') {
+                scoreStr = score.toFixed(2) + '%';
+            }
+
+            // Glow border calculations based on selected rank model
+            let borderClass = 'common-border';
+            let badgeClass = 'bg-slate-800 text-slate-400';
+            let badgeText = dict.rarity_common;
+            
+            if (rank <= 100) {
+                borderClass = 'legendary-glow';
+                badgeClass = 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
+                badgeText = dict.rarity_legendary;
+            } else if (rank <= 500) {
+                borderClass = 'mythic-glow';
+                badgeClass = 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
+                badgeText = dict.rarity_mythic;
+            } else if (rank <= 1500) {
+                borderClass = 'rare-glow';
+                badgeClass = 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+                badgeText = dict.rarity_rare;
+            }
+
+            const card = document.createElement('div');
+            card.className = `nft-card kawaii-cardBg rounded-2xl p-4 flex flex-col gap-3 relative select-none cursor-pointer ${borderClass}`;
+            card.onclick = () => openDetailsModal(item.id);
+            
+            // Resolve owner & mint status
+            const owner = mintedOwners[item.id];
+            const isMinted = owner !== undefined;
+            const ownerFriendly = isMinted ? `${owner.substring(0, 6)}...${owner.substring(owner.length - 4)}` : dict.unminted;
+            const mintBadgeClass = isMinted ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
+            const mintBadgeText = isMinted ? dict.minted : dict.unminted;
+
+            // Image element with sequential gateway fallback
+            const img = document.createElement('img');
+            img.className = `w-full h-full object-cover ${isMinted ? '' : 'opacity-40'}`;
+            img.alt = item.name;
+            img.loading = "lazy";
+            
+            // Try loading from configured base image URL first, then fall back to IPFS gateways
+            const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
+            img.src = IMAGE_BASE_URL.startsWith('http') ? `${cleanBase}${item.id}.svg` : `${cleanBase}${ISSUER}/${TAXON}/${item.id}.svg`;
+            img.onerror = () => {
+                let gwIndex = 0;
+                function tryLoadImage() {
+                    if (gwIndex >= IPFS_GATEWAYS.length) {
+                        img.src = "https://placehold.co/200x200?text=dropchan";
+                        return;
+                    }
+                    img.src = `${IPFS_GATEWAYS[gwIndex]}${IMAGE_CID}/${item.id}.svg`;
+                    gwIndex++;
+                }
+                img.onerror = tryLoadImage;
+                tryLoadImage();
+            };
+
+            card.innerHTML = `
+                <!-- Image Container -->
+                <div class="w-full aspect-square rounded-xl bg-purple-950/20 overflow-hidden relative border border-purple-900/30 flex items-center justify-center" id="img-container-${item.id}">
+                </div>
+                
+                <!-- Info -->
+                <div class="flex flex-col gap-1 flex-grow">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-sm text-white truncate">${item.name}</span>
+                    </div>
+
+                    <div class="flex justify-between items-center text-[10px] border-b border-purple-900/20 pb-1.5 mt-0.5">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="text-[8px] px-1.5 py-0.5 rounded font-extrabold uppercase tracking-wide flex-shrink-0 ${mintBadgeClass}">${mintBadgeText}</span>
+                            <span class="text-[8px] px-1.5 py-0.5 rounded font-extrabold uppercase tracking-wide whitespace-nowrap flex-shrink-0 ${badgeClass}">${badgeText}</span>
+                        </div>
+                        <span class="font-mono text-[9px] text-slate-300 font-semibold select-all truncate max-w-[80px] text-right flex-shrink-0 pl-1" title="${owner || 'Not Minted'}">${ownerFriendly}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-1.5 py-1 bg-purple-950/20 rounded-lg px-2 border border-purple-900/20 mt-1.5">
+                        <div>
+                            <span class="block text-[8px] text-purple-400 uppercase tracking-wide font-bold" data-i18n="card_rank">${dict.card_rank}</span>
+                            <span class="text-[11px] font-black text-white">#${rank.toLocaleString()}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-[8px] text-purple-400 uppercase tracking-wide font-bold" data-i18n="card_score">${dict.card_score}</span>
+                            <span class="text-[11px] font-bold text-kawaii-300 font-mono">${scoreStr}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Indicator -->
+                <div class="flex justify-between items-center border-t border-purple-900/20 pt-2.5 mt-auto">
+                    <span class="text-[9px] text-purple-400 uppercase tracking-wide font-bold">${priceLabel}</span>
+                    <span class="text-xs font-black ${priceClass}">
+                        ${priceVal}
+                    </span>
+                </div>
+            `;
+            
+            // Append loaded image to container
+            card.querySelector(`#img-container-${item.id}`).appendChild(img);
+            return card;
+        }
+
+        // Lazy load next batch
+        function loadNextBatch() {
+            const grid = document.getElementById('nftGrid');
+            const end = Math.min(displayedCount + BATCH_SIZE, processedList.length);
+            
+            for (let i = displayedCount; i < end; i++) {
+                grid.appendChild(createNftCard(processedList[i]));
+            }
+            
+            displayedCount = end;
+
+            // Toggle Load More button
+            const loadBtn = document.getElementById('loadMoreBtn');
+            if (displayedCount < processedList.length) {
+                loadBtn.classList.remove('hidden');
+                const leftCount = processedList.length - displayedCount;
+                if (currentLang === 'ja') {
+                    loadBtn.innerText = `さらに表示 (残り ${leftCount} 個)`;
+                } else if (currentLang === 'ko') {
+                    loadBtn.innerText = `더 보기 (남은 수량: ${leftCount})`;
+                } else {
+                    loadBtn.innerText = `LOAD MORE (${leftCount} LEFT)`;
+                }
+            } else {
+                loadBtn.classList.add('hidden');
+            }
+        }
+
+        const METADATA_CID = "bafybeiccj6add7p52p335r56nvsiytbtplyvv7aifztlheie3s4duovdku";
+
+        // Dynamic metadata fetch with static local lookup and gateway fallbacks
+        async function fetchMetadata(id) {
+            if (window.DROPCHAN_METADATA && window.DROPCHAN_METADATA[id]) {
+                return { attributes: window.DROPCHAN_METADATA[id] };
+            }
+            for (let i = 0; i < IPFS_GATEWAYS.length; i++) {
+                const url = `${IPFS_GATEWAYS[i]}${METADATA_CID}/${id}.json`;
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                } catch(e) {
+                    console.warn(`Gateway failed for metadata id ${id}:`, e);
+                }
+            }
+            throw new Error("All gateways failed to fetch metadata");
+        }
+
+        function renderTopDeals() {
+            const model = document.getElementById('rarityModel').value;
+            const rankKey = `${model}_rank`;
+
+            // List of all active listings
+            let listedItems = [];
+            for (let tokenId in activeListings) {
+                const id = parseInt(tokenId);
+                const item = fullCollection.find(x => x.id === id);
+                if (item) {
+                    const price = activeListings[id];
+                    const rank = item[rankKey];
+                    listedItems.push({ item, price, rank });
+                }
+            }
+
+            if (listedItems.length === 0) {
+                document.getElementById('topDealsContainer').classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('topDealsContainer').classList.remove('hidden');
+
+            // 1. Cheapest Deal (Lowest Price)
+            listedItems.sort((a, b) => {
+                if (a.price !== b.price) return a.price - b.price;
+                return a.rank - b.rank; // tiebreaker: rarest first
+            });
+            const cheapestDeal = listedItems[0];
+
+            // 2. Most Rare Deal (Lowest Rank)
+            listedItems.sort((a, b) => {
+                if (a.rank !== b.rank) return a.rank - b.rank;
+                return a.price - b.price; // tiebreaker: cheapest first
+            });
+            const rarestDeal = listedItems[0];
+
+            // 3. Best Value Deal (price-to-rarity ratio)
+            const collectionSize = fullCollection.length || 10000;
+            listedItems.sort((a, b) => {
+                const scoreA = (collectionSize - a.rank) / a.price;
+                const scoreB = (collectionSize - b.rank) / b.price;
+                return scoreB - scoreA; // highest score first
+            });
+            const bestValueDeal = listedItems[0];
+
+            // Render the cards
+            const dict = I18N_DICTS[currentLang];
+            renderDealCard('cardCheapestDeal', cheapestDeal, dict.cheapest_listing, 'fa-tag text-green-400');
+            renderDealCard('cardRarestDeal', rarestDeal, dict.most_rare, 'fa-crown text-yellow-400');
+            renderDealCard('cardBestValueDeal', bestValueDeal, dict.best_value, 'fa-fire text-red-400');
+        }
+
+        function renderDealCard(containerId, deal, label, iconClass) {
+            const container = document.getElementById(containerId);
+            if (!container || !deal) return;
+
+            const item = deal.item;
+            const price = deal.price;
+            const rank = deal.rank;
+
+            // Generate image element with sequential fallback rotation
+            const img = document.createElement('img');
+            img.className = "w-full h-full object-cover";
+            img.alt = item.name;
+
+            // Check if already in grid
+            const gridCardImg = document.querySelector(`#img-container-${item.id} img`);
+            if (gridCardImg && gridCardImg.src && !gridCardImg.src.includes('placehold.co')) {
+                img.src = gridCardImg.src;
+            } else {
+                let gwIndex = 0;
+                function tryLoadDealImage() {
+                    if (gwIndex >= IPFS_GATEWAYS.length) {
+                        img.src = "https://placehold.co/200x200?text=dropchan";
+                        return;
+                    }
+                    img.src = `${IPFS_GATEWAYS[gwIndex]}${IMAGE_CID}/${item.id}.svg`;
+                    gwIndex++;
+                }
+                img.onerror = tryLoadDealImage;
+                tryLoadDealImage();
+            }
+
+            container.innerHTML = `
+                <div onclick="openDetailsModal(${item.id})" class="flex items-center gap-3 p-3 bg-purple-950/20 hover:bg-purple-950/40 border border-purple-800/20 hover:border-purple-600/30 rounded-2xl cursor-pointer transition-all active:scale-98 select-none">
+                    <!-- Image -->
+                    <div id="deal-img-container-${item.id}" class="w-14 h-14 rounded-xl bg-purple-900/10 border border-purple-800/10 overflow-hidden flex items-center justify-center flex-shrink-0">
+                    </div>
+                    <!-- Info -->
+                    <div class="flex-grow min-w-0">
+                        <div class="flex items-center gap-1.5 mb-0.5">
+                            <i class="fa-solid ${iconClass} text-[10px]"></i>
+                            <span class="text-[9px] uppercase tracking-wider font-extrabold text-purple-400">${label}</span>
+                        </div>
+                        <h4 class="font-bold text-xs text-white truncate">${item.name}</h4>
+                        <div class="flex items-center gap-2 mt-0.5 text-[10px]">
+                            <span class="font-black text-kawaii-accentAqua">${price.toLocaleString()} XRP</span>
+                            <span class="text-purple-300 font-bold">${currentLang === 'ja' ? '順位' : (currentLang === 'ko' ? '순위' : 'Rank')} #${rank.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-purple-500/50 text-[10px] pr-1"></i>
+                </div>
+            `;
+            container.querySelector(`#deal-img-container-${item.id}`).appendChild(img);
+        }
+
+        const I18N_DICTS = {
+            en: {
+                back_to_market: "Back to Marketplace",
+                explore_title: "dropchan Rarity & Listings Explorer",
+                explore_subtitle: "Verify collection rarity ranks in real-time, view live on-ledger listing prices, and filter by wallet inventory.",
+                connect_xaman: "Connect Xaman",
+                filter_my_wallet: "Filter by My Wallet",
+                view_offers_accept: "View Offers to Accept",
+                disconnect: "Disconnect",
+                cheapest_listing: "Cheapest Listing",
+                most_rare: "Most Rare Listed",
+                best_value: "Best Value (Rarity/Price)",
+                filter_wallet_label: "Filter by Wallet Address",
+                search_placeholder: "Paste XRPL Wallet Address...",
+                filter_btn: "Filter",
+                rarity_model_label: "Rarity Ranking Model",
+                rarity_model_standard: "Standard Rarity (Rarity Score)",
+                rarity_model_statistical: "Statistical Rarity (z-score/Probability)",
+                rarity_model_average: "Average Rarity (Average Trait Freq)",
+                sort_label: "Sort Orders",
+                sort_rarity_asc: "Rarity Rank: Rarest First",
+                sort_rarity_desc: "Rarity Rank: Common First",
+                sort_price_asc: "Price: Low to High",
+                sort_price_desc: "Price: High to Low",
+                listed_only: "Listed Only",
+                clear_filter: "Clear Filter",
+                loading_database: "Loading database...",
+                empty_state: "No matching NFTs found. Try adjusting your filters.",
+                load_more: "LOAD MORE ITEMS",
+                footer_copy: "KawaiiMarket Rarity Explorer &copy; 2026. Powered by XRPL Native XLS-20.",
+                list_price: "List Price",
+                best_bid: "Best Bid",
+                not_listed: "Not Listed",
+                not_minted: "Not Minted",
+                minted: "Minted",
+                unminted: "Unminted",
+                card_rank: "Rank",
+                card_score: "Score",
+                rarity_common: "Common",
+                rarity_rare: "Rare",
+                rarity_mythic: "Mythic",
+                rarity_legendary: "Legendary",
+                modal_subtitle: "Collection Item Detail",
+                current_owner: "Current Owner",
+                marketplace_list_price: "Marketplace List Price",
+                no_offers_on_ledger: "No active buy or sell offers on-ledger.",
+                active_sell_listings: "Active Sell Listings",
+                active_buy_bids: "Active Buy Bids",
+                private: "Private",
+                public: "Public",
+                seller: "Seller",
+                bidder: "Bidder",
+                accept_btn: "Accept",
+                no_history_events: "No historical ledger events found.",
+                cancel_listing: "Cancel Listing",
+                list_for_sale: "List for Sale",
+                buy_now: "Buy Now",
+                cancel_buy_offer: "Cancel My Buy Offer",
+                make_buy_offer: "Make Buy Offer",
+                submit_offer_btn: "Submit Offer",
+                stat_total_minted: "Total Minted",
+                stat_active_listings: "Active Listings",
+                stat_floor_price: "Floor Price",
+                stat_active_filter: "Active Wallet Filter",
+                top_deals_header: "Top 3 On-Ledger Deals",
+                none_full_collection: "None (Full Collection)",
+                querying_ledger_history: "Querying ledger history...",
+                ledger_id_not_found: "Ledger ID not found for this NFT.",
+                failed_to_load_history: "Failed to load history",
+                bid_amount_label: "Bid Amount (XRP)",
+                enter_bid_amount: "Enter bid amount...",
+                expiration_label: "Expiration",
+                opt_10m: "10 Minutes",
+                opt_1h: "1 Hour",
+                opt_24h: "24 Hours",
+                opt_7d: "7 Days",
+                opt_never: "Never (Permanent)",
+                est_fee_label: "Estimated Network Fee:",
+                cancel_btn: "Cancel",
+                list_transfer_title: "List / Transfer NFT",
+                tab_public_sale: "Public Sale",
+                tab_private_sale: "Private Sale",
+                tab_gift_transfer: "Gift / Transfer",
+                listing_price_label: "Listing Price (XRP)",
+                enter_listing_price: "Enter listing price...",
+                recipient_label: "Recipient Wallet Address (Destination)",
+                enter_recipient_placeholder: "e.g. rDestinationWallet...",
+                list_nft_btn: "List NFT",
+                create_private_offer_btn: "Create Private Offer",
+                transfer_nft_btn: "Transfer NFT",
+                confirm_purchase_title: "Confirm Purchase",
+                base_listing_price: "Base Listing Price:",
+                total_to_pay: "Total Amount to Pay:",
+                sign_buy_btn: "Sign & Buy",
+                connect_xaman_title: "Connect Xaman Wallet",
+                connect_xaman_desc: "Scan the QR code below using your Xaman app on your mobile device to sign in securely.",
+                open_in_xaman: "Open in Xaman app",
+                awaiting_sig: "Awaiting signature...",
+                broadcasting_tx: "Broadcasting transaction to ledger...",
+                creating_offer: "Creating offer...",
+                sign_cancel_title: "Cancel Offer",
+                sign_cancel_desc: "Sign to revoke this active offer from the XRP Ledger. A push notification was sent directly to your Xaman app.",
+                sign_list_title: "List NFT for Sale",
+                sign_list_desc: "Sign to list dropchan #{0} for sale on-ledger at {1} XRP.",
+                sign_private_desc: "Sign to list dropchan #{0} for private sale to {1} on-ledger at {2} XRP.",
+                sign_transfer_title: "Gift / Transfer NFT",
+                sign_transfer_desc: "Sign to transfer dropchan #{0} to recipient {1} on-ledger.",
+                sign_bid_title: "Create Buy Offer",
+                sign_bid_desc: "Sign to submit your buy offer of {0} XRP for this NFT to the ledger.",
+                sign_buy_title: "Authorize Purchase",
+                sign_buy_desc: "Scan the QR code below or check your mobile push notifications to sign and buy this NFT.",
+                sign_accept_title: "Accept Buy Offer",
+                sign_accept_desc: "Sign to accept buy offer of {0} XRP for this NFT."
+            },
+            ja: {
+                back_to_market: "マーケットプレイスに戻る",
+                explore_title: "dropchan レア度＆価格エクスプローラー",
+                explore_subtitle: "コレクションのレア度ランキングをリアルタイムで検証し、オンチェーンの販売価格を確認、ウォレット内の保有NFTでフィルタリングします。",
+                connect_xaman: "Xamanを接続",
+                filter_my_wallet: "マイウォレットで絞り込み",
+                view_offers_accept: "承認待ちのオファーを表示",
+                disconnect: "接続解除",
+                cheapest_listing: "最安値出品",
+                most_rare: "最レア出品",
+                best_value: "お買い得度 (レア度/価格)",
+                filter_wallet_label: "ウォレットアドレスで絞り込み",
+                search_placeholder: "XRPLウォレットアドレスを入力...",
+                filter_btn: "適用",
+                rarity_model_label: "レア度計算モデル",
+                rarity_model_standard: "標準レア度 (レア度スコア)",
+                rarity_model_statistical: "統計的レア度 (確率値/z-score)",
+                rarity_model_average: "平均レア度 (平均特性頻度)",
+                sort_label: "並び替え順",
+                sort_rarity_asc: "レア度順: レア度が高い順",
+                sort_rarity_desc: "レア度順: コモンに近い順",
+                sort_price_asc: "価格順: 安い順",
+                sort_price_desc: "価格順: 高い順",
+                listed_only: "出品中のみ表示",
+                clear_filter: "フィルター解除",
+                loading_database: "データベース読込中...",
+                empty_state: "該当するNFTが見つかりません。フィルターを変更してください。",
+                load_more: "さらに表示",
+                footer_copy: "KawaiiMarket レア度エクスプローラー &copy; 2026. Powered by XRPL Native XLS-20.",
+                list_price: "出品価格",
+                best_bid: "最高オファー",
+                not_listed: "未出品",
+                not_minted: "未ミント",
+                minted: "ミント済",
+                unminted: "未ミント",
+                card_rank: "順位",
+                card_score: "スコア",
+                rarity_common: "コモン",
+                rarity_rare: "レア",
+                rarity_mythic: "ミシック",
+                rarity_legendary: "レジェンダリー",
+                modal_subtitle: "コレクションアイテム詳細",
+                current_owner: "現在の所有者",
+                marketplace_list_price: "マーケットプレイス出品価格",
+                no_offers_on_ledger: "オンチェーンに有効なオファーはありません。",
+                active_sell_listings: "有効な出品オファー（売）",
+                active_buy_bids: "有効な入札オファー（買）",
+                private: "プライベート",
+                public: "パブリック",
+                seller: "売り手",
+                bidder: "入札者",
+                accept_btn: "承認",
+                no_history_events: "過去の履歴データはありません。",
+                cancel_listing: "出品を取り消す",
+                list_for_sale: "出品する",
+                buy_now: "今すぐ購入",
+                cancel_buy_offer: "購入オファーを取り消す",
+                make_buy_offer: "購入オファーを提示",
+                submit_offer_btn: "オファーを提示する",
+                stat_total_minted: "発行済合計",
+                stat_active_listings: "出品中のNFT",
+                stat_floor_price: "最低価格 (フロア)",
+                stat_active_filter: "適用中のウォレット",
+                top_deals_header: "オンチェーンお買い得NFTトップ3",
+                none_full_collection: "なし (全コレクション)",
+                querying_ledger_history: "台帳から取引履歴を取得中...",
+                ledger_id_not_found: "このNFTのオンチェーンIDが見つかりませんでした。",
+                failed_to_load_history: "履歴の読み込みに失敗しました",
+                bid_amount_label: "入札価格 (XRP)",
+                enter_bid_amount: "入札価格を入力してください...",
+                expiration_label: "有効期限",
+                opt_10m: "10分間",
+                opt_1h: "1時間",
+                opt_24h: "24時間",
+                opt_7d: "7日間",
+                opt_never: "無期限 (永久)",
+                est_fee_label: "ネットワーク手数料 (予測):",
+                cancel_btn: "キャンセル",
+                list_transfer_title: "NFTを出品 / 譲渡する",
+                tab_public_sale: "一般販売",
+                tab_private_sale: "個別販売 (プライベート)",
+                tab_gift_transfer: "無償譲渡 (ギフト)",
+                listing_price_label: "出品価格 (XRP)",
+                enter_listing_price: "出品価格を入力してください...",
+                recipient_label: "受取人のウォレットアドレス (宛先)",
+                enter_recipient_placeholder: "例: rDestinationWallet...",
+                list_nft_btn: "NFTを出品する",
+                create_private_offer_btn: "個別出品オファー作成",
+                transfer_nft_btn: "NFTを譲渡する",
+                confirm_purchase_title: "購入確認",
+                base_listing_price: "基本出品価格:",
+                total_to_pay: "支払い総額:",
+                sign_buy_btn: "署名して購入",
+                connect_xaman_title: "Xamanウォレットを接続",
+                connect_xaman_desc: "モバイル端末のXamanアプリで以下のQRコードをスキャンし、安全にサインインしてください。",
+                open_in_xaman: "Xamanアプリで開く",
+                awaiting_sig: "署名承認を待機中...",
+                broadcasting_tx: "トランザクションを台帳へブロードキャスト中...",
+                creating_offer: "オファー作成中...",
+                sign_cancel_title: "オファーの取り消し",
+                sign_cancel_desc: "オンチェーンからこのオファーを取り消す署名を行います。Xamanアプリにプッシュ通知が送信されました。",
+                sign_list_title: "NFTの出品",
+                sign_list_desc: "dropchan #{0} をオンチェーン上に {1} XRP で出品するための署名を行います。",
+                sign_private_desc: "dropchan #{0} を {1} 宛てにオンチェーン上で {2} XRP で個別出品するための署名を行います。",
+                sign_transfer_title: "NFTの譲渡",
+                sign_transfer_desc: "dropchan #{0} を受取先 {1} へオンチェーン上で無償譲渡するための署名を行います。",
+                sign_bid_title: "購入オファー作成",
+                sign_bid_desc: "このNFTに対して {0} XRP の購入オファーを提示するための署名を行います。",
+                sign_buy_title: "購入権限の承認",
+                sign_buy_desc: "以下のQRコードをスキャンするか、モバイル端末のプッシュ通知を確認して署名し、このNFTを購入します。",
+                sign_accept_title: "購入オファーの承認",
+                sign_accept_desc: "このNFTに対する {0} XRP の購入オファーを承認するための署名を行います。"
+            },
+            ko: {
+                back_to_market: "마켓플레이스로 돌아가기",
+                explore_title: "dropchan 희귀도 & 가격 탐색기",
+                explore_subtitle: "컬렉션의 희귀도 순위를 실시간으로 검증하고 온체인 판매 가격을 확인하며 지갑 내 보유 NFT를 필터링합니다.",
+                connect_xaman: "Xaman 지갑 연결",
+                filter_my_wallet: "내 지갑으로 필터링",
+                view_offers_accept: "수락 대기 중인 오퍼 보기",
+                disconnect: "연결 해제",
+                cheapest_listing: "최저가 판매",
+                most_rare: "최고 희귀 매물",
+                best_value: "가성비 오퍼 (희귀도/가격)",
+                filter_wallet_label: "지갑 주소로 필터링",
+                search_placeholder: "XRPL 지갑 주소 붙여넣기...",
+                filter_btn: "적용",
+                rarity_model_label: "희귀도 계산 모델",
+                rarity_model_standard: "표준 희귀도 (희귀도 점수)",
+                rarity_model_statistical: "통계적 희귀도 (확률/z-score)",
+                rarity_model_average: "평균 희귀도 (평균 속성 빈도)",
+                sort_label: "정렬 기준",
+                sort_rarity_asc: "희귀도 순: 희귀한 순서",
+                sort_rarity_desc: "희귀도 순: 흔한 순서",
+                sort_price_asc: "가격 순: 낮은 가격순",
+                sort_price_desc: "가격 순: 높은 가격순",
+                listed_only: "판매 중만 보기",
+                clear_filter: "필터 해제",
+                loading_database: "데이터베이스 불러오는 중...",
+                empty_state: "일치하는 NFT가 없습니다. 필터를 조정해 보세요.",
+                load_more: "아이템 더 보기",
+                footer_copy: "KawaiiMarket 희귀도 탐색기 &copy; 2026. Powered by XRPL Native XLS-20.",
+                list_price: "판매 가격",
+                best_bid: "최고 입찰가",
+                not_listed: "판매 중 아님",
+                not_minted: "민팅되지 않음",
+                minted: "민팅됨",
+                unminted: "민팅되지 않음",
+                card_rank: "순위",
+                card_score: "점수",
+                rarity_common: "커먼",
+                rarity_rare: "레어",
+                rarity_mythic: "미식",
+                rarity_legendary: "레전더리",
+                modal_subtitle: "컬렉션 아이템 상세 정보",
+                current_owner: "현재 소유자",
+                marketplace_list_price: "마켓플레이스 판매 가격",
+                no_offers_on_ledger: "진행 중인 온체인 오퍼가 없습니다.",
+                active_sell_listings: "진행 중인 판매 리스팅",
+                active_buy_bids: "진행 중인 구매 입찰",
+                private: "프라이빗",
+                public: "퍼블릭",
+                seller: "판매자",
+                bidder: "입찰자",
+                accept_btn: "수락",
+                no_history_events: "기록된 트랜잭션 내역이 없습니다.",
+                cancel_listing: "판매 취소",
+                list_for_sale: "판매 등록",
+                buy_now: "즉시 구매",
+                cancel_buy_offer: "구매 제안 취소",
+                make_buy_offer: "구매 제안하기",
+                submit_offer_btn: "오퍼 제출",
+                stat_total_minted: "총 민팅 수량",
+                stat_active_listings: "활성 판매 목록",
+                stat_floor_price: "최저 가격 (바닥가)",
+                stat_active_filter: "활성 지갑 필터",
+                top_deals_header: "실시간 가성비 NFT 탑 3",
+                none_full_collection: "없음 (전체 컬렉션)",
+                querying_ledger_history: "블록체인 거래 내역 조회 중...",
+                ledger_id_not_found: "이 NFT의 온체인 ID를 찾을 수 없습니다.",
+                failed_to_load_history: "이력 조회에 실패했습니다",
+                bid_amount_label: "입찰 금액 (XRP)",
+                enter_bid_amount: "입찰 금액을 입력하세요...",
+                expiration_label: "유효 기간",
+                opt_10m: "10분",
+                opt_1h: "1시간",
+                opt_24h: "24시간",
+                opt_7d: "7일",
+                opt_never: "영구적 (만료 없음)",
+                est_fee_label: "예상 네트워크 수수료:",
+                cancel_btn: "취소",
+                list_transfer_title: "NFT 판매 등록 / 양도",
+                tab_public_sale: "일반 판매",
+                tab_private_sale: "개별 판매",
+                tab_gift_transfer: "선물 / 양도",
+                listing_price_label: "판매 등록 가격 (XRP)",
+                enter_listing_price: "판매 가격을 입력하세요...",
+                recipient_label: "수령인 지갑 주소 (대상)",
+                enter_recipient_placeholder: "예: rDestinationWallet...",
+                list_nft_btn: "NFT 판매 등록",
+                create_private_offer_btn: "개별 제안 생성",
+                transfer_nft_btn: "NFT 양도",
+                confirm_purchase_title: "구매 확인",
+                base_listing_price: "기본 판매 가격:",
+                total_to_pay: "최종 결제 금액:",
+                sign_buy_btn: "서명 및 구매",
+                connect_xaman_title: "Xaman 지갑 연결",
+                connect_xaman_desc: "모바일 기기의 Xaman 앱을 사용하여 아래 QR 코드를 스캔하여 안전하게 로그인하세요.",
+                open_in_xaman: "Xaman 앱에서 열기",
+                awaiting_sig: "서명 대기 중...",
+                broadcasting_tx: "트랜잭션을 블록체인에 전송 중...",
+                creating_offer: "제안 생성 중...",
+                sign_cancel_title: "제안 취소",
+                sign_cancel_desc: "온체인에서 이 제안을 취소하기 위해 서명합니다. Xaman 앱으로 푸시 알림이 전송되었습니다.",
+                sign_list_title: "NFT 판매 등록",
+                sign_list_desc: "dropchan #{0}을(를) 온체인에 {1} XRP로 판매 등록하기 위해 서명합니다.",
+                sign_private_desc: "dropchan #{0}을(를) {1}에게 온체인에서 {2} XRP로 개별 판매하기 위해 서명합니다.",
+                sign_transfer_title: "NFT 양도",
+                sign_transfer_desc: "dropchan #{0}을(를) 수령인 {1}에게 온체인으로 양도하기 위해 서명합니다.",
+                sign_bid_title: "구매 제안 생성",
+                sign_bid_desc: "이 NFT에 대해 {0} XRP의 구매 제안을 제출하기 위해 서명합니다.",
+                sign_buy_title: "구매 승인",
+                sign_buy_desc: "아래 QR 코드를 스캔하거나 모바일 푸시 알림을 승인하여 서명하고 이 NFT를 구매합니다.",
+                sign_accept_title: "구매 제안 수락",
+                sign_accept_desc: "이 NFT에 대한 {0} XRP의 구매 제안을 수락하기 위해 서명합니다."
+            }
+        };
+
+        let defaultLang = 'en';
+        const browserLang = navigator.language || navigator.userLanguage;
+        if (browserLang) {
+            if (browserLang.startsWith('ja')) {
+                defaultLang = 'ja';
+            } else if (browserLang.startsWith('ko')) {
+                defaultLang = 'ko';
+            }
+        }
+        let currentLang = localStorage.getItem('selected_lang') || defaultLang;
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('selected_lang', lang);
+            
+            // Sync dropdown selected value
+            const selector = document.getElementById('langSelector');
+            if (selector) {
+                selector.value = lang;
+            }
+            
+            applyTranslations();
+        }
+
+        function applyTranslations() {
+            const dict = I18N_DICTS[currentLang];
+            
+            // Translate elements tagged with data-i18n
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) {
+                    el.innerText = dict[key];
+                }
+            });
+
+            // Translate placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (dict[key]) {
+                    el.placeholder = dict[key];
+                }
+            });
+
+            // Update wallet button
+            if (connectedWallet) {
+                updateWalletButtonLabel();
+            } else {
+                const connectBtn = document.getElementById('xamanConnectBtn');
+                if (connectBtn) {
+                    connectBtn.innerHTML = `<i class="fa-solid fa-wallet"></i> ${dict.connect_xaman}`;
+                }
+            }
+
+            // Translate dropdown subelements
+            const dropdownButtons = document.getElementById('walletDropdown')?.querySelectorAll('button');
+            if (dropdownButtons && dropdownButtons.length >= 3) {
+                dropdownButtons[0].innerHTML = `<i class="fa-solid fa-filter text-kawaii-accentAqua"></i> ${dict.filter_my_wallet}`;
+                dropdownButtons[1].innerHTML = `<i class="fa-solid fa-hand-holding-dollar text-green-400"></i> ${dict.view_offers_accept}`;
+                dropdownButtons[2].innerHTML = `<i class="fa-solid fa-power-off text-red-500"></i> ${dict.disconnect}`;
+            }
+
+            // Translate modal static subelements if active
+            const btnTraits = document.getElementById('btnDetailTabTraits');
+            const btnHistory = document.getElementById('btnDetailTabHistory');
+            const btnOffers = document.getElementById('btnDetailTabOffers');
+            const countSpan = document.getElementById('modalTraitsCount');
+            const countVal = countSpan ? countSpan.innerText : '0';
+            
+            if (btnTraits) {
+                const label = currentLang === 'ja' ? '特性' : (currentLang === 'ko' ? '속성' : 'Traits');
+                btnTraits.innerHTML = `${label} (<span id="modalTraitsCount">${countVal}</span>)`;
+            }
+            if (btnHistory) {
+                btnHistory.innerText = currentLang === 'ja' ? '取引履歴' : (currentLang === 'ko' ? '거래 기록' : 'Sales History');
+            }
+            if (btnOffers) {
+                btnOffers.innerText = currentLang === 'ja' ? 'オファー状況' : (currentLang === 'ko' ? '진행 중인 오퍼' : 'Current Offers');
+            }
+
+            // Translate reactive stats
+            const listingCount = Object.keys(activeListings).length;
+            const activeLabel = currentLang === 'ja' ? '点出品中' : (currentLang === 'ko' ? '개 판매 중' : ' Active');
+            const statActiveListings = document.getElementById('statActiveListings');
+            if (statActiveListings) {
+                statActiveListings.innerText = `${listingCount}${activeLabel}`;
+            }
+
+            const statWalletHolding = document.getElementById('statWalletHolding');
+            if (statWalletHolding) {
+                if (ownedNftsSet !== null) {
+                    const ownedLabel = currentLang === 'ja' ? '個保有' : (currentLang === 'ko' ? '개 보유' : ' dropchans');
+                    statWalletHolding.innerText = `${ownedNftsSet.size}${ownedLabel}`;
+                } else {
+                    statWalletHolding.innerText = dict.none_full_collection;
+                }
+            }
+
+            const loadBtn = document.getElementById('loadMoreBtn');
+            if (loadBtn && !loadBtn.classList.contains('hidden')) {
+                const leftCount = processedList.length - displayedCount;
+                if (currentLang === 'ja') {
+                    loadBtn.innerText = `さらに表示 (残り ${leftCount} 個)`;
+                } else if (currentLang === 'ko') {
+                    loadBtn.innerText = `더 보기 (남은 수량: ${leftCount})`;
+                } else {
+                    loadBtn.innerText = `LOAD MORE (${leftCount} LEFT)`;
+                }
+            }
+
+            const filterLabel = document.getElementById('filterLabel');
+            if (filterLabel) {
+                if (filterOffersToAcceptOnly) {
+                    const totalOffers = getPendingOffersCount();
+                    if (currentLang === 'ja') {
+                        filterLabel.innerText = `購入オファーが提示されている保有NFTで絞り込み中 (合計 ${totalOffers} 件のオファー)。`;
+                    } else if (currentLang === 'ko') {
+                        filterLabel.innerText = `활성 구매 제안이 있는 보유 NFT 필터링 중 (총 ${totalOffers}개 오퍼).`;
+                    } else {
+                        filterLabel.innerText = `Filtering owned NFTs with active buy offers (${totalOffers} offers total).`;
+                    }
+                } else if (activeFilteredAddress) {
+                    const shortAddr = `${activeFilteredAddress.substring(0, 8)}...${activeFilteredAddress.substring(activeFilteredAddress.length-6)}`;
+                    if (currentLang === 'ja') {
+                        filterLabel.innerText = `アクティブなアドレス (${shortAddr}) が保有する ${ownedNftsSet.size} 個の dropchan で絞り込み中。`;
+                    } else if (currentLang === 'ko') {
+                        filterLabel.innerText = `활성 주소 (${shortAddr})가 보유한 ${ownedNftsSet.size}개의 dropchan 필터링 중.`;
+                    } else {
+                        filterLabel.innerText = `Filtering ${ownedNftsSet.size} dropchans owned by active address (${shortAddr}).`;
+                    }
+                }
+            }
+
+            // Sync list modal submit text if open
+            const listModal = document.getElementById('listSaleModal');
+            if (listModal && !listModal.classList.contains('hidden')) {
+                setListMode(currentListMode);
+            }
+
+            // Re-render deals and grid to translate all dynamic labels
+            renderTopDeals();
+            updateProcessList();
+        }
+
+        let activeModalImgNode = null;
+        let activeModalImgOriginalParent = null;
+
+        // Close Modal
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            
+            // Restore reparented image node to original grid card container
+            if (activeModalImgNode && activeModalImgOriginalParent) {
+                activeModalImgOriginalParent.appendChild(activeModalImgNode);
+                activeModalImgNode = null;
+                activeModalImgOriginalParent = null;
+            }
+            const modalImgContainer = document.getElementById('modalCardImgContainer');
+            if (modalImgContainer) {
+                modalImgContainer.innerHTML = '';
+            }
+
+            activeNftId = null;
+            if (activePollInterval) {
+                clearInterval(activePollInterval);
+                activePollInterval = null;
+            }
+        }
+
+        // Open Details Modal and Helpers
+        let activeDetailTab = 'traits';
+        let detailHistoryCache = {};
+
+        async function openDetailsModal(id) {
+            const modal = document.getElementById('detailsModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            // 1. Initial State / Setup
+            const model = document.getElementById('rarityModel').value;
+            const rankKey = `${model}_rank`;
+            
+            const item = fullCollection.find(x => x.id === id);
+            if (!item) return;
+
+            const rank = item[rankKey];
+            const price = activeListings[id];
+            const owner = mintedOwners[id];
+            const isMinted = owner !== undefined;
+
+            const dict = I18N_DICTS[currentLang];
+            const ownerFriendly = isMinted ? `${owner.substring(0, 8)}...${owner.substring(owner.length - 8)}` : dict.not_minted;
+
+            // Set basic details immediately
+            document.getElementById('modalCardName').innerText = `dropchan #${id}`;
+            document.getElementById('modalDetailName').innerText = `dropchan #${id}`;
+            const rankLabel = currentLang === 'ja' ? '順位' : (currentLang === 'ko' ? '순위' : 'RANK');
+            document.getElementById('modalCardHp').innerText = `${rankLabel} #${rank.toLocaleString()}`;
+            document.getElementById('modalDetailOwner').innerText = ownerFriendly;
+            document.getElementById('modalDetailOwner').title = owner || '';
+            document.getElementById('modalDetailPrice').innerText = price !== undefined ? `${price.toLocaleString()} XRP` : dict.not_listed;
+            renderModalActions(id);
+
+            // Set dynamic badges
+            let rarityBadgeText = 'Common';
+            let badgeClass = 'bg-slate-800 text-slate-400';
+            if (rank <= 100) {
+                rarityBadgeText = 'Legendary';
+                badgeClass = 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
+            } else if (rank <= 500) {
+                rarityBadgeText = 'Mythic';
+                badgeClass = 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
+            } else if (rank <= 1500) {
+                rarityBadgeText = 'Rare';
+                badgeClass = 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+            }
+
+            const rBadge = document.getElementById('modalDetailRarity');
+            rBadge.className = `text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${badgeClass}`;
+            rBadge.innerText = currentLang === 'ja' ? (rarityBadgeText === 'Legendary' ? 'レジェンダリー' : (rarityBadgeText === 'Mythic' ? 'ミシック' : (rarityBadgeText === 'Rare' ? 'レア' : 'コモン'))) :
+                              (currentLang === 'ko' ? (rarityBadgeText === 'Legendary' ? '레전더리' : (rarityBadgeText === 'Mythic' ? '미식' : (rarityBadgeText === 'Rare' ? '레어' : '커먼'))) :
+                              rarityBadgeText);
+
+            const mBadge = document.getElementById('modalDetailMinted');
+            if (isMinted) {
+                mBadge.className = "text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20";
+                mBadge.innerText = dict.minted;
+            } else {
+                mBadge.className = "text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-slate-500/10 text-slate-400 border border-slate-500/20";
+                mBadge.innerText = dict.unminted;
+            }
+
+            const translatedRarity = currentLang === 'ja' ? (rarityBadgeText === 'Legendary' ? 'レジェンダリー' : (rarityBadgeText === 'Mythic' ? 'ミシック' : (rarityBadgeText === 'Rare' ? 'レア' : 'コモン'))) :
+                                   (currentLang === 'ko' ? (rarityBadgeText === 'Legendary' ? '레전더리' : (rarityBadgeText === 'Mythic' ? '미식' : (rarityBadgeText === 'Rare' ? '레어' : '커먼'))) :
+                                   rarityBadgeText.toUpperCase());
+            document.getElementById('modalCardRarityBadge').innerText = translatedRarity;
+            document.getElementById('modalCardRarityBadge').className = `font-bold ${rank <= 1500 ? 'text-yellow-400' : 'text-purple-300'}`;
+
+            // Set active nft id and open traits tab or offers tab by default
+            activeNftId = id;
+            if (isMinted && owner === connectedWallet && (activeBuyOffersMap[id] || []).length > 0) {
+                setDetailTab('offers');
+            } else {
+                setDetailTab('traits');
+            }
+
+            // Instant load from grid card image if already fetched
+            const modalImgContainer = document.getElementById('modalCardImgContainer');
+            if (modalImgContainer) {
+                modalImgContainer.innerHTML = '';
+            }
+
+            const gridCardImg = document.querySelector(`#img-container-${id} img`);
+            if (gridCardImg && gridCardImg.src && !gridCardImg.src.includes('placehold.co')) {
+                // Store references for restoring when closed
+                activeModalImgNode = gridCardImg;
+                activeModalImgOriginalParent = gridCardImg.parentNode;
+                
+                // Reparent node to modal instantly - zero network fetch!
+                modalImgContainer.appendChild(gridCardImg);
+                gridCardImg.style.opacity = isMinted ? '1' : '0.4';
+            } else {
+                // Fallback to creating a new img element and loading sequentially
+                const fallbackImg = document.createElement('img');
+                fallbackImg.className = "w-full h-full object-cover";
+                fallbackImg.style.opacity = '0';
+                modalImgContainer.appendChild(fallbackImg);
+                
+                const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
+                fallbackImg.src = IMAGE_BASE_URL.startsWith('http') ? `${cleanBase}${id}.svg` : `${cleanBase}${ISSUER}/${TAXON}/${id}.svg`;
+                fallbackImg.onload = () => {
+                    fallbackImg.style.opacity = isMinted ? '1' : '0.4';
+                };
+                fallbackImg.onerror = () => {
+                    let gwIndex = 0;
+                    function tryLoadModalImage() {
+                        if (gwIndex >= IPFS_GATEWAYS.length) {
+                            fallbackImg.src = "https://placehold.co/200x200?text=dropchan";
+                            fallbackImg.style.opacity = '1';
+                            return;
+                        }
+                        fallbackImg.src = `${IPFS_GATEWAYS[gwIndex]}${IMAGE_CID}/${id}.svg`;
+                        gwIndex++;
+                    }
+                    fallbackImg.onerror = tryLoadModalImage;
+                    tryLoadModalImage();
+                };
+            }
+            
+            // Trigger introductory tilt and shimmer sweep animation (gorgeous on mobile and desktop)
+            triggerCardIntroAnimation();
+        }
+
+        function fetchNftHistoryWS(nftId) {
+            return new Promise((resolve, reject) => {
+                const ws = new WebSocket('wss://s2.ripple.com');
+                ws.onopen = () => {
+                    ws.send(JSON.stringify({
+                        command: "nft_history",
+                        nft_id: nftId,
+                        limit: 25
+                    }));
+                };
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        ws.close();
+                        if (data.status === 'success' || (data.result && data.result.status === 'success')) {
+                            resolve(data.result?.transactions || []);
+                        } else {
+                            reject(new Error(data.error_message || 'Failed to fetch history'));
+                        }
+                    } catch (e) {
+                        ws.close();
+                        reject(e);
+                    }
+                };
+                ws.onerror = (err) => {
+                    ws.close();
+                    reject(err);
+                };
+                setTimeout(() => {
+                    ws.close();
+                    reject(new Error('Timeout connecting to ledger history'));
+                }, 5000);
+            });
+        }
+
+        function formatHistoryList(txs) {
+            const dict = I18N_DICTS[currentLang];
+            if (!txs || txs.length === 0) {
+                return `<div class="text-[10px] text-purple-400 text-center py-8">${dict.no_history_events}</div>`;
+            }
+            
+            let html = `<div class="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">`;
+            txs.forEach(item => {
+                const tx = item.tx || item;
+                const txType = tx.TransactionType;
+                const txHash = tx.hash;
+                const timestamp = (tx.date + 946684800) * 1000;
+                const dateStr = new Date(timestamp).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                let amountXrp = 0;
+                let isTransfer = false;
+                if (tx.Amount) {
+                    if (typeof tx.Amount === 'string') {
+                        amountXrp = parseFloat(tx.Amount) / 1000000;
+                    }
+                } else {
+                    isTransfer = true;
+                }
+                
+                let actionText = '';
+                let icon = '';
+                let colorClass = '';
+                
+                if (txType === 'NFTokenAcceptOffer') {
+                    if (isTransfer || amountXrp === 0) {
+                        if (currentLang === 'ja') {
+                            actionText = `<span class="font-mono text-purple-300">${tx.Account.substring(0, 6)}...</span> に譲渡されました`;
+                        } else if (currentLang === 'ko') {
+                            actionText = `<span class="font-mono text-purple-300">${tx.Account.substring(0, 6)}...</span> 에게 양도됨`;
+                        } else {
+                            actionText = `Transferred to <span class="font-mono text-purple-300">${tx.Account.substring(0, 6)}...</span>`;
+                        }
+                        icon = 'fa-solid fa-gift';
+                        colorClass = 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+                    } else {
+                        if (currentLang === 'ja') {
+                            actionText = `<span class="font-mono text-purple-300">${tx.Account.substring(0, 6)}...</span> に <span class="font-bold text-white">${amountXrp.toLocaleString()} XRP</span> で売却されました`;
+                        } else if (currentLang === 'ko') {
+                            actionText = `<span class="font-mono text-purple-300">${tx.Account.substring(0, 6)}...</span> 에게 <span class="font-bold text-white">${amountXrp.toLocaleString()} XRP</span> 에 판매됨`;
+                        } else {
+                            actionText = `Sold for <span class="font-bold text-white">${amountXrp.toLocaleString()} XRP</span> to <span class="font-mono text-purple-300">${tx.Account.substring(0, 6)}...</span>`;
+                        }
+                        icon = 'fa-solid fa-cart-shopping';
+                        colorClass = 'text-green-400 bg-green-500/10 border-green-500/20';
+                    }
+                } else if (txType === 'NFTokenMint') {
+                    if (currentLang === 'ja') {
+                        actionText = `<span class="font-mono text-purple-300">${tx.Account.substring(0, 6)}...</span> によってミントされました`;
+                    } else if (currentLang === 'ko') {
+                        actionText = `<span class="font-mono text-purple-300">${tx.Account.substring(0, 6)}...</span> 에 의해 민팅됨`;
+                    } else {
+                        actionText = `Minted by <span class="font-mono text-purple-300">${tx.Account.substring(0, 6)}...</span>`;
+                    }
+                    icon = 'fa-solid fa-hammer';
+                    colorClass = 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+                } else if (txType === 'NFTokenBurn') {
+                    actionText = currentLang === 'ja' ? 'バーン（消滅）' : (currentLang === 'ko' ? '소각 / 소멸됨' : 'Burned / Destroyed');
+                    icon = 'fa-solid fa-fire';
+                    colorClass = 'text-red-400 bg-red-500/10 border-red-500/20';
+                } else {
+                    return; // skip creates/cancels
+                }
+                
+                html += `
+                    <div class="flex items-center justify-between bg-purple-950/20 border border-purple-900/20 rounded-xl p-2.5 text-[10px]">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-lg flex items-center justify-center border ${colorClass}">
+                                <i class="${icon}"></i>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-slate-300 leading-tight">${actionText}</span>
+                                <span class="text-[8px] text-purple-400">${dateStr}</span>
+                            </div>
+                        </div>
+                        <a href="https://livenet.xrpl.org/transactions/${txHash}" target="_blank" class="text-purple-400 hover:text-white font-mono text-[9px] underline mr-1">
+                            tx
+                        </a>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            return html;
+        }
+
+        function formatOffersList(id) {
+            const buyOffers = activeBuyOffersMap[id] || [];
+            const sellOffers = activeSellOffersMap[id] || [];
+            const dict = I18N_DICTS[currentLang];
+            
+            if (buyOffers.length === 0 && sellOffers.length === 0) {
+                return `<div class="text-[10px] text-purple-400 text-center py-8">${dict.no_offers_on_ledger}</div>`;
+            }
+            
+            let html = `<div class="flex flex-col gap-3 max-h-[220px] overflow-y-auto pr-1">`;
+            
+            if (sellOffers.length > 0) {
+                html += `<div class="flex flex-col gap-1.5">
+                    <span class="text-[8px] text-purple-400 font-black uppercase tracking-wider">${dict.active_sell_listings}</span>`;
+                sellOffers.forEach(offer => {
+                    const priceXrp = parseFloat(offer.Amount) / 1000000;
+                    const isPrivate = offer.Destination && offer.Destination !== '';
+                    html += `
+                        <div class="flex justify-between items-center bg-[#220d18]/40 border border-pink-500/20 rounded-xl p-2.5 text-[10px]">
+                            <div class="flex items-center gap-2">
+                                <span class="font-extrabold text-kawaii-accentPink">${priceXrp.toLocaleString()} XRP</span>
+                                <span class="text-[8px] text-purple-400 font-semibold">${isPrivate ? dict.private : dict.public}</span>
+                            </div>
+                            <span class="font-mono text-purple-400 text-[8px]">${dict.seller}: ${offer.Owner.substring(0, 6)}...</span>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            
+            if (buyOffers.length > 0) {
+                html += `<div class="flex flex-col gap-1.5">
+                    <span class="text-[8px] text-purple-400 font-black uppercase tracking-wider">${dict.active_buy_bids}</span>`;
+                buyOffers.forEach(offer => {
+                    const priceXrp = parseFloat(offer.Amount) / 1000000;
+                    const isMyNft = mintedOwners[id] === connectedWallet;
+                    
+                    let acceptBtnHtml = '';
+                    if (isMyNft) {
+                        acceptBtnHtml = `
+                            <button onclick="acceptBuyOfferExecute(${id}, '${offer.OfferID}', ${priceXrp})" class="px-2.5 py-1 bg-green-500 hover:bg-green-400 text-purple-950 font-black text-[9px] rounded-lg transition-all active:scale-95 cursor-pointer ml-2">
+                                ${dict.accept_btn}
+                            </button>
+                        `;
+                    }
+                    
+                    html += `
+                        <div class="flex justify-between items-center bg-[#0e211b]/40 border border-green-500/20 rounded-xl p-2.5 text-[10px]">
+                            <div class="flex items-center gap-2">
+                                <span class="font-extrabold text-green-400">${priceXrp.toLocaleString()} XRP</span>
+                                ${acceptBtnHtml}
+                            </div>
+                            <span class="font-mono text-purple-400 text-[8px]">${dict.bidder}: ${offer.Owner.substring(0, 6)}...</span>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+
+        async function setDetailTab(tab) {
+            activeDetailTab = tab;
+            
+            const btnTraits = document.getElementById('btnDetailTabTraits');
+            const btnHistory = document.getElementById('btnDetailTabHistory');
+            const btnOffers = document.getElementById('btnDetailTabOffers');
+            
+            const activeClass = "pb-2 border-b-2 border-kawaii-accentPink text-white cursor-pointer transition-all";
+            const inactiveClass = "pb-2 border-b-2 border-transparent text-purple-400 hover:text-white cursor-pointer transition-all";
+            
+            if (btnTraits) btnTraits.className = tab === 'traits' ? activeClass : inactiveClass;
+            if (btnHistory) btnHistory.className = tab === 'history' ? activeClass : inactiveClass;
+            if (btnOffers) btnOffers.className = tab === 'offers' ? activeClass : inactiveClass;
+            
+            const container = document.getElementById('detailTabContent');
+            if (!container) return;
+            
+            if (tab === 'traits') {
+                container.innerHTML = `
+                    <div id="modalTraitsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[220px] overflow-y-auto pr-1">
+                        <!-- traits populated below -->
+                    </div>
+                `;
+                renderTraitsGrid(activeNftId);
+            } else if (tab === 'history') {
+                const dict = I18N_DICTS[currentLang];
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 gap-2 text-purple-400 text-[10px]">
+                        <div class="spinner border-2 border-purple-900/20 border-t-purple-400 w-5 h-5 rounded-full animate-spin"></div>
+                        <span>${dict.querying_ledger_history}</span>
+                    </div>
+                `;
+                
+                try {
+                    const tokenID = tokenToIdMap[activeNftId];
+                    if (!tokenID) {
+                        container.innerHTML = `<div class="text-[10px] text-purple-400 text-center py-8">${dict.ledger_id_not_found}</div>`;
+                        return;
+                    }
+                    
+                    let txs = detailHistoryCache[activeNftId];
+                    if (!txs) {
+                        txs = await fetchNftHistoryWS(tokenID);
+                        detailHistoryCache[activeNftId] = txs;
+                    }
+                    container.innerHTML = formatHistoryList(txs);
+                } catch (e) {
+                    console.error(e);
+                    container.innerHTML = `<div class="text-[10px] text-red-400 text-center py-8">${dict.failed_to_load_history}: ${e.message}</div>`;
+                }
+            } else if (tab === 'offers') {
+                container.innerHTML = formatOffersList(activeNftId);
+            }
+        }
+
+        async function renderTraitsGrid(id) {
+            const traitsGrid = document.getElementById('modalTraitsGrid');
+            if (!traitsGrid) return;
+            
+            try {
+                const meta = await fetchMetadata(id);
+                const attrs = meta.attributes || [];
+                const dict = I18N_DICTS[currentLang];
+                
+                const tCount = document.getElementById('modalTraitsCount');
+                if (tCount) tCount.innerText = attrs.length;
+                
+                const cardTCount = document.getElementById('modalCardTraitsCount');
+                if (cardTCount) {
+                    const label = currentLang === 'ja' ? '特性' : (currentLang === 'ko' ? '속성' : 'Traits');
+                    cardTCount.innerText = `${label}: ${attrs.length}`;
+                }
+                
+                traitsGrid.innerHTML = '';
+                attrs.forEach((attr, idx) => {
+                    const type = attr.trait_type;
+                    const val = attr.value;
+                    
+                    let rPct = "N/A";
+                    if (window.RARITIES_DB && window.RARITIES_DB["dropchan"]) {
+                        const freq = window.RARITIES_DB["dropchan"].attributes[String(type).toLowerCase().trim()]?.[String(val).toLowerCase().trim()];
+                        if (freq !== undefined) {
+                            rPct = freq.toFixed(2) + "%";
+                        }
+                    }
+                    
+                    const isRare = parseFloat(rPct) < 5;
+                    const freqText = currentLang === 'ja' ? `出現頻度: ${rPct}` : (currentLang === 'ko' ? `출현 빈도: ${rPct}` : `${rPct} frequency`);
+                    
+                    const div = document.createElement('div');
+                    div.className = "bg-purple-950/15 border border-purple-900/25 p-2.5 rounded-xl flex flex-col justify-between hover:bg-purple-950/30 transition-all select-none cursor-pointer hover:border-kawaii-accentPink/50 hover:scale-[1.02] active:scale-95";
+                    div.title = `Click to filter by ${type}: ${val}`;
+                    div.onclick = () => selectTraitFilter(type, val);
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start gap-1">
+                            <span class="text-[8px] uppercase tracking-wider text-purple-400 truncate max-w-[65px]" title="${type}">${type}</span>
+                            <span class="text-[7px] px-1 bg-purple-900/40 text-purple-200 rounded font-bold uppercase tracking-wider">${isRare ? dict.rarity_rare : dict.rarity_common}</span>
+                        </div>
+                        <span class="font-bold text-xs text-white mt-1 truncate" title="${val}">${val}</span>
+                        <span class="text-[9px] text-kawaii-accentPink font-semibold mt-1">${freqText}</span>
+                    `;
+                    traitsGrid.appendChild(div);
+                });
+            } catch(e) {
+                console.error(e);
+                traitsGrid.innerHTML = `<div class="col-span-full text-center text-xs text-red-500 font-bold">Failed to load traits.</div>`;
+            }
+        }
+
+        // Setup Parallax for Modal Card
+        window.addEventListener('DOMContentLoaded', () => {
+            const modalHoloCard = document.getElementById('modalHoloCard');
+            const mShine = modalHoloCard.querySelector('.modal-card__shine');
+            const mGlare = modalHoloCard.querySelector('.modal-card__glare');
+
+            modalHoloCard.onmouseenter = () => {
+                modalHoloCard.style.transition = 'transform 0.05s ease-out';
+                mShine.style.transition = 'opacity 0.1s ease';
+                mGlare.style.transition = 'opacity 0.1s ease';
+            };
+
+            modalHoloCard.onmousemove = (e) => {
+                const rect = modalHoloCard.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const px = x / rect.width;
+                const py = y / rect.height;
+
+                const rotateX = (py - 0.5) * -18;
+                const rotateY = (px - 0.5) * 18;
+
+                modalHoloCard.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+
+                mShine.style.backgroundPosition = `${(1 - px) * 100}% ${(1 - py) * 100}%`;
+                mShine.style.opacity = '0.6';
+
+                mGlare.style.background = `radial-gradient(circle at ${px * 100}% ${py * 100}%, rgba(255,255,255,0.15) 0%, transparent 75%)`;
+                mGlare.style.opacity = '1';
+            };
+
+            modalHoloCard.onmouseleave = () => {
+                modalHoloCard.style.transition = 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                mShine.style.transition = 'opacity 0.5s ease';
+                mGlare.style.transition = 'opacity 0.5s ease';
+
+                modalHoloCard.style.transform = 'rotateX(0deg) rotateY(0deg)';
+                mShine.style.opacity = '0';
+                mGlare.style.opacity = '0';
+            };
+        });
+
+        function triggerCardIntroAnimation() {
+            const card = document.getElementById('modalHoloCard');
+            const shine = card ? card.querySelector('.modal-card__shine') : null;
+            const glare = card ? card.querySelector('.modal-card__glare') : null;
+            if (!card || !shine || !glare) return;
+
+            // Stop any ongoing user/mouse transitions
+            card.style.transition = 'transform 0.7s cubic-bezier(0.25, 1, 0.5, 1)';
+            shine.style.transition = 'opacity 0.7s ease, background-position 0.7s ease';
+            glare.style.transition = 'opacity 0.7s ease, background 0.7s ease';
+
+            // Phase 1: Tilt Left & Glow
+            card.style.transform = 'rotateX(8deg) rotateY(-12deg)';
+            shine.style.opacity = '0.5';
+            shine.style.backgroundPosition = '0% 50%';
+            glare.style.opacity = '0.7';
+            glare.style.background = 'radial-gradient(circle at 10% 30%, rgba(255,255,255,0.15) 0%, transparent 60%)';
+
+            // Phase 2: Sweep Right
+            setTimeout(() => {
+                card.style.transform = 'rotateX(-8deg) rotateY(12deg)';
+                shine.style.backgroundPosition = '100% 50%';
+                glare.style.background = 'radial-gradient(circle at 90% 70%, rgba(255,255,255,0.15) 0%, transparent 60%)';
+                
+                // Phase 3: Flat State
+                setTimeout(() => {
+                    card.style.transform = 'rotateX(0deg) rotateY(0deg)';
+                    shine.style.opacity = '0';
+                    glare.style.opacity = '0';
+                    
+                    // Reset transitions back to mousemove sensitivity
+                    setTimeout(() => {
+                        card.style.transition = 'transform 0.05s ease-out';
+                        shine.style.transition = 'opacity 0.1s ease';
+                        glare.style.transition = 'opacity 0.1s ease';
+                    }, 700);
+                }, 700);
+            }, 700);
+        }
+
+        // Xaman Integration Helpers
+        let xumm = null;
+        let activeWS = null;
+
+        function initXaman() {
+            xumm = new XummPkce("5ecae9ef-b8f6-4b0a-bfb7-fc24078771bf");
+
+            xumm.on("success", async () => {
+                const state = await xumm.state();
+                setXamanConnected(state.me.account);
+            });
+
+            xumm.on("retrieved", async () => {
+                const state = await xumm.state();
+                if (state.me && state.me.account) {
+                    setXamanConnected(state.me.account);
+                }
+            });
+        }
+
+        function setXamanConnected(account) {
+            connectedWallet = account;
+            localStorage.setItem('xaman_address', account);
+
+            const connectBtn = document.getElementById('xamanConnectBtn');
+            if (connectBtn) {
+                connectBtn.className = "px-3 py-1.5 bg-green-950/40 border border-green-500/30 text-green-400 font-extrabold text-[10px] rounded-xl shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-1";
+            }
+            updateWalletButtonLabel();
+            
+            if (activeNftId !== null) {
+                renderModalActions(activeNftId);
+            }
+            updateProcessList();
+        }
+
+        function subscribeToPayloadWS(uuid, onSignedCallback) {
+            if (activeWS) activeWS.close();
+            
+            const ws = new WebSocket(`wss://xumm.app/sign/${uuid}`);
+            activeWS = ws;
+            
+            ws.onmessage = async (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log("[DEBUG] Xumm WS Message:", data);
+                    
+                    if (data.signed === true) {
+                        ws.close();
+                        activeWS = null;
+                        
+                        const checkData = {
+                            meta: { signed: true },
+                            response: { account: data.account || connectedWallet }
+                        };
+                        
+                        if (data.user_token) {
+                            localStorage.setItem('xaman_user_token', data.user_token);
+                        }
+                        
+                        closeXamanSignModal();
+                        closeXamanLoginModal();
+                        
+                        if (!connectedWallet && data.account) {
+                            setXamanConnected(data.account);
+                            showToast("Wallet Connected Successfully!", "success");
+                        }
+                        
+                        onSignedCallback(checkData);
+                    } else if (data.signed === false) {
+                        ws.close();
+                        activeWS = null;
+                        showToast("Transaction rejected by user.", "error");
+                        closeXamanSignModal();
+                        closeXamanLoginModal();
+                    }
+                } catch (e) {
+                    console.error("Error parsing WS message", e);
+                }
+            };
+
+            ws.onerror = (e) => {
+                console.error("Xumm WS Error", e);
+            };
+            
+            return ws;
+        }
+
+        async function toggleXamanWallet() {
+            if (connectedWallet) {
+                const dropdown = document.getElementById('walletDropdown');
+                if (dropdown) dropdown.classList.toggle('hidden');
+            } else {
+                const connectBtn = document.getElementById('xamanConnectBtn');
+                connectBtn.innerHTML = `<div class="spinner border-2 border-purple-900/20 border-t-white w-3 h-3 rounded-full animate-spin"></div> Connecting...`;
+                
+                try {
+                    await xumm.authorize();
+                } catch(e) {
+                    console.error(e);
+                    alert("Xaman Connection failed: " + e.message);
+                    initXaman();
+                }
+            }
+        }
+
+        function openXamanLoginModal(payload) {
+            // Deprecated - Client side SDK login flow uses redirect/popups natively.
+        }
+
+        function closeXamanLoginModal() {
+            const modal = document.getElementById('xamanLoginModal');
+            if (modal) modal.classList.add('hidden');
+            initXaman();
+        }
+
+        function openXamanSignModal(title, desc, payload, onSignedCallback) {
+            const dict = I18N_DICTS[currentLang];
+            let translatedTitle = title;
+            let translatedDesc = desc;
+
+            if (title === "Cancel Offer") {
+                translatedTitle = dict.sign_cancel_title || title;
+                translatedDesc = dict.sign_cancel_desc || desc;
+            } else if (title === "List NFT for Sale" || title === "Gift / Transfer NFT") {
+                translatedTitle = title === "List NFT for Sale" ? (dict.sign_list_title || title) : (dict.sign_transfer_title || title);
+                if (desc.includes("transfer")) {
+                    const matches = desc.match(/dropchan #(\d+) to recipient (\w+)/);
+                    if (matches && matches.length >= 3) {
+                        translatedDesc = dict.sign_transfer_desc
+                            ? dict.sign_transfer_desc.replace("{0}", matches[1]).replace("{1}", matches[2])
+                            : desc;
+                    }
+                } else if (desc.includes("private")) {
+                    const matches = desc.match(/dropchan #(\d+) for private sale to (\w+) on-ledger at ([\d\.]+) XRP/);
+                    if (matches && matches.length >= 4) {
+                        translatedDesc = dict.sign_private_desc
+                            ? dict.sign_private_desc.replace("{0}", matches[1]).replace("{1}", matches[2]).replace("{2}", matches[3])
+                            : desc;
+                    }
+                } else {
+                    const matches = desc.match(/dropchan #(\d+) for sale on-ledger at ([\d\.]+) XRP/);
+                    if (matches && matches.length >= 3) {
+                        translatedDesc = dict.sign_list_desc
+                            ? dict.sign_list_desc.replace("{0}", matches[1]).replace("{1}", matches[2])
+                            : desc;
+                    }
+                }
+            } else if (title === "Create Buy Offer") {
+                translatedTitle = dict.sign_bid_title || title;
+                const matches = desc.match(/buy offer of ([\d\.]+) XRP/);
+                if (matches && matches.length >= 2) {
+                    translatedDesc = dict.sign_bid_desc
+                        ? dict.sign_bid_desc.replace("{0}", matches[1])
+                        : desc;
+                }
+            } else if (title === "Authorize Purchase") {
+                translatedTitle = dict.sign_buy_title || title;
+                translatedDesc = dict.sign_buy_desc || desc;
+            } else if (title === "Accept Buy Offer") {
+                translatedTitle = dict.sign_accept_title || title;
+                const matches = desc.match(/accept buy offer of ([\d\.]+) XRP/);
+                if (matches && matches.length >= 2) {
+                    translatedDesc = dict.sign_accept_desc
+                        ? dict.sign_accept_desc.replace("{0}", matches[1])
+                        : desc;
+                }
+            }
+
+            document.getElementById('xamanSignTitle').innerText = translatedTitle;
+            document.getElementById('xamanSignDesc').innerText = translatedDesc;
+            
+            // If pushed directly via push notifications, adjust description helper text
+            if (payload.pushed) {
+                const pushMsg = currentLang === 'ja' ? ' モバイル端末のXamanアプリへ直接プッシュ通知が送信されました。' : (currentLang === 'ko' ? ' Xaman 앱으로 푸시 알림이 직접 전송되었습니다.' : ' A push notification was sent directly to your Xaman app.');
+                document.getElementById('xamanSignDesc').innerText = translatedDesc + pushMsg;
+            }
+            
+            document.getElementById('xamanSignQr').src = payload.refs.qr_png;
+            document.getElementById('xamanSignLink').href = payload.next.always;
+            
+            document.getElementById('xamanSignModal').classList.remove('hidden');
+            
+            if (activePollInterval) clearInterval(activePollInterval);
+            subscribeToPayloadWS(payload.uuid, onSignedCallback);
+        }
+
+        function closeXamanSignModal() {
+            document.getElementById('xamanSignModal').classList.add('hidden');
+            if (activeWS) {
+                activeWS.close();
+                activeWS = null;
+            }
+            if (activePollInterval) {
+                clearInterval(activePollInterval);
+                activePollInterval = null;
+            }
+        }
+
+        async function filterByConnectedWallet() {
+            const dropdown = document.getElementById('walletDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+            
+            filterOffersToAcceptOnly = false;
+            if (connectedWallet) {
+                document.getElementById('walletInput').value = connectedWallet;
+                await applyWalletFilter(connectedWallet);
+            }
+        }
+
+        function filterByOffersToAccept() {
+            const dropdown = document.getElementById('walletDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+
+            if (!connectedWallet) {
+                alert("Please connect your wallet first.");
+                return;
+            }
+
+            filterOffersToAcceptOnly = true;
+            ownedNftsSet = null; // Reset normal wallet holding filter
+            activeFilteredAddress = null;
+            document.getElementById('walletInput').value = connectedWallet;
+            
+            const totalOffers = getPendingOffersCount();
+            if (currentLang === 'ja') {
+                document.getElementById('filterLabel').innerText = `購入オファーが提示されている保有NFTで絞り込み中 (合計 ${totalOffers} 件のオファー)。`;
+            } else if (currentLang === 'ko') {
+                document.getElementById('filterLabel').innerText = `활성 구매 제안이 있는 보유 NFT 필터링 중 (총 ${totalOffers}개 오퍼).`;
+            } else {
+                document.getElementById('filterLabel').innerText = `Filtering owned NFTs with active buy offers (${totalOffers} offers total).`;
+            }
+            document.getElementById('filterStatus').classList.remove('hidden');
+            
+            updateProcessList();
+        }
+
+        function getPendingOffersCount() {
+            if (!connectedWallet) return 0;
+            let count = 0;
+            for (let id in mintedOwners) {
+                if (mintedOwners[id] === connectedWallet) {
+                    const buyOffers = activeBuyOffersMap[id] || [];
+                    if (buyOffers.length > 0) {
+                        count += buyOffers.length;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function updateWalletButtonLabel() {
+            if (!connectedWallet) return;
+            const connectBtn = document.getElementById('xamanConnectBtn');
+            if (connectBtn) {
+                const short = `${connectedWallet.substring(0, 6)}...${connectedWallet.substring(connectedWallet.length - 4)}`;
+                const offerCount = getPendingOffersCount();
+                const offersText = currentLang === 'ja' ? 'オファー' : (currentLang === 'ko' ? '오퍼' : 'Offers');
+                const badge = offerCount > 0 ? ` <span class="bg-green-500 text-purple-950 text-[8px] font-black px-1.5 py-0.5 rounded-full ml-1 animate-pulse">${offerCount} ${offersText}</span>` : '';
+                connectBtn.innerHTML = `<i class="fa-solid fa-circle-check text-green-400"></i> ${short}${badge}`;
+            }
+        }
+
+        function disconnectXamanWallet() {
+            const dropdown = document.getElementById('walletDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+            
+            connectedWallet = null;
+            filterOffersToAcceptOnly = false;
+            localStorage.removeItem('xaman_address');
+            localStorage.removeItem('xaman_user_token');
+            
+            const connectBtn = document.getElementById('xamanConnectBtn');
+            if (connectBtn) {
+                const dict = I18N_DICTS[currentLang];
+                connectBtn.innerHTML = `<i class="fa-solid fa-wallet"></i> ${dict.connect_xaman}`;
+                connectBtn.className = "px-3 py-1.5 bg-gradient-to-r from-purple-800 to-kawaii-600 hover:from-purple-700 hover:to-kawaii-500 text-white font-extrabold text-[10px] rounded-xl shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-1";
+            }
+            
+            if (activeNftId !== null) {
+                renderModalActions(activeNftId);
+            }
+            clearWalletFilter();
+            showToast("Disconnected from Xaman", "success");
+        }
+
+        // Close dropdown when clicking outside
+        window.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('walletDropdown');
+            const connectBtn = document.getElementById('xamanConnectBtn');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                if (e.target !== connectBtn && !connectBtn.contains(e.target) && e.target !== dropdown && !dropdown.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            }
+        });
+
+        // 3. Trade / Listing Actions Controllers
+        function renderModalActions(id) {
+            const actionsRow = document.getElementById('modalActionsRow');
+            if (!actionsRow) return;
+
+            const owner = mintedOwners[id];
+            const isMinted = owner !== undefined;
+            const price = activeListings[id];
+            const dict = I18N_DICTS[currentLang];
+
+            actionsRow.innerHTML = '';
+
+            if (isMinted && connectedWallet && owner === connectedWallet) {
+                if (price !== undefined) {
+                    const offerDetail = activeOffersDetails[id];
+                    const offerID = (offerDetail && offerDetail.OfferID) ? offerDetail.OfferID : '';
+                    actionsRow.innerHTML = `
+                        <button onclick="cancelOfferExecute(${id}, '${offerID}', 'listing')" class="px-5 py-2.5 bg-red-950/40 hover:bg-red-900/60 border border-red-500/25 rounded-xl text-xs font-bold text-red-300 transition-all cursor-pointer">
+                            ${dict.cancel_listing}
+                        </button>
+                    `;
+                } else {
+                    actionsRow.innerHTML = `
+                        <button onclick="openListSaleModal(${id})" class="px-5 py-2.5 bg-gradient-to-r from-purple-800 to-kawaii-600 hover:from-purple-700 hover:to-kawaii-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer">
+                            ${dict.list_for_sale}
+                        </button>
+                    `;
+                }
+            } else {
+                let buyBtnHtml = '';
+                if (price !== undefined) {
+                    buyBtnHtml = `
+                        <button onclick="openBuyConfirmModal(${id})" class="px-5 py-2.5 bg-gradient-to-r from-kawaii-accentPink to-pink-500 hover:from-pink-500 hover:to-kawaii-accentPink text-white font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-cart-shopping"></i> ${dict.buy_now} (${price.toLocaleString()} XRP)
+                        </button>
+                    `;
+                }
+                
+                // Check if user has an active buy offer (bid)
+                const myBuyOffer = (activeBuyOffersMap[id] || []).find(offer => offer.Owner === connectedWallet);
+                
+                if (myBuyOffer) {
+                    actionsRow.innerHTML = `
+                        ${buyBtnHtml}
+                        <button onclick="cancelOfferExecute(${id}, '${myBuyOffer.OfferID}', 'buy')" class="px-5 py-2.5 bg-red-950/40 hover:bg-red-900/60 border border-red-500/25 rounded-xl text-xs font-bold text-red-300 transition-all cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-xmark"></i> ${dict.cancel_buy_offer}
+                        </button>
+                    `;
+                } else {
+                    actionsRow.innerHTML = `
+                        ${buyBtnHtml}
+                        <button onclick="openBidModal(${id})" class="px-5 py-2.5 bg-purple-900/40 hover:bg-purple-900/60 border border-purple-500/20 rounded-xl text-xs font-bold text-purple-200 transition-all cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-hand-holding-dollar"></i> ${dict.make_buy_offer}
+                        </button>
+                    `;
+                }
+            }
+        }
+
+        // Cancel Listing / Cancel Buy Offer Unified Execute
+        async function cancelOfferExecute(id, offerID, type = 'listing') {
+            const jwt = localStorage.getItem('xaman_address');
+            if (!jwt) {
+                alert("Please connect your Xaman wallet first.");
+                return;
+            }
+
+            if (!offerID) {
+                alert("Offer ID not found for cancellation.");
+                return;
+            }
+
+            const actionsRow = document.getElementById('modalActionsRow');
+            actionsRow.innerHTML = `
+                <div class="flex flex-col gap-2 items-center text-center text-xs py-2 w-full">
+                    <span class="text-[10px] font-bold text-yellow-400">Creating cancellation payload...</span>
+                    <div class="spinner border-2 border-purple-900/20 border-t-purple-400 w-5 h-5 rounded-full animate-spin"></div>
+                </div>
+            `;
+
+            const txjson = {
+                TransactionType: "NFTokenCancelOffer",
+                NFTokenOffers: [offerID]
+            };
+
+            try {
+                const requestBody = { txjson };
+                const userToken = localStorage.getItem('xaman_user_token');
+                if (userToken) requestBody.user_token = userToken;
+
+                const payload = await xumm.payload.create(requestBody);
+
+                // Re-render actions row immediately to remove loading spinner from the details modal card
+                renderModalActions(id);
+
+                openXamanSignModal(
+                    "Cancel Offer",
+                    "Sign to revoke this active offer from the XRP Ledger.",
+                    payload,
+                    (checkData) => {
+                        if (type === 'listing') {
+                            delete activeListings[id];
+                            delete activeOffersDetails[id];
+                            document.getElementById('modalDetailPrice').innerText = 'Not Listed';
+                            
+                            if (activeSellOffersMap[id]) {
+                                activeSellOffersMap[id] = activeSellOffersMap[id].filter(off => off.OfferID !== offerID);
+                            }
+                        } else {
+                            if (activeBuyOffersMap[id]) {
+                                activeBuyOffersMap[id] = activeBuyOffersMap[id].filter(off => off.OfferID !== offerID);
+                            }
+                        }
+                        
+                        renderModalActions(id);
+                        updateProcessList();
+                        updateWalletButtonLabel();
+                        renderTopDeals();
+                        
+                        // Re-render offers tab if active
+                        if (activeDetailTab === 'offers') {
+                            setDetailTab('offers');
+                        }
+                        
+                        showToast("Offer cancelled successfully on-ledger!", "success");
+                    }
+                );
+
+            } catch(e) {
+                console.error(e);
+                alert("Failed to create cancellation payload: " + e.message);
+                renderModalActions(id);
+            }
+        }
+
+        // Dynamic fetch for current ledger open fee (drops converted to XRP)
+        async function fetchCurrentLedgerFee() {
+            try {
+                const response = await fetch('https://xrplcluster.com/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ method: 'fee', params: [{}] })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const openLedgerFeeDrops = parseInt(data.result?.drops?.open_ledger_fee);
+                    if (!isNaN(openLedgerFeeDrops)) {
+                        return openLedgerFeeDrops / 1000000;
+                    }
+                }
+            } catch(e) {
+                console.warn("Failed to fetch ledger fee, using fallback", e);
+            }
+            return 0.000012; // Fallback 12 drops
+        }
+
+        // List / Private Sale / Transfer Multi-mode Logic
+        let currentListMode = 'public';
+
+        function setListMode(mode) {
+            currentListMode = mode;
+            
+            const btnPublic = document.getElementById('btnListModePublic');
+            const btnPrivate = document.getElementById('btnListModePrivate');
+            const btnTransfer = document.getElementById('btnListModeTransfer');
+            
+            const priceGroup = document.getElementById('listPriceGroup');
+            const destGroup = document.getElementById('listDestinationGroup');
+            const submitBtn = document.getElementById('listSubmitBtn');
+            
+            const activeClass = "flex-1 py-1.5 rounded-lg text-white bg-purple-900/50 cursor-pointer transition-all";
+            const inactiveClass = "flex-1 py-1.5 rounded-lg text-purple-300 hover:text-white cursor-pointer transition-all";
+            
+            if (btnPublic) btnPublic.className = mode === 'public' ? activeClass : inactiveClass;
+            if (btnPrivate) btnPrivate.className = mode === 'private' ? activeClass : inactiveClass;
+            if (btnTransfer) btnTransfer.className = mode === 'transfer' ? activeClass : inactiveClass;
+            
+            const dict = I18N_DICTS[currentLang];
+            if (mode === 'public') {
+                if (priceGroup) priceGroup.classList.remove('hidden');
+                if (destGroup) destGroup.classList.add('hidden');
+                if (submitBtn) submitBtn.innerText = dict.list_nft_btn || 'List NFT';
+            } else if (mode === 'private') {
+                if (priceGroup) priceGroup.classList.remove('hidden');
+                if (destGroup) destGroup.classList.remove('hidden');
+                if (submitBtn) submitBtn.innerText = dict.create_private_offer_btn || 'Create Private Offer';
+            } else if (mode === 'transfer') {
+                if (priceGroup) priceGroup.classList.add('hidden');
+                if (destGroup) destGroup.classList.remove('hidden');
+                if (submitBtn) submitBtn.innerText = dict.transfer_nft_btn || 'Transfer NFT';
+            }
+        }
+
+        async function openListSaleModal(id) {
+            if (!connectedWallet) {
+                alert("Please connect your Xaman wallet first!");
+                return;
+            }
+            activeNftId = id;
+            if (document.getElementById('listPriceInput')) document.getElementById('listPriceInput').value = '';
+            if (document.getElementById('listDestinationInput')) document.getElementById('listDestinationInput').value = '';
+            setListMode('public');
+            
+            document.getElementById('listProcessing').classList.add('hidden');
+            document.getElementById('listActions').classList.remove('hidden');
+            document.getElementById('listSaleModal').classList.remove('hidden');
+
+            const fee = await fetchCurrentLedgerFee();
+            document.getElementById('listNetworkFee').innerText = `${fee.toFixed(6)} XRP`;
+        }
+
+        function closeListSaleModal() {
+            document.getElementById('listSaleModal').classList.add('hidden');
+            if (activePollInterval) {
+                clearInterval(activePollInterval);
+                activePollInterval = null;
+            }
+        }
+
+        async function confirmListExecute() {
+            if (!connectedWallet) {
+                alert("Please connect your Xaman wallet first.");
+                return;
+            }
+            
+            let val = 0;
+            let destination = '';
+            
+            if (currentListMode !== 'transfer') {
+                val = parseFloat(document.getElementById('listPriceInput').value);
+                if (isNaN(val) || val <= 0) {
+                    alert("Please enter a valid price greater than 0");
+                    return;
+                }
+            }
+            
+            if (currentListMode !== 'public') {
+                destination = document.getElementById('listDestinationInput').value.trim();
+                if (!destination) {
+                    alert("Please enter the recipient's wallet address.");
+                    return;
+                }
+                if (!destination.startsWith('r')) {
+                    alert("Invalid XRPL wallet address format.");
+                    return;
+                }
+            }
+            
+            document.getElementById('listProcessing').classList.remove('hidden');
+            document.getElementById('listActions').classList.add('hidden');
+            
+            const tokenID = tokenToIdMap[activeNftId];
+            if (!tokenID) {
+                alert("Token ID not found for this NFT.");
+                document.getElementById('listProcessing').classList.add('hidden');
+                document.getElementById('listActions').classList.remove('hidden');
+                return;
+            }
+
+            const txjson = {
+                TransactionType: "NFTokenCreateOffer",
+                NFTokenID: tokenID,
+                Amount: String(Math.round(val * 1000000)),
+                Flags: 1 // tfSellNFToken
+            };
+            
+            if (destination) {
+                txjson.Destination = destination;
+            }
+
+            try {
+                const requestBody = { txjson };
+                const userToken = localStorage.getItem('xaman_user_token');
+                if (userToken) requestBody.user_token = userToken;
+
+                const payload = await xumm.payload.create(requestBody);
+
+                // Close list modal first
+                closeListSaleModal();
+
+                const actionTitle = currentListMode === 'transfer' ? "Confirm Transfer" : "Confirm Listing";
+                const actionDesc = currentListMode === 'transfer' ? "Sign to transfer this NFT to the destination address." : `Sign to list this NFT for sale at ${val} XRP.`;
+
+                openXamanSignModal(
+                    actionTitle,
+                    actionDesc,
+                    payload,
+                    (checkData) => {
+                        let successMsg = "";
+                        if (currentListMode === 'public') {
+                            activeListings[activeNftId] = val;
+                            activeOffersDetails[activeNftId] = { 
+                                OfferID: checkData.response?.txid || 'simulated-offer-id',
+                                Destination: '' 
+                            };
+                            document.getElementById('modalDetailPrice').innerText = `${val.toLocaleString()} XRP`;
+                            successMsg = `NFT listed for sale at ${val} XRP!`;
+                        } else if (currentListMode === 'private') {
+                            activeListings[activeNftId] = val;
+                            activeOffersDetails[activeNftId] = { 
+                                OfferID: checkData.response?.txid || 'simulated-offer-id',
+                                Destination: destination 
+                            };
+                            document.getElementById('modalDetailPrice').innerText = `${val.toLocaleString()} XRP (Private)`;
+                            successMsg = `Private sell offer for ${val} XRP created!`;
+                        } else {
+                            mintedOwners[activeNftId] = destination;
+                            delete activeListings[activeNftId];
+                            delete activeOffersDetails[activeNftId];
+                            
+                            const ownerFriendly = `${destination.substring(0, 8)}...${destination.substring(destination.length - 8)}`;
+                            document.getElementById('modalDetailOwner').innerText = ownerFriendly;
+                            document.getElementById('modalDetailOwner').title = destination;
+                            document.getElementById('modalDetailPrice').innerText = 'Not Listed';
+                            successMsg = `NFT successfully transferred to ${ownerFriendly}!`;
+                        }
+                        
+                        renderModalActions(activeNftId);
+                        updateProcessList();
+                        updateWalletButtonLabel();
+                        renderTopDeals();
+                        
+                        showToast(successMsg, "success");
+                    }
+                );
+
+            } catch(e) {
+                console.error(e);
+                alert("Failed to create Xaman payload: " + e.message);
+                document.getElementById('listProcessing').classList.add('hidden');
+                document.getElementById('listActions').classList.remove('hidden');
+            }
+        }
+
+        // Make Buy Offer / Bid
+        async function openBidModal(id) {
+            if (!connectedWallet) {
+                alert("Please connect your Xaman wallet first!");
+                return;
+            }
+            activeNftId = id;
+            document.getElementById('bidAmountInput').value = '';
+            document.getElementById('bidExpiryInput').value = '10m';
+            document.getElementById('bidNetworkFee').innerText = "Querying ledger...";
+            document.getElementById('bidProcessing').classList.add('hidden');
+            document.getElementById('bidActions').classList.remove('hidden');
+            document.getElementById('makeBidModal').classList.remove('hidden');
+
+            const fee = await fetchCurrentLedgerFee();
+            document.getElementById('bidNetworkFee').innerText = `${fee.toFixed(6)} XRP`;
+        }
+        function closeBidModal() {
+            document.getElementById('makeBidModal').classList.add('hidden');
+            if (activePollInterval) {
+                clearInterval(activePollInterval);
+                activePollInterval = null;
+            }
+        }
+        async function confirmBidExecute() {
+            if (!connectedWallet) {
+                alert("Please connect your Xaman wallet first.");
+                return;
+            }
+            const val = parseFloat(document.getElementById('bidAmountInput').value);
+            if (isNaN(val) || val <= 0) {
+                alert("Please enter a valid bid amount greater than 0");
+                return;
+            }
+            document.getElementById('bidProcessing').classList.remove('hidden');
+            document.getElementById('bidActions').classList.add('hidden');
+            
+            const tokenID = tokenToIdMap[activeNftId];
+            const owner = mintedOwners[activeNftId];
+            if (!tokenID || !owner) {
+                alert("Token ID or Owner not found.");
+                document.getElementById('bidProcessing').classList.add('hidden');
+                document.getElementById('bidActions').classList.remove('hidden');
+                return;
+            }
+
+            const txjson = {
+                TransactionType: "NFTokenCreateOffer",
+                NFTokenID: tokenID,
+                Amount: String(Math.round(val * 1000000)),
+                Owner: owner
+            };
+
+            try {
+                const requestBody = { txjson };
+                const userToken = localStorage.getItem('xaman_user_token');
+                if (userToken) requestBody.user_token = userToken;
+
+                const payload = await xumm.payload.create(requestBody);
+
+                // Close makeBidModal first
+                closeBidModal();
+
+                openXamanSignModal(
+                    "Submit Buy Offer (Bid)",
+                    `Sign to submit a buy offer of ${val} XRP for this NFT.`,
+                    payload,
+                    (checkData) => {
+                        if (!activeBuyOffersMap[activeNftId]) {
+                            activeBuyOffersMap[activeNftId] = [];
+                        }
+                        activeBuyOffersMap[activeNftId].push({
+                            Amount: String(Math.round(val * 1000000)),
+                            Flags: 0,
+                            NFTokenID: tokenID,
+                            OfferID: checkData.response?.txid || 'simulated-offer-id',
+                            Owner: connectedWallet,
+                            Destination: null,
+                            Expiration: null
+                        });
+                        
+                        renderModalActions(activeNftId);
+                        updateWalletButtonLabel();
+                        renderTopDeals();
+                        if (activeDetailTab === 'offers') {
+                            setDetailTab('offers');
+                        }
+                        
+                        showToast(`Buy offer of ${val} XRP placed successfully!`, "success");
+                    }
+                );
+
+            } catch(e) {
+                console.error(e);
+                alert("Failed to create Xaman payload: " + e.message);
+                document.getElementById('bidProcessing').classList.add('hidden');
+                document.getElementById('bidActions').classList.remove('hidden');
+            }
+        }
+
+        // Buy Now Confirm
+        async function openBuyConfirmModal(id) {
+            if (!connectedWallet) {
+                alert("Please connect your Xaman wallet first!");
+                return;
+            }
+            activeNftId = id;
+            const price = activeListings[id];
+            if (price === undefined) return;
+            
+            const minterRoyalty = price * 0.10; // 10% XLS-20 transfer fee
+            const sellerNet = price - minterRoyalty;
+            
+            const offerDetail = activeOffersDetails[id];
+            const isBrokered = offerDetail && offerDetail.Destination && offerDetail.Destination !== '';
+            
+            const brokerFee = isBrokered ? price * 0.01589 : 0;
+
+            document.getElementById('buyNetworkFee').innerText = "Querying ledger...";
+            const networkFee = await fetchCurrentLedgerFee();
+            document.getElementById('buyNetworkFee').innerText = `${networkFee.toFixed(6)} XRP`;
+            
+            const totalPrice = price + brokerFee;
+            
+            document.getElementById('buyBasePrice').innerText = `${price.toLocaleString()} XRP`;
+            document.getElementById('buyMinterRoyalty').innerText = `${minterRoyalty.toLocaleString(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 4})} XRP`;
+            document.getElementById('buySellerNet').innerText = `${sellerNet.toLocaleString(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 4})} XRP`;
+            
+            const feeRow = document.getElementById('buyBrokerFeeRow');
+            const noteDiv = document.getElementById('buyBrokerNote');
+            
+            if (isBrokered) {
+                feeRow.classList.remove('hidden');
+                document.getElementById('buyBrokerFee').innerText = `${brokerFee.toLocaleString(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 4})} XRP`;
+                noteDiv.innerHTML = `
+                    <div class="flex items-start gap-1.5 text-yellow-400">
+                        <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                        <span>This listing is brokered by <strong>xrp.cafe</strong>, who charges an additional 1.589% match fee. KawaiiMarket charges <strong>0% brokerage fees</strong>. The match fee is paid directly to xrp.cafe.</span>
+                    </div>
+                `;
+            } else {
+                feeRow.classList.add('hidden');
+                noteDiv.innerHTML = `
+                    <div class="flex items-start gap-1.5 text-green-400">
+                        <i class="fa-solid fa-circle-check mt-0.5"></i>
+                        <span>This is a direct peer-to-peer transaction on the XRP Ledger. KawaiiMarket charges <strong>0% brokerage fees</strong>.</span>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('buyTotalPrice').innerText = `${totalPrice.toLocaleString(undefined, {minimumFractionDigits: 4, maximumFractionDigits: 4})} XRP`;
+            
+            document.getElementById('buyProcessing').classList.add('hidden');
+            document.getElementById('buyActions').classList.remove('hidden');
+            document.getElementById('buyConfirmModal').classList.remove('hidden');
+        }
+        function closeBuyConfirmModal() {
+            document.getElementById('buyConfirmModal').classList.add('hidden');
+            if (activePollInterval) {
+                clearInterval(activePollInterval);
+                activePollInterval = null;
+            }
+        }
+        async function confirmPurchaseExecute() {
+            if (!connectedWallet) {
+                alert("Please connect your Xaman wallet first.");
+                return;
+            }
+            document.getElementById('buyProcessing').classList.remove('hidden');
+            document.getElementById('buyActions').classList.add('hidden');
+            
+            const offerDetail = activeOffersDetails[activeNftId];
+            if (!offerDetail || !offerDetail.OfferID) {
+                alert("Offer details not found.");
+                document.getElementById('buyProcessing').classList.add('hidden');
+                document.getElementById('buyActions').classList.remove('hidden');
+                return;
+            }
+
+            const txjson = {
+                TransactionType: "NFTokenAcceptOffer",
+                NFTokenSellOffer: offerDetail.OfferID
+            };
+
+            try {
+                const requestBody = { txjson };
+                const userToken = localStorage.getItem('xaman_user_token');
+                if (userToken) requestBody.user_token = userToken;
+
+                const payload = await xumm.payload.create(requestBody);
+
+                // Close buy confirm modal first
+                closeBuyConfirmModal();
+
+                openXamanSignModal(
+                    "Authorize Purchase",
+                    "Scan the QR code below or check your mobile push notifications to sign and buy this NFT.",
+                    payload,
+                    (checkData) => {
+                        mintedOwners[activeNftId] = connectedWallet;
+                        delete activeListings[activeNftId];
+                        delete activeOffersDetails[activeNftId];
+                        
+                        const ownerFriendly = `${connectedWallet.substring(0, 8)}...${connectedWallet.substring(connectedWallet.length - 8)}`;
+                        document.getElementById('modalDetailOwner').innerText = ownerFriendly;
+                        document.getElementById('modalDetailOwner').title = connectedWallet;
+                        document.getElementById('modalDetailPrice').innerText = 'Not Listed';
+                        
+                        const mBadge = document.getElementById('modalDetailMinted');
+                        if (mBadge) {
+                            mBadge.className = "text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20";
+                            mBadge.innerText = "Minted";
+                        }
+                        
+                        renderModalActions(activeNftId);
+                        updateProcessList();
+                        updateWalletButtonLabel();
+                        renderTopDeals();
+                        
+                        showToast("Purchase Complete! Ownership registered successfully.", "success");
+                    }
+                );
+
+            } catch(e) {
+                console.error(e);
+                alert("Failed to create Xaman payload: " + e.message);
+                document.getElementById('buyProcessing').classList.add('hidden');
+                document.getElementById('buyActions').classList.remove('hidden');
+            }
+        }
+
+        async function acceptBuyOfferExecute(id, offerID, priceXrp) {
+            const jwt = localStorage.getItem('xaman_address');
+            if (!jwt) {
+                alert("Please connect your Xaman wallet first.");
+                return;
+            }
+
+            const txjson = {
+                TransactionType: "NFTokenAcceptOffer",
+                NFTokenBuyOffer: offerID
+            };
+
+            try {
+                const requestBody = { txjson };
+                const userToken = localStorage.getItem('xaman_user_token');
+                if (userToken) requestBody.user_token = userToken;
+
+                const payload = await xumm.payload.create(requestBody);
+
+                openXamanSignModal(
+                    "Accept Buy Bid",
+                    `Sign to accept this buy offer of ${priceXrp} XRP and sell your NFT.`,
+                    payload,
+                    (checkData) => {
+                        const buyer = (activeBuyOffersMap[id] || []).find(off => off.OfferID === offerID)?.Owner || connectedWallet;
+                        
+                        mintedOwners[id] = buyer;
+                        delete activeListings[id];
+                        delete activeOffersDetails[id];
+                        
+                        if (activeBuyOffersMap[id]) {
+                            activeBuyOffersMap[id] = activeBuyOffersMap[id].filter(off => off.OfferID !== offerID);
+                        }
+                        
+                        const ownerFriendly = `${buyer.substring(0, 8)}...${buyer.substring(buyer.length - 8)}`;
+                        document.getElementById('modalDetailOwner').innerText = ownerFriendly;
+                        document.getElementById('modalDetailOwner').title = buyer;
+                        document.getElementById('modalDetailPrice').innerText = 'Not Listed';
+                        
+                        renderModalActions(id);
+                        updateProcessList();
+                        updateWalletButtonLabel();
+                        renderTopDeals();
+                        
+                        if (activeDetailTab === 'offers') {
+                            setDetailTab('offers');
+                        }
+                        
+                        showToast(`Bid accepted! NFT sold to ${ownerFriendly}.`, "success");
+                    }
+                );
+            } catch(e) {
+                console.error(e);
+                alert("Failed to accept buy offer: " + e.message);
+            }
+        }
+
+        // Custom Premium Toast
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 border text-xs font-bold transition-all duration-300 transform translate-y-10 opacity-0 ${
+                type === 'success' ? 'bg-[#0e2118] border-green-500/30 text-green-400' : 'bg-[#220d0f] border-red-500/30 text-red-400'
+            }`;
+            toast.innerHTML = `
+                <i class="${type === 'success' ? 'fa-solid fa-circle-check text-green-400' : 'fa-solid fa-circle-xmark text-red-400'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+    </script>
+
+    <!-- Disclaimer Modal -->
+    <div id="disclaimerModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden px-4 select-none">
+        <div class="glass-panel max-w-md w-full rounded-3xl p-6 flex flex-col gap-4 shadow-2xl border border-purple-500/30">
+            <div class="flex items-center gap-3 text-kawaii-accentPink">
+                <i class="fa-solid fa-circle-info text-2xl"></i>
+                <h3 class="kawaii-title font-extrabold text-lg text-white">Notice / 免責事項 / 공지</h3>
+            </div>
+            
+            <div class="flex flex-col gap-3.5 text-xs text-purple-200 font-medium leading-relaxed max-h-[300px] overflow-y-auto pr-1">
+                <!-- English -->
+                <div>
+                    <span class="text-[10px] uppercase tracking-wider text-kawaii-accentAqua font-bold block mb-1">English</span>
+                    <p>
+                        The 3 rarity models presented on this explorer are calculations for reference. 
+                        <span class="text-white font-extrabold">No promise or guarantee is made that these models use an identical formula as xrp.cafe or bidds.com.</span>
+                    </p>
+                </div>
+                <!-- Japanese -->
+                <div class="border-t border-purple-900/20 pt-2.5">
+                    <span class="text-[10px] uppercase tracking-wider text-kawaii-accentPink font-bold block mb-1">日本語</span>
+                    <p>
+                        このエクスプローラーに表示されている3つのレアリティモデルは参考値としての計算結果です。
+                        <span class="text-white font-extrabold">これらのモデルがxrp.cafeやbidds.comと同じ計算式を使用していること、あるいは同一の結果であることを保証するものではありません。</span>
+                    </p>
+                </div>
+                <!-- Korean -->
+                <div class="border-t border-purple-900/20 pt-2.5">
+                    <span class="text-[10px] uppercase tracking-wider text-yellow-400 font-bold block mb-1">한국어</span>
+                    <p>
+                        본 익스플로러에 표시되는 3가지 희귀도 모델은 참고용 계산 결과입니다. 
+                        <span class="text-white font-extrabold">이 모델들이 xrp.cafe 또는 bidds.com과 동일한 공식을 사용하거나 완전히 일치한다는 보장은 제공되지 않습니다.</span>
+                    </p>
+                </div>
+            </div>
+            
+            <button onclick="dismissDisclaimer()" class="w-full mt-2 py-3 bg-gradient-to-r from-purple-800 to-kawaii-600 hover:from-purple-700 hover:to-kawaii-500 text-white text-xs font-black rounded-2xl shadow-lg hover:shadow-purple-500/20 transition-all active:scale-95 cursor-pointer uppercase tracking-wider">
+                I Understand / 同意する / 동의함
+            </button>
+        </div>
+    </div>
+
+    <!-- NFT Details Modal -->
+    <div id="detailsModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto hidden">
+        <div class="relative bg-kawaii-cardBg/95 border border-purple-800/30 rounded-3xl p-6 md:p-8 max-w-4xl w-full grid grid-cols-1 md:grid-cols-12 gap-8 shadow-2xl">
+            <!-- Close Button -->
+            <button onclick="closeDetailsModal()" class="absolute top-4 right-4 text-purple-400 hover:text-white transition-colors cursor-pointer text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Left Column: Holographic Card Display -->
+            <div class="md:col-span-5 flex flex-col items-center justify-center" style="perspective: 1000px;">
+                <div id="modalHoloCard" class="relative w-full max-w-[280px] aspect-[1/1.25] bg-[#111322] border-2 border-purple-500/30 rounded-2xl p-4 flex flex-col gap-2.5 shadow-2xl overflow-hidden select-none transition-transform duration-100 ease-out">
+                    <!-- Shine & Glare Overlays -->
+                    <div class="modal-card__shine absolute inset-0 pointer-events-none mix-blend-color-dodge opacity-0 z-20 bg-[linear-gradient(115deg,transparent_0%,rgba(255,255,255,0.4)_30%,rgba(255,0,128,0.2)_45%,rgba(0,255,255,0.2)_55%,rgba(255,255,255,0.4)_70%,transparent_100%)] bg-[length:200%_200%] transition-opacity duration-300"></div>
+                    <div class="modal-card__glare absolute inset-0 pointer-events-none opacity-0 z-20 transition-opacity duration-300"></div>
+
+                    <!-- Top Bar -->
+                    <div class="flex justify-between items-center pb-1.5 border-b border-purple-900/30">
+                        <span id="modalCardName" class="font-extrabold text-xs text-white truncate">dropchan #--</span>
+                        <span id="modalCardHp" class="text-[10px] font-black text-kawaii-accentPink">RANK #--</span>
+                    </div>
+
+                    <!-- Media Container -->
+                    <div class="w-full aspect-square rounded-xl bg-purple-950/20 overflow-hidden relative border border-purple-900/20 flex items-center justify-center" id="modalCardImgContainer">
+                    </div>
+
+                    <!-- Middle Ribbon -->
+                    <div class="flex justify-between items-center text-[8px] text-purple-300 bg-white/5 border border-purple-900/20 rounded px-2 py-0.5 mt-auto">
+                        <span id="modalCardTraitsCount">Traits: --</span>
+                        <span id="modalCardRarityBadge" class="font-bold text-purple-300">COMMON</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Details & Traits Grid -->
+            <div class="md:col-span-7 flex flex-col gap-5">
+                <!-- Title & Header -->
+                <div class="flex flex-col gap-1.5 border-b border-purple-900/30 pb-3">
+                    <span class="text-xs font-bold text-kawaii-accentAqua uppercase tracking-wider" data-i18n="modal_subtitle">Collection Item Detail</span>
+                    <h2 id="modalDetailName" class="kawaii-title text-2xl font-black text-white">dropchan #--</h2>
+                    
+                    <div class="flex flex-wrap gap-2 mt-1">
+                        <span id="modalDetailRarity" class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-purple-900/30 text-purple-300 border border-purple-800/30">--</span>
+                        <span id="modalDetailMinted" class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-green-500/10 text-green-400 border border-green-500/20">--</span>
+                    </div>
+                </div>
+
+                <!-- Owner & Price Rows -->
+                <div class="grid grid-cols-2 gap-4 bg-purple-950/20 border border-purple-900/20 p-4 rounded-2xl text-xs">
+                    <div class="flex flex-col gap-0.5">
+                        <span class="text-[10px] text-purple-400 uppercase font-bold tracking-wide" data-i18n="current_owner">Current Owner</span>
+                        <span id="modalDetailOwner" class="font-mono text-white select-all break-all leading-tight">--</span>
+                    </div>
+                    <div class="flex flex-col gap-0.5">
+                        <span class="text-[10px] text-purple-400 uppercase font-bold tracking-wide" data-i18n="marketplace_list_price">Marketplace List Price</span>
+                        <span id="modalDetailPrice" class="font-black text-sm text-kawaii-accentAqua">--</span>
+                    </div>
+                </div>
+
+                <!-- Details Section Tabs -->
+                <div class="flex border-b border-purple-900/30 text-[10px] font-black uppercase tracking-wider gap-4">
+                    <button onclick="setDetailTab('traits')" id="btnDetailTabTraits" class="pb-2 border-b-2 border-kawaii-accentPink text-white cursor-pointer transition-all" data-i18n="tab_traits">Traits (<span id="modalTraitsCount">0</span>)</button>
+                    <button onclick="setDetailTab('history')" id="btnDetailTabHistory" class="pb-2 border-b-2 border-transparent text-purple-400 hover:text-white cursor-pointer transition-all" data-i18n="tab_history">Sales History</button>
+                    <button onclick="setDetailTab('offers')" id="btnDetailTabOffers" class="pb-2 border-b-2 border-transparent text-purple-400 hover:text-white cursor-pointer transition-all" data-i18n="tab_offers">Current Offers</button>
+                </div>
+                
+                <!-- Dynamic Details Pane -->
+                <div id="detailTabContent" class="flex flex-col gap-2 min-h-[220px] justify-center">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Actions Section -->
+                <div class="flex gap-3 mt-4 border-t border-purple-900/20 pt-4" id="modalActionsRow">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Confirmation Modal -->
+    <div id="buyConfirmModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="relative bg-kawaii-cardBg border border-purple-800/30 rounded-3xl p-6 max-w-md w-full flex flex-col gap-4 shadow-2xl">
+            <!-- Close Button -->
+            <button onclick="closeBuyConfirmModal()" class="absolute top-4 right-4 text-purple-400 hover:text-white transition-colors cursor-pointer text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="kawaii-title font-extrabold text-lg text-white" data-i18n="confirm_purchase_title">Confirm Purchase</h3>
+            
+            <div class="flex flex-col gap-2 bg-purple-950/20 border border-purple-900/25 p-4 rounded-2xl text-xs">
+                <div class="flex justify-between items-center text-slate-300">
+                    <span data-i18n="base_listing_price">Base Listing Price:</span>
+                    <span id="buyBasePrice" class="font-bold text-white">-- XRP</span>
+                </div>
+                <div class="flex justify-between items-center text-purple-400 pl-4 border-l border-purple-900/40 text-[10px]">
+                    <span data-i18n="creator_royalty">└─ Creator Royalty (10.0%):</span>
+                    <span id="buyMinterRoyalty" class="font-semibold text-purple-300">-- XRP</span>
+                </div>
+                <div class="flex justify-between items-center text-purple-400 pl-4 border-l border-purple-900/40 text-[10px]">
+                    <span data-i18n="seller_net">└─ Seller Net Proceeds:</span>
+                    <span id="buySellerNet" class="font-semibold text-purple-300">-- XRP</span>
+                </div>
+                <div id="buyBrokerFeeRow" class="flex justify-between items-center text-slate-300 mt-1">
+                    <span data-i18n="broker_fee">XRP Cafe Broker Fee (1.589%):</span>
+                    <span id="buyBrokerFee" class="font-bold text-yellow-400">-- XRP</span>
+                </div>
+                <div class="h-[1px] bg-purple-900/20 my-1"></div>
+                <div class="flex justify-between items-center text-slate-100 font-bold mb-1">
+                    <span data-i18n="total_to_pay">Total Amount to Pay:</span>
+                    <span id="buyTotalPrice" class="text-sm font-black text-kawaii-accentPink">-- XRP</span>
+                </div>
+                <div class="flex justify-between items-center text-[10px] text-purple-400 border-t border-purple-900/20 pt-1.5 mt-0.5">
+                    <span data-i18n="est_fee_label">Estimated Network Fee:</span>
+                    <span id="buyNetworkFee" class="font-bold text-purple-300">-- XRP</span>
+                </div>
+            </div>
+
+            <!-- Warning note -->
+            <div id="buyBrokerNote" class="text-[10px] text-purple-400 bg-purple-950/30 border border-purple-900/20 p-3 rounded-xl leading-relaxed">
+            </div>
+
+            <div id="buyProcessing" class="hidden flex flex-col items-center justify-center py-4 gap-2 text-purple-400">
+                <div class="spinner border-2 border-purple-900/20 border-t-purple-400 w-6 h-6 rounded-full animate-spin"></div>
+                <span class="text-[10px] font-bold" data-i18n="broadcasting_tx">Broadcasting transaction to ledger...</span>
+            </div>
+
+            <div id="buyActions" class="flex gap-3 justify-end mt-2">
+                <button onclick="closeBuyConfirmModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer" data-i18n="cancel_btn">Cancel</button>
+                <button onclick="confirmPurchaseExecute()" class="px-5 py-2.5 bg-gradient-to-r from-kawaii-accentPink to-pink-500 hover:from-pink-500 hover:to-kawaii-accentPink text-white font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer" data-i18n="sign_buy_btn">Sign & Buy</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Make Bid Modal -->
+    <div id="makeBidModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="relative bg-kawaii-cardBg border border-purple-800/30 rounded-3xl p-6 max-w-md w-full flex flex-col gap-4 shadow-2xl">
+            <!-- Close Button -->
+            <button onclick="closeBidModal()" class="absolute top-4 right-4 text-purple-400 hover:text-white transition-colors cursor-pointer text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="kawaii-title font-extrabold text-lg text-white" data-i18n="make_buy_offer">Place Buy Offer (Bid)</h3>
+            
+            <div class="flex flex-col gap-3">
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] text-purple-300 uppercase font-bold tracking-wide" data-i18n="bid_amount_label">Bid Amount (XRP)</label>
+                    <input type="number" id="bidAmountInput" placeholder="Enter bid amount..." step="0.1" min="0.1" data-i18n-placeholder="enter_bid_amount"
+                        class="w-full bg-purple-950/30 border border-purple-900/40 rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-300">
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] text-purple-300 uppercase font-bold tracking-wide" data-i18n="expiration_label">Expiration</label>
+                    <select id="bidExpiryInput" class="w-full bg-purple-950/30 border border-purple-900/40 rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-300">
+                        <option value="10m" data-i18n="opt_10m">10 Minutes</option>
+                        <option value="1h" data-i18n="opt_1h">1 Hour</option>
+                        <option value="24h" data-i18n="opt_24h">24 Hours</option>
+                        <option value="7d" data-i18n="opt_7d">7 Days</option>
+                        <option value="none" data-i18n="opt_never">Never (Permanent)</option>
+                    </select>
+                </div>
+                <div class="text-[10px] text-purple-400 flex justify-between bg-purple-950/20 p-2.5 rounded-xl border border-purple-900/20 mt-1">
+                    <span data-i18n="est_fee_label">Estimated Network Fee:</span>
+                    <span id="bidNetworkFee">0.000012 XRP</span>
+                </div>
+            </div>
+
+            <div id="bidProcessing" class="hidden flex flex-col items-center justify-center py-4 gap-2 text-purple-400">
+                <div class="spinner border-2 border-purple-900/20 border-t-purple-400 w-6 h-6 rounded-full animate-spin"></div>
+                <span class="text-[10px] font-bold" data-i18n="creating_offer">Creating offer...</span>
+            </div>
+
+            <div id="bidActions" class="flex gap-3 justify-end mt-2">
+                <button onclick="closeBidModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer" data-i18n="cancel_btn">Cancel</button>
+                <button onclick="confirmBidExecute()" class="px-5 py-2.5 bg-gradient-to-r from-kawaii-accentAqua/80 to-kawaii-accentAqua hover:from-kawaii-accentAqua hover:to-kawaii-accentAqua/80 text-purple-950 font-black text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer" data-i18n="submit_offer_btn">Submit Offer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- List / Transfer NFT Modal -->
+    <div id="listSaleModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="relative bg-kawaii-cardBg border border-purple-800/30 rounded-3xl p-6 max-w-md w-full flex flex-col gap-4 shadow-2xl">
+            <!-- Close Button -->
+            <button onclick="closeListSaleModal()" class="absolute top-4 right-4 text-purple-400 hover:text-white transition-colors cursor-pointer text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="kawaii-title font-extrabold text-lg text-white" data-i18n="list_transfer_title">List / Transfer NFT</h3>
+            
+            <!-- Tabs -->
+            <div class="flex bg-purple-950/40 p-1 rounded-xl border border-purple-900/30 text-center text-[10px] font-extrabold uppercase mt-1">
+                <button onclick="setListMode('public')" id="btnListModePublic" class="flex-1 py-1.5 rounded-lg text-white bg-purple-900/50 cursor-pointer transition-all" data-i18n="tab_public_sale">Public Sale</button>
+                <button onclick="setListMode('private')" id="btnListModePrivate" class="flex-1 py-1.5 rounded-lg text-purple-300 hover:text-white cursor-pointer transition-all" data-i18n="tab_private_sale">Private Sale</button>
+                <button onclick="setListMode('transfer')" id="btnListModeTransfer" class="flex-1 py-1.5 rounded-lg text-purple-300 hover:text-white cursor-pointer transition-all" data-i18n="tab_gift_transfer">Gift / Transfer</button>
+            </div>
+            
+            <div class="flex flex-col gap-3">
+                <div id="listPriceGroup" class="flex flex-col gap-1">
+                    <label class="text-[10px] text-purple-300 uppercase font-bold tracking-wide" data-i18n="listing_price_label">Listing Price (XRP)</label>
+                    <input type="number" id="listPriceInput" placeholder="Enter listing price..." step="0.1" min="0.1" data-i18n-placeholder="enter_listing_price"
+                        class="w-full bg-purple-950/30 border border-purple-900/40 rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-300">
+                </div>
+                
+                <div id="listDestinationGroup" class="flex flex-col gap-1 hidden">
+                    <label class="text-[10px] text-purple-300 uppercase font-bold tracking-wide" data-i18n="recipient_label">Recipient Wallet Address (Destination)</label>
+                    <input type="text" id="listDestinationInput" placeholder="e.g. rDestinationWallet..." data-i18n-placeholder="enter_recipient_placeholder"
+                        class="w-full bg-purple-950/30 border border-purple-900/40 rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-300 font-mono">
+                </div>
+                
+                <div class="text-[10px] text-purple-400 flex justify-between bg-purple-950/20 p-2.5 rounded-xl border border-purple-900/20 mt-1">
+                    <span data-i18n="est_fee_label">Estimated Network Fee:</span>
+                    <span id="listNetworkFee">0.000012 XRP</span>
+                </div>
+            </div>
+
+            <div id="listProcessing" class="hidden flex flex-col items-center justify-center py-4 gap-2 text-purple-400">
+                <div class="spinner border-2 border-purple-900/20 border-t-purple-400 w-6 h-6 rounded-full animate-spin"></div>
+                <span class="text-[10px] font-bold">Creating offer...</span>
+            </div>
+
+            <div id="listActions" class="flex gap-3 justify-end mt-2">
+                <button onclick="closeListSaleModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-300 transition-all cursor-pointer">Cancel</button>
+                <button id="listSubmitBtn" onclick="confirmListExecute()" class="px-5 py-2.5 bg-gradient-to-r from-kawaii-accentPink to-pink-500 hover:from-pink-500 hover:to-kawaii-accentPink text-white font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer">List NFT</button>
+            </div>
+        </div>
+    </div>
+    <!-- Xaman Login Modal -->
+    <div id="xamanLoginModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="relative bg-kawaii-cardBg border border-purple-800/30 rounded-3xl p-6 max-w-sm w-full flex flex-col gap-4 shadow-2xl items-center text-center">
+            <!-- Close Button -->
+            <button onclick="closeXamanLoginModal()" class="absolute top-4 right-4 text-purple-400 hover:text-white transition-colors cursor-pointer text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="kawaii-title font-extrabold text-lg text-white">Connect Xaman Wallet</h3>
+            
+            <p class="text-xs text-purple-300 leading-relaxed">
+                Scan the QR code below using your Xaman app on your mobile device to sign in securely.
+            </p>
+
+            <img id="xamanLoginQr" class="w-48 h-48 border border-purple-500/20 rounded-2xl shadow-xl bg-white p-2" src="" alt="Scan QR">
+            
+            <a id="xamanLoginLink" href="#" target="_blank" class="px-5 py-2.5 bg-gradient-to-r from-purple-800 to-kawaii-600 hover:from-purple-700 hover:to-kawaii-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 w-full">
+                Open in Xaman app
+            </a>
+
+            <div class="flex items-center gap-2 text-xs text-purple-400 mt-1">
+                <div class="spinner border-2 border-purple-900/20 border-t-purple-400 w-4 h-4 rounded-full animate-spin"></div>
+                <span class="animate-pulse">Awaiting signature...</span>
+            </div>
+
+            <button onclick="closeXamanLoginModal()" class="mt-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-300 transition-all w-full cursor-pointer">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Xaman Sign Modal -->
+    <div id="xamanSignModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="relative bg-kawaii-cardBg border border-purple-800/30 rounded-3xl p-6 max-w-sm w-full flex flex-col gap-4 shadow-2xl items-center text-center">
+            <!-- Close Button -->
+            <button onclick="closeXamanSignModal()" class="absolute top-4 right-4 text-purple-400 hover:text-white transition-colors cursor-pointer text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <h3 id="xamanSignTitle" class="kawaii-title font-extrabold text-lg text-white">Sign Transaction</h3>
+            
+            <p id="xamanSignDesc" class="text-xs text-purple-300 leading-relaxed">
+                Please scan the QR code below or approve the push notification on your device to sign this transaction.
+            </p>
+
+            <img id="xamanSignQr" class="w-48 h-48 border border-purple-500/20 rounded-2xl shadow-xl bg-white p-2" src="" alt="Scan QR">
+            
+            <a id="xamanSignLink" href="#" target="_blank" class="px-5 py-2.5 bg-gradient-to-r from-purple-800 to-kawaii-600 hover:from-purple-700 hover:to-kawaii-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 w-full">
+                Open in Xaman app
+            </a>
+
+            <div class="flex items-center gap-2 text-xs text-purple-400 mt-1">
+                <div class="spinner border-2 border-purple-900/20 border-t-purple-400 w-4 h-4 rounded-full animate-spin"></div>
+                <span class="animate-pulse">Awaiting signature...</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
