@@ -2210,13 +2210,13 @@
 
         async function createXummPayload(requestBody) {
             initXaman();
-            if (!xumm.payload) {
+            if (!connectedWallet || !xumm || !xumm.payload) {
                 await xumm.authorize();
             }
             if (xumm && xumm.payload && typeof xumm.payload.create === 'function') {
                 return await xumm.payload.create(requestBody);
             }
-            throw new Error("Xaman SDK payload is unavailable. Please click Connect Wallet to log in.");
+            throw new Error("Xaman is not connected. Please click Connect Wallet to log in.");
         }
 
         function setXamanConnected(account) {
@@ -2296,11 +2296,12 @@
                 connectBtn.innerHTML = `<div class="spinner border-2 border-purple-900/20 border-t-white w-3 h-3 rounded-full animate-spin"></div> Connecting...`;
 
                 try {
+                    initXaman();
                     await xumm.authorize();
                 } catch (e) {
                     console.error(e);
                     alert("Xaman Connection failed: " + e.message);
-                    initXaman();
+                    updateWalletButtonLabel();
                 }
             }
         }
@@ -2462,9 +2463,18 @@
             }
         }
 
-        function disconnectXamanWallet() {
+        async function disconnectXamanWallet() {
             const dropdown = document.getElementById('walletDropdown');
             if (dropdown) dropdown.classList.add('hidden');
+
+            if (xumm) {
+                try {
+                    await xumm.logout();
+                } catch (e) {
+                    console.warn("Xumm logout error:", e);
+                }
+                xumm = null;
+            }
 
             connectedWallet = null;
             filterOffersToAcceptOnly = false;
