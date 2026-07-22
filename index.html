@@ -244,6 +244,8 @@
                             (z-score/Probability)</option>
                         <option value="average" data-i18n="rarity_model_average">Average Rarity (Average Trait Freq)
                         </option>
+                        <option value="xrplto" data-i18n="rarity_model_xrplto">XRPL.to Model (Harmonic Trait Weight)
+                        </option>
                     </select>
                 </div>
 
@@ -420,6 +422,7 @@
                     throw new Error("dropchan_ranks.js database not loaded. Ensure it is in the same directory.");
                 }
                 fullCollection = Object.values(window.DROPCHAN_RANKS);
+                computeXrplToRarityRanks();
                 initializeTraitFilters();
 
                 // 2. Fetch all minted NFTs to check owners & mint status
@@ -595,6 +598,38 @@
 
                 updateProcessList();
             }
+        }
+
+        function computeXrplToRarityRanks() {
+            if (!window.DROPCHAN_METADATA || !fullCollection || fullCollection.length === 0) return;
+            const traitCounts = {};
+            const totalItems = fullCollection.length;
+
+            fullCollection.forEach(item => {
+                const attrs = window.DROPCHAN_METADATA[item.id] || [];
+                attrs.forEach(a => {
+                    const key = `${a.trait_type}||${a.value}`;
+                    traitCounts[key] = (traitCounts[key] || 0) + 1;
+                });
+            });
+
+            fullCollection.forEach(item => {
+                const attrs = window.DROPCHAN_METADATA[item.id] || [];
+                let score = 0;
+                attrs.forEach(a => {
+                    const key = `${a.trait_type}||${a.value}`;
+                    const count = traitCounts[key] || 1;
+                    const freq = count / totalItems;
+                    score += (1 / freq);
+                });
+                score = score * (1 + (attrs.length / 20.0));
+                item.xrplto_score = score;
+            });
+
+            const sorted = [...fullCollection].sort((a, b) => b.xrplto_score - a.xrplto_score);
+            sorted.forEach((item, index) => {
+                item.xrplto_rank = index + 1;
+            });
         }
 
         function clearWalletFilter() {
@@ -1134,6 +1169,7 @@
                 rarity_model_standard: "Standard Rarity (Rarity Score)",
                 rarity_model_statistical: "Statistical Rarity (z-score/Probability)",
                 rarity_model_average: "Average Rarity (Average Trait Freq)",
+                rarity_model_xrplto: "XRPL.to Model (Harmonic Trait Weight)",
                 sort_label: "Sort Orders",
                 sort_rarity_asc: "Rarity Rank: Rarest First",
                 sort_rarity_desc: "Rarity Rank: Common First",
