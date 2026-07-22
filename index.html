@@ -2449,9 +2449,18 @@
             }
         }
 
-        function disconnectXamanWallet() {
+        async function disconnectXamanWallet() {
             const dropdown = document.getElementById('walletDropdown');
             if (dropdown) dropdown.classList.add('hidden');
+
+            if (xumm) {
+                try {
+                    await xumm.logout();
+                } catch (e) {
+                    console.warn("Xumm logout error:", e);
+                }
+                xumm = null;
+            }
 
             connectedWallet = null;
             filterOffersToAcceptOnly = false;
