@@ -2510,7 +2510,9 @@
 
             actionsRow.innerHTML = '';
 
-            if (isMinted && connectedWallet && owner === connectedWallet) {
+            const isMyNft = isMinted && connectedWallet && (owner.toLowerCase() === connectedWallet.toLowerCase());
+
+            if (isMyNft) {
                 if (price !== undefined) {
                     const offerDetail = activeOffersDetails[id];
                     const offerID = (offerDetail && offerDetail.OfferID) ? offerDetail.OfferID : '';
