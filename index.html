@@ -3047,6 +3047,11 @@
                 activePollInterval = null;
             }
         }
+        const SUPPORTED_BROKERS = {
+            "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC": { name: "XRP Cafe", mult: 1.01589 },
+            "rpZqTPC8GvrSvEfFsUuHkmPCg29GdQuXhC": { name: "Bidds / onXRP", mult: 1.015 }
+        };
+
         async function confirmPurchaseExecute() {
             if (!connectedWallet) {
                 alert("Please connect your Xaman wallet first.");
@@ -3063,10 +3068,25 @@
                 return;
             }
 
-            const txjson = {
-                TransactionType: "NFTokenAcceptOffer",
-                NFTokenSellOffer: offerDetail.OfferID
-            };
+            let txjson;
+            if (offerDetail.Destination && SUPPORTED_BROKERS[offerDetail.Destination]) {
+                const brokerInfo = SUPPORTED_BROKERS[offerDetail.Destination];
+                const baseDrops = parseFloat(offerDetail.Amount);
+                const totalDrops = String(Math.round(baseDrops * brokerInfo.mult));
+
+                txjson = {
+                    TransactionType: "NFTokenCreateOffer",
+                    Owner: offerDetail.Owner,
+                    NFTokenID: tokenToIdMap[activeNftId] || offerDetail.NFTokenID,
+                    Amount: totalDrops,
+                    Destination: offerDetail.Destination
+                };
+            } else {
+                txjson = {
+                    TransactionType: "NFTokenAcceptOffer",
+                    NFTokenSellOffer: offerDetail.OfferID
+                };
+            }
 
             try {
                 const requestBody = { txjson };
