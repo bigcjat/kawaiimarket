@@ -2191,32 +2191,19 @@
         let activeWS = null;
 
         function initXaman() {
-            if (!xumm) {
-                xumm = new XummPkce("5ecae9ef-b8f6-4b0a-bfb7-fc24078771bf");
+            xumm = new XummPkce("5ecae9ef-b8f6-4b0a-bfb7-fc24078771bf");
 
-                xumm.on("success", async () => {
-                    const state = await xumm.state();
+            xumm.on("success", async () => {
+                const state = await xumm.state();
+                setXamanConnected(state.me.account);
+            });
+
+            xumm.on("retrieved", async () => {
+                const state = await xumm.state();
+                if (state.me && state.me.account) {
                     setXamanConnected(state.me.account);
-                });
-
-                xumm.on("retrieved", async () => {
-                    const state = await xumm.state();
-                    if (state.me && state.me.account) {
-                        setXamanConnected(state.me.account);
-                    }
-                });
-            }
-        }
-
-        async function createXummPayload(requestBody) {
-            initXaman();
-            if (!connectedWallet || !xumm || !xumm.payload) {
-                await xumm.authorize();
-            }
-            if (xumm && xumm.payload && typeof xumm.payload.create === 'function') {
-                return await xumm.payload.create(requestBody);
-            }
-            throw new Error("Xaman is not connected. Please click Connect Wallet to log in.");
+                }
+            });
         }
 
         function setXamanConnected(account) {
@@ -2296,12 +2283,11 @@
                 connectBtn.innerHTML = `<div class="spinner border-2 border-purple-900/20 border-t-white w-3 h-3 rounded-full animate-spin"></div> Connecting...`;
 
                 try {
-                    initXaman();
                     await xumm.authorize();
                 } catch (e) {
                     console.error(e);
                     alert("Xaman Connection failed: " + e.message);
-                    updateWalletButtonLabel();
+                    initXaman();
                 }
             }
         }
@@ -2463,18 +2449,9 @@
             }
         }
 
-        async function disconnectXamanWallet() {
+        function disconnectXamanWallet() {
             const dropdown = document.getElementById('walletDropdown');
             if (dropdown) dropdown.classList.add('hidden');
-
-            if (xumm) {
-                try {
-                    await xumm.logout();
-                } catch (e) {
-                    console.warn("Xumm logout error:", e);
-                }
-                xumm = null;
-            }
 
             connectedWallet = null;
             filterOffersToAcceptOnly = false;
@@ -2518,9 +2495,7 @@
 
             actionsRow.innerHTML = '';
 
-            const isMyNft = isMinted && connectedWallet && (owner.toLowerCase() === connectedWallet.toLowerCase());
-
-            if (isMyNft) {
+            if (isMinted && connectedWallet && owner === connectedWallet) {
                 if (price !== undefined) {
                     const offerDetail = activeOffersDetails[id];
                     const offerID = (offerDetail && offerDetail.OfferID) ? offerDetail.OfferID : '';
@@ -2598,7 +2573,7 @@
                 const userToken = localStorage.getItem('xaman_user_token');
                 if (userToken) requestBody.user_token = userToken;
 
-                const payload = await createXummPayload(requestBody);
+                const payload = await xumm.payload.create(requestBody);
 
                 // Re-render actions row immediately to remove loading spinner from the details modal card
                 renderModalActions(id);
@@ -2783,7 +2758,7 @@
                 const userToken = localStorage.getItem('xaman_user_token');
                 if (userToken) requestBody.user_token = userToken;
 
-                const payload = await createXummPayload(requestBody);
+                const payload = await xumm.payload.create(requestBody);
 
                 // Close list modal first
                 closeListSaleModal();
@@ -2900,7 +2875,7 @@
                 const userToken = localStorage.getItem('xaman_user_token');
                 if (userToken) requestBody.user_token = userToken;
 
-                const payload = await createXummPayload(requestBody);
+                const payload = await xumm.payload.create(requestBody);
 
                 // Close makeBidModal first
                 closeBidModal();
@@ -3031,7 +3006,7 @@
                 const userToken = localStorage.getItem('xaman_user_token');
                 if (userToken) requestBody.user_token = userToken;
 
-                const payload = await createXummPayload(requestBody);
+                const payload = await xumm.payload.create(requestBody);
 
                 // Close buy confirm modal first
                 closeBuyConfirmModal();
@@ -3090,7 +3065,7 @@
                 const userToken = localStorage.getItem('xaman_user_token');
                 if (userToken) requestBody.user_token = userToken;
 
-                const payload = await createXummPayload(requestBody);
+                const payload = await xumm.payload.create(requestBody);
 
                 openXamanSignModal(
                     "Accept Buy Bid",
