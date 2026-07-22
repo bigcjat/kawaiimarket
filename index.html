@@ -526,31 +526,21 @@
             }
         };
 
-        // Queries xrpldata API for Account NFTs (CORS-friendly for local file:// protocols)
-        async function fetchWalletNfts(walletAddress) {
-            try {
-                const response = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/owner/${walletAddress}`);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const data = await response.json();
-                const rawNfts = data.data?.nfts || [];
-
-                const ownedNumbers = new Set();
-                rawNfts.forEach(nft => {
-                    if (nft.Issuer === ISSUER && nft.URI) {
-                        try {
-                            const decoded = hexToString(nft.URI);
-                            const num = parseInt(decoded.split('/').pop().split('.')[0]);
-                            if (!isNaN(num)) {
-                                ownedNumbers.add(num);
-                            }
-                        } catch (e) { }
+        // Fast in-memory wallet NFT filtering from pre-loaded mintedOwners collection map (zero network requests)
+        function fetchWalletNfts(walletAddress) {
+            const ownedNumbers = new Set();
+            if (!walletAddress) return ownedNumbers;
+            const targetAddr = walletAddress.trim().toLowerCase();
+            for (let idKey in mintedOwners) {
+                const owner = mintedOwners[idKey];
+                if (owner && owner.toLowerCase() === targetAddr) {
+                    const idNum = parseInt(idKey);
+                    if (!isNaN(idNum)) {
+                        ownedNumbers.add(idNum);
                     }
-                });
-                return ownedNumbers;
-            } catch (e) {
-                alert(`Error querying wallet from xrpldata: ${e.message}`);
-                return null;
+                }
             }
+            return ownedNumbers;
         }
 
         // Apply Wallet filter from input
@@ -570,13 +560,8 @@
             }
         });
 
-        async function applyWalletFilter(address) {
-            document.getElementById('loadingIndicator').style.display = 'flex';
-            document.getElementById('nftGrid').innerHTML = '';
-
-            const owned = await fetchWalletNfts(address);
-            document.getElementById('loadingIndicator').style.display = 'none';
-
+        function applyWalletFilter(address) {
+            const owned = fetchWalletNfts(address);
             if (owned !== null) {
                 ownedNftsSet = owned;
                 activeFilteredAddress = address;
