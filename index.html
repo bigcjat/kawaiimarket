@@ -247,6 +247,20 @@
                     </select>
                 </div>
 
+                <!-- Rarity Tier Filter -->
+                <div class="lg:col-span-2 flex flex-col gap-1.5">
+                    <label class="text-[11px] font-bold text-purple-300 uppercase tracking-wide"
+                        data-i18n="rarity_tier_label">Rarity Tier</label>
+                    <select id="rarityTierFilter" onchange="onControlChange()"
+                        class="w-full bg-purple-950/40 border border-purple-900/40 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-300">
+                        <option value="all" data-i18n="rarity_tier_all">All Tiers</option>
+                        <option value="legendary" data-i18n="rarity_tier_legendary">Legendary (1-100)</option>
+                        <option value="mythic" data-i18n="rarity_tier_mythic">Mythic (101-500)</option>
+                        <option value="rare" data-i18n="rarity_tier_rare">Rare (501-1500)</option>
+                        <option value="common" data-i18n="rarity_tier_common">Common (1501+)</option>
+                    </select>
+                </div>
+
                 <!-- Sort Mode -->
                 <div class="lg:col-span-3 flex flex-col gap-1.5">
                     <label class="text-[11px] font-bold text-purple-300 uppercase tracking-wide"
@@ -706,6 +720,20 @@
                 list = list.filter(item => item.id in activeListings);
             }
 
+            // Rarity Tier Filter
+            const rarityTier = document.getElementById('rarityTierFilter') ? document.getElementById('rarityTierFilter').value : 'all';
+            if (rarityTier !== 'all') {
+                const rankKey = `${model}_rank`;
+                list = list.filter(item => {
+                    const rank = item[rankKey];
+                    if (rarityTier === 'legendary') return rank <= 100;
+                    if (rarityTier === 'mythic') return rank > 100 && rank <= 500;
+                    if (rarityTier === 'rare') return rank > 500 && rank <= 1500;
+                    if (rarityTier === 'common') return rank > 1500;
+                    return true;
+                });
+            }
+
             // Trait Filtering
             const selectedType = document.getElementById('traitTypeFilter') ? document.getElementById('traitTypeFilter').value : "";
             const selectedVal = document.getElementById('traitValueFilter') ? document.getElementById('traitValueFilter').value : "";
@@ -1097,6 +1125,12 @@
                 search_placeholder: "Paste XRPL Wallet Address...",
                 filter_btn: "Filter",
                 rarity_model_label: "Rarity Ranking Model",
+                rarity_tier_label: "Rarity Tier",
+                rarity_tier_all: "All Tiers",
+                rarity_tier_legendary: "⭐ Legendary (1-100)",
+                rarity_tier_mythic: "💎 Mythic (101-500)",
+                rarity_tier_rare: "🔮 Rare (501-1500)",
+                rarity_tier_common: "🌸 Common (1501+)",
                 rarity_model_standard: "Standard Rarity (Rarity Score)",
                 rarity_model_statistical: "Statistical Rarity (z-score/Probability)",
                 rarity_model_average: "Average Rarity (Average Trait Freq)",
