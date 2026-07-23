@@ -629,17 +629,22 @@
                 activeFilteredAddress = address;
 
                 const ownedLabel = currentLang === 'ja' ? '個保有' : (currentLang === 'ko' ? '개 보유' : ' dropchans');
-                document.getElementById('statWalletHolding').innerText = `${owned.size}${ownedLabel}`;
+                const statWalletHolding = document.getElementById('statWalletHolding');
+                if (statWalletHolding) statWalletHolding.innerText = `${owned.size}${ownedLabel}`;
 
                 const shortAddr = `${address.substring(0, 8)}...${address.substring(address.length - 6)}`;
-                if (currentLang === 'ja') {
-                    document.getElementById('filterLabel').innerText = `アクティブなアドレス (${shortAddr}) が保有する ${owned.size} 個の dropchan で絞り込み中。`;
-                } else if (currentLang === 'ko') {
-                    document.getElementById('filterLabel').innerText = `활성 주소 (${shortAddr})가 보유한 ${owned.size}개의 dropchan 필터링 중.`;
-                } else {
-                    document.getElementById('filterLabel').innerText = `Filtering ${owned.size} dropchans owned by active address (${shortAddr}).`;
+                const filterLabel = document.getElementById('filterLabel');
+                if (filterLabel) {
+                    if (currentLang === 'ja') {
+                        filterLabel.innerText = `アクティブなアドレス (${shortAddr}) が保有する ${owned.size} 個の dropchan で絞り込み中。`;
+                    } else if (currentLang === 'ko') {
+                        filterLabel.innerText = `활성 주소 (${shortAddr})가 보유한 ${owned.size}개의 dropchan 필터링 중.`;
+                    } else {
+                        filterLabel.innerText = `Filtering ${owned.size} dropchans owned by active address (${shortAddr}).`;
+                    }
                 }
-                document.getElementById('filterStatus').classList.remove('hidden');
+                const filterStatus = document.getElementById('filterStatus');
+                if (filterStatus) filterStatus.classList.remove('hidden');
 
                 updateProcessList();
             }
@@ -714,11 +719,15 @@
             ownedNftsSet = null;
             activeFilteredAddress = null;
             filterOffersToAcceptOnly = false;
-            document.getElementById('walletInput').value = '';
+            const walletInput = document.getElementById('walletInput');
+            if (walletInput) walletInput.value = '';
 
             const dict = I18N_DICTS[currentLang];
-            document.getElementById('statWalletHolding').innerText = dict.none_full_collection;
-            document.getElementById('filterStatus').classList.add('hidden');
+            const statWalletHolding = document.getElementById('statWalletHolding');
+            if (statWalletHolding) statWalletHolding.innerText = dict.none_full_collection;
+
+            const filterStatus = document.getElementById('filterStatus');
+            if (filterStatus) filterStatus.classList.add('hidden');
             updateProcessList();
         }
 
