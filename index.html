@@ -3469,14 +3469,14 @@
             }
 
             // Collect all matching token IDs owned by targetAddr
-            let ownedItems = allItemsData.filter(item => {
+            let ownedItems = fullCollection.filter(item => {
                 const owner = mintedOwners[item.id];
                 return owner && owner.toLowerCase() === targetAddr.toLowerCase();
             });
 
             // Fallback: if user filtered by connected wallet using ownedNftsSet
             if (ownedItems.length === 0 && ownedNftsSet && ownedNftsSet.size > 0 && targetAddr.toLowerCase() === connectedWallet?.toLowerCase()) {
-                ownedItems = allItemsData.filter(item => ownedNftsSet.has(parseInt(item.id)));
+                ownedItems = fullCollection.filter(item => ownedNftsSet.has(parseInt(item.id)));
             }
 
             if (ownedItems.length === 0) {
