@@ -3432,26 +3432,35 @@
 
         // Batch download all owned SVGs in target wallet as a ZIP archive
         async function downloadWalletSvgs(walletAddr) {
-            const searchInput = document.getElementById('searchWalletInput')?.value?.trim();
-            const targetAddr = walletAddr || activeWalletFilter || searchInput || connectedWallet;
+            const dropdown = document.getElementById('walletDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+
+            const inputAddr = document.getElementById('walletInput')?.value?.trim();
+            const targetAddr = (typeof walletAddr === 'string' && walletAddr) ? walletAddr : (activeFilteredAddress || inputAddr || connectedWallet);
+
             if (!targetAddr) {
-                showToast("Please filter by a wallet or connect Xaman first.", "error");
+                showToast("Please enter a wallet address or connect Xaman first.", "error");
                 return;
             }
 
             // Collect all matching token IDs owned by targetAddr
-            const ownedItems = allItemsData.filter(item => {
+            let ownedItems = allItemsData.filter(item => {
                 const owner = mintedOwners[item.id];
                 return owner && owner.toLowerCase() === targetAddr.toLowerCase();
             });
 
+            // Fallback: if user filtered by connected wallet using ownedNftsSet
+            if (ownedItems.length === 0 && ownedNftsSet && ownedNftsSet.size > 0 && targetAddr.toLowerCase() === connectedWallet?.toLowerCase()) {
+                ownedItems = allItemsData.filter(item => ownedNftsSet.has(parseInt(item.id)));
+            }
+
             if (ownedItems.length === 0) {
-                showToast("No Dropchans found for this wallet address.", "error");
+                showToast(`No Dropchans found for wallet ${targetAddr.substring(0, 6)}...`, "error");
                 return;
             }
 
             if (typeof JSZip === 'undefined') {
-                showToast("ZIP library is loading, please try again in a moment.", "error");
+                showToast("ZIP compression library is loading, please try again in a moment.", "error");
                 return;
             }
 
@@ -3465,71 +3474,82 @@
             if (pText) pText.innerText = `0 / ${ownedItems.length}`;
             if (pSub) pSub.innerText = `Downloading ${ownedItems.length} Dropchan SVGs...`;
 
-            const zip = new JSZip();
-            const folderName = `dropchans_${targetAddr.substring(0, 6)}_${targetAddr.substring(targetAddr.length - 4)}`;
-            const folder = zip.folder(folderName);
+            try {
+                const zip = new JSZip();
+                const folderName = `dropchans_${targetAddr.substring(0, 6)}_${targetAddr.substring(targetAddr.length - 4)}`;
+                const folder = zip.folder(folderName);
 
-            let successCount = 0;
+                let successCount = 0;
 
-            for (let i = 0; i < ownedItems.length; i++) {
-                const item = ownedItems[i];
-                const id = item.id;
-                const pct = Math.round(((i + 1) / ownedItems.length) * 85);
-                if (pBar) pBar.style.width = `${pct}%`;
-                if (pText) pText.innerText = `${i + 1} / ${ownedItems.length}`;
-                if (pSub) pSub.innerText = `Fetching SVG #${id} (${item.name})...`;
+                for (let i = 0; i < ownedItems.length; i++) {
+                    const item = ownedItems[i];
+                    const id = item.id;
+                    const pct = Math.round(((i + 1) / ownedItems.length) * 85);
+                    if (pBar) pBar.style.width = `${pct}%`;
+                    if (pText) pText.innerText = `${i + 1} / ${ownedItems.length}`;
+                    if (pSub) pSub.innerText = `Fetching SVG #${id}...`;
 
-                const svgText = await fetchSvgFileContent(id);
-                if (svgText) {
-                    const filename = `dropchan_${String(id).padStart(4, '0')}.svg`;
-                    folder.file(filename, svgText);
-                    successCount++;
+                    const svgText = await fetchSvgFileContent(id);
+                    if (svgText) {
+                        const filename = `dropchan_${String(id).padStart(4, '0')}.svg`;
+                        folder.file(filename, svgText);
+                        successCount++;
+                    }
                 }
-            }
 
-            if (successCount === 0) {
+                if (successCount === 0) {
+                    if (modal) modal.classList.add('hidden');
+                    showToast("Failed to fetch SVG files from storage.", "error");
+                    return;
+                }
+
+                if (pSub) pSub.innerText = "Building ZIP archive...";
+                if (pBar) pBar.style.width = '95%';
+
+                const blob = await zip.generateAsync({ type: "blob" });
+                if (pBar) pBar.style.width = '100%';
+                if (pSub) pSub.innerText = "Download Starting!";
+
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${folderName}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                setTimeout(() => {
+                    if (modal) modal.classList.add('hidden');
+                    showToast(`Downloaded ${successCount} Dropchan SVGs as ZIP!`, "success");
+                }, 600);
+            } catch (err) {
+                console.error("[ZIP DOWNLOAD ERROR]", err);
                 if (modal) modal.classList.add('hidden');
-                showToast("Failed to fetch SVG files from storage.", "error");
-                return;
+                showToast("Error creating ZIP file: " + err.message, "error");
             }
-
-            if (pSub) pSub.innerText = "Building ZIP archive...";
-            if (pBar) pBar.style.width = '95%';
-
-            const blob = await zip.generateAsync({ type: "blob" });
-            if (pBar) pBar.style.width = '100%';
-            if (pSub) pSub.innerText = "Download Ready!";
-
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `${folderName}.zip`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            setTimeout(() => {
-                if (modal) modal.classList.add('hidden');
-                showToast(`Downloaded ${successCount} Dropchan SVGs as ZIP!`, "success");
-            }, 600);
         }
 
         async function fetchSvgFileContent(id) {
+            const urlsToTry = [];
             const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
             const primaryUrl = IMAGE_BASE_URL.startsWith('http') ? `${cleanBase}${id}.svg` : `${cleanBase}${ISSUER}/${TAXON}/${id}.svg`;
+            urlsToTry.push(primaryUrl);
 
-            try {
-                const res = await fetch(primaryUrl);
-                if (res.ok) return await res.text();
-            } catch (e) {}
+            IPFS_GATEWAYS.forEach(gw => {
+                const cleanGw = gw.endsWith('/') ? gw : gw + '/';
+                urlsToTry.push(`${cleanGw}${IMAGE_CID}/${id}.svg`);
+            });
 
-            for (let i = 0; i < IPFS_GATEWAYS.length; i++) {
+            for (let url of urlsToTry) {
                 try {
-                    const url = `${IPFS_GATEWAYS[i]}${IMAGE_CID}/${id}.svg`;
                     const res = await fetch(url);
-                    if (res.ok) return await res.text();
+                    if (res.ok) {
+                        const text = await res.text();
+                        if (text && (text.includes('<svg') || text.includes('<?xml'))) return text;
+                    }
                 } catch (e) {}
             }
-            return null;
+
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#1e1b4b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#a78bfa" font-family="sans-serif" font-size="14">Dropchan #${id}</text></svg>`;
         }
 
         // Custom Premium Toast
