@@ -204,9 +204,11 @@
         <div class="glass-panel p-5 rounded-3xl flex flex-col gap-4">
             <div class="flex items-center justify-between border-b border-purple-900/30 pb-3">
                 <h3 class="text-xs text-purple-300 uppercase font-black tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-chart-line text-kawaii-accentAqua"></i> Collection Market Analytics & Supply Depth
+                    <i class="fa-solid fa-chart-line text-kawaii-accentAqua"></i> Collection Market Analytics & Supply
+                    Depth
                 </h3>
-                <span class="text-[10px] text-purple-400 font-bold bg-purple-950/60 px-2.5 py-1 rounded-full border border-purple-800/40">
+                <span
+                    class="text-[10px] text-purple-400 font-bold bg-purple-950/60 px-2.5 py-1 rounded-full border border-purple-800/40">
                     Live On-Ledger Data
                 </span>
             </div>
@@ -214,7 +216,8 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-1">
                 <!-- Rarity Tier Supply Chart -->
                 <div class="bg-purple-950/30 p-4 rounded-2xl border border-purple-900/30 flex flex-col gap-2">
-                    <span class="text-[11px] font-bold text-purple-200 tracking-wide">Supply & Listings by Rarity Tier</span>
+                    <span class="text-[11px] font-bold text-purple-200 tracking-wide">Supply & Listings by Rarity
+                        Tier</span>
                     <div class="relative h-48 w-full">
                         <canvas id="tierSupplyChart"></canvas>
                     </div>
@@ -222,7 +225,8 @@
 
                 <!-- Market Depth Chart -->
                 <div class="bg-purple-950/30 p-4 rounded-2xl border border-purple-900/30 flex flex-col gap-2">
-                    <span class="text-[11px] font-bold text-purple-200 tracking-wide">On-Ledger Market Depth & Bids</span>
+                    <span class="text-[11px] font-bold text-purple-200 tracking-wide">On-Ledger Market Depth &
+                        Bids</span>
                     <div class="relative h-48 w-full flex justify-center">
                         <canvas id="marketDepthChart"></canvas>
                     </div>
@@ -351,7 +355,8 @@
                         <i class="fa-solid fa-file-arrow-down text-emerald-200"></i> Download Wallet SVGs (.zip)
                     </button>
                     <button onclick="clearAllFilters()" data-i18n="clear_filter"
-                        class="font-extrabold text-purple-300 hover:text-white transition-colors underline text-xs">Clear Filter</button>
+                        class="font-extrabold text-purple-300 hover:text-white transition-colors underline text-xs">Clear
+                        Filter</button>
                 </div>
             </div>
         </div>
@@ -373,13 +378,24 @@
             <!-- Dynamically populated -->
         </div>
 
-        <!-- Lazy Loading Control -->
-        <div class="flex justify-center py-6">
+        <!-- Lazy Loading Control & DOM SVG Zip Downloader -->
+        <div class="flex justify-center py-6 flex-col items-center gap-4">
             <button id="loadMoreBtn" onclick="loadNextBatch()"
                 class="hidden px-8 py-3.5 bg-purple-900/40 hover:bg-purple-900/60 border border-purple-500/20 rounded-2xl text-xs font-black text-purple-200 tracking-wider hover:text-white transition-all shadow-md active:scale-95"
                 data-i18n="load_more">
                 LOAD MORE ITEMS
             </button>
+
+            <!-- Wallet Download Section (Appears at bottom once all wallet NFTs are loaded into DOM) -->
+            <div id="walletDownloadSection" class="hidden flex flex-col items-center gap-2">
+                <button id="btnDownloadWalletDom" onclick="downloadLoadedWalletSvgsFromDom()"
+                    class="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-2xl transition-all active:scale-95 cursor-pointer flex items-center gap-3 border border-emerald-400/30">
+                    <i class="fa-solid fa-file-arrow-down text-base"></i> Download All Wallet SVGs (.zip)
+                </button>
+                <span id="walletDownloadSubtitle" class="text-[11px] text-emerald-300 font-bold">
+                    All wallet NFTs loaded in browser — ready to package ZIP
+                </span>
+            </div>
         </div>
 
     </main>
@@ -1216,10 +1232,13 @@
 
             displayedCount = end;
 
-            // Toggle Load More button
+            // Toggle Load More button & Bottom Wallet Download Section
             const loadBtn = document.getElementById('loadMoreBtn');
+            const downloadSection = document.getElementById('walletDownloadSection');
+
             if (displayedCount < processedList.length) {
                 loadBtn.classList.remove('hidden');
+                if (downloadSection) downloadSection.classList.add('hidden');
                 const leftCount = processedList.length - displayedCount;
                 if (currentLang === 'ja') {
                     loadBtn.innerText = `さらに表示 (残り ${leftCount} 個)`;
@@ -1230,6 +1249,17 @@
                 }
             } else {
                 loadBtn.classList.add('hidden');
+                // If wallet filter is active and all items are in the DOM, reveal the bottom download button
+                const isWalletFiltered = activeFilteredAddress || connectedWallet;
+                if (isWalletFiltered && processedList.length > 0 && downloadSection) {
+                    downloadSection.classList.remove('hidden');
+                    const downloadBtn = document.getElementById('btnDownloadWalletDom');
+                    if (downloadBtn) {
+                        downloadBtn.innerHTML = `<i class="fa-solid fa-file-arrow-down text-base"></i> Download All ${processedList.length} Wallet SVGs (.zip)`;
+                    }
+                } else if (downloadSection) {
+                    downloadSection.classList.add('hidden');
+                }
             }
         }
 
@@ -1973,7 +2003,7 @@
             const tokenID = tokenToIdMap[id];
             const isTokenMinted = tokenID && !tokenID.startsWith('unminted') && !tokenID.startsWith('lazy');
             const tokenIDText = isTokenMinted ? tokenID : dict.unminted;
-            
+
             const tokenIDSpan = document.getElementById('modalDetailTokenID');
             const copyBtn = document.getElementById('modalDetailCopyBtn');
             const linkBidds = document.getElementById('modalLinkBidds');
@@ -3546,11 +3576,110 @@
                     if (modal) modal.classList.add('hidden');
                     showToast(`Downloaded ${successCount} Dropchan SVGs as ZIP!`, "success");
                 }, 600);
-            } catch (err) {
-                console.error("[ZIP DOWNLOAD ERROR]", err);
-                if (modal) modal.classList.add('hidden');
-                showToast("Error creating ZIP file: " + err.message, "error");
+        // Download all rendered DOM SVGs directly from the browser without network requests
+        async function downloadLoadedWalletSvgsFromDom() {
+            const targetAddr = activeFilteredAddress || connectedWallet;
+            if (!targetAddr) {
+                showToast("Please filter by a wallet first.", "error");
+                return;
             }
+
+            if (typeof JSZip === 'undefined') {
+                showToast("ZIP compression library is loading, please try again in a moment.", "error");
+                return;
+            }
+
+            const modal = document.getElementById('downloadProgressModal');
+            const pBar = document.getElementById('downloadProgressBar');
+            const pText = document.getElementById('downloadProgressText');
+            const pSub = document.getElementById('downloadProgressSubtitle');
+
+            if (modal) modal.classList.remove('hidden');
+            if (pBar) pBar.style.width = '0%';
+            if (pText) pText.innerText = `0 / ${processedList.length}`;
+            if (pSub) pSub.innerText = `Packaging ${processedList.length} Dropchan SVGs from browser DOM...`;
+
+            try {
+                const zip = new JSZip();
+                const folderName = `dropchans_${targetAddr.substring(0, 6)}_${targetAddr.substring(targetAddr.length - 4)}`;
+                const folder = zip.folder(folderName);
+
+                let successCount = 0;
+
+                for (let i = 0; i < processedList.length; i++) {
+                    const item = processedList[i];
+                    const id = item.id;
+                    const pct = Math.round(((i + 1) / processedList.length) * 92);
+                    if (pBar) pBar.style.width = `${pct}%`;
+                    if (pText) pText.innerText = `${i + 1} / ${processedList.length}`;
+                    if (pSub) pSub.innerText = `Packaging SVG #${id} (${item.name})...`;
+
+                    const imgNode = document.querySelector(`#img-container-${id} img`);
+                    let svgContent = null;
+
+                    if (imgNode) {
+                        svgContent = await getSvgFromDomImg(imgNode, id);
+                    }
+
+                    if (!svgContent) {
+                        svgContent = await fetchSvgFileContent(id);
+                    }
+
+                    if (svgContent) {
+                        const filename = `dropchan_${String(id).padStart(4, '0')}.svg`;
+                        folder.file(filename, svgContent);
+                        successCount++;
+                    }
+                }
+
+                if (pSub) pSub.innerText = "Building ZIP archive...";
+                if (pBar) pBar.style.width = '98%';
+
+                const blob = await zip.generateAsync({ type: "blob" });
+                if (pBar) pBar.style.width = '100%';
+                if (pSub) pSub.innerText = "Download Ready!";
+
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${folderName}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                setTimeout(() => {
+                    if (modal) modal.classList.add('hidden');
+                    showToast(`Successfully packaged and downloaded ${successCount} SVGs as ZIP!`, "success");
+                }, 600);
+            } catch (err) {
+                console.error("[ZIP PACKAGING ERROR]", err);
+                if (modal) modal.classList.add('hidden');
+                showToast("Error creating ZIP archive: " + err.message, "error");
+            }
+        }
+
+        async function getSvgFromDomImg(imgNode, id) {
+            if (!imgNode) return null;
+
+            // Direct extraction if src is data URL
+            if (imgNode.src && imgNode.src.startsWith('data:image/svg+xml')) {
+                try {
+                    const encoded = imgNode.src.split(',')[1];
+                    return decodeURIComponent(encoded);
+                } catch (e) {}
+            }
+
+            // Attempt fetch from imgNode.src
+            if (imgNode.src && imgNode.src.startsWith('http')) {
+                try {
+                    const res = await fetch(imgNode.src);
+                    if (res.ok) {
+                        const text = await res.text();
+                        if (text && (text.includes('<svg') || text.includes('<?xml'))) return text;
+                    }
+                } catch (e) {}
+            }
+
+            return null;
         }
 
         async function fetchSvgFileContent(id) {
@@ -3571,7 +3700,7 @@
                         const text = await res.text();
                         if (text && (text.includes('<svg') || text.includes('<?xml'))) return text;
                     }
-                } catch (e) {}
+                } catch (e) { }
             }
 
             return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#1e1b4b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#a78bfa" font-family="sans-serif" font-size="14">Dropchan #${id}</text></svg>`;
@@ -3604,16 +3733,22 @@
     <!-- Download Progress Modal -->
     <div id="downloadProgressModal" translate="no"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md hidden px-4 select-none notranslate">
-        <div class="glass-panel max-w-sm w-full rounded-3xl p-6 flex flex-col items-center text-center gap-4 shadow-2xl border border-emerald-500/40">
-            <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 text-2xl shadow-lg animate-bounce">
+        <div
+            class="glass-panel max-w-sm w-full rounded-3xl p-6 flex flex-col items-center text-center gap-4 shadow-2xl border border-emerald-500/40">
+            <div
+                class="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 text-2xl shadow-lg animate-bounce">
                 <i class="fa-solid fa-file-arrow-down"></i>
             </div>
             <div>
                 <h3 class="font-black text-lg text-white">Packaging SVGs</h3>
-                <p id="downloadProgressSubtitle" class="text-xs text-purple-300 mt-1">Downloading SVGs for ZIP package...</p>
+                <p id="downloadProgressSubtitle" class="text-xs text-purple-300 mt-1">Downloading SVGs for ZIP
+                    package...</p>
             </div>
-            <div class="w-full bg-purple-950/60 rounded-full h-3 border border-purple-800/40 overflow-hidden p-0.5 relative">
-                <div id="downloadProgressBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-200 w-0"></div>
+            <div
+                class="w-full bg-purple-950/60 rounded-full h-3 border border-purple-800/40 overflow-hidden p-0.5 relative">
+                <div id="downloadProgressBar"
+                    class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-200 w-0">
+                </div>
             </div>
             <span id="downloadProgressText" class="font-mono text-xs font-bold text-emerald-300">0 / 0</span>
         </div>
@@ -3745,20 +3880,29 @@
                     <!-- NFTokenID Section -->
                     <div class="flex flex-col gap-1.5 col-span-2 border-t border-purple-900/35 pt-3">
                         <span class="text-[10px] text-purple-400 uppercase font-bold tracking-wide">NFTokenID</span>
-                        <div class="flex items-center justify-between gap-3 bg-purple-950/40 border border-purple-900/30 p-2.5 rounded-xl">
-                            <span id="modalDetailTokenID" class="font-mono text-purple-300 text-[10px] select-all break-all leading-tight select-none">--</span>
+                        <div
+                            class="flex items-center justify-between gap-3 bg-purple-950/40 border border-purple-900/30 p-2.5 rounded-xl">
+                            <span id="modalDetailTokenID"
+                                class="font-mono text-purple-300 text-[10px] select-all break-all leading-tight select-none">--</span>
                             <div class="flex items-center gap-2">
-                                <a id="modalLinkBidds" href="#" target="_blank" class="flex-shrink-0 p-1.5 bg-purple-900/60 hover:bg-purple-800/80 border border-purple-800/40 rounded-xl transition-all flex items-center justify-center active:scale-95 cursor-pointer" title="View on Bidd's">
+                                <a id="modalLinkBidds" href="#" target="_blank"
+                                    class="flex-shrink-0 p-1.5 bg-purple-900/60 hover:bg-purple-800/80 border border-purple-800/40 rounded-xl transition-all flex items-center justify-center active:scale-95 cursor-pointer"
+                                    title="View on Bidd's">
                                     <svg viewBox="0 0 50 40" class="w-4 h-3.2 fill-white">
-                                        <path d="M43.2557 16.4929H39.8786V6.45244C39.8786 2.8945 36.9929 0 33.4457 0H6.43286C2.88571 0 0 2.8945 0 6.45244V33.549C0 37.1069 2.88571 40.0014 6.43286 40.0014H43.2571C46.8043 40.0014 49.69 37.1069 49.69 33.549V22.9468C49.69 19.3889 46.8043 16.4944 43.2571 16.4944L43.2557 16.4929ZM35.5929 33.1664C35.5929 34.5664 34.4614 35.7012 33.0657 35.7012C31.67 35.7012 30.5386 34.5664 30.5386 33.1664V22.9454C30.5386 21.756 31.5 20.7917 32.6857 20.7917H35.5929V33.1664ZM35.5929 16.4929H32.6857C29.1386 16.4929 26.2529 19.3874 26.2529 22.9454V33.5476C26.2529 34.3027 26.3843 35.0263 26.6229 35.7012H6.43286C5.24857 35.7012 4.28571 34.7354 4.28571 33.5476V6.45244C4.28571 5.26455 5.24857 4.29876 6.43286 4.29876H33.4471C34.6314 4.29876 35.5943 5.26455 35.5943 6.45244V16.4929H35.5929ZM45.4029 33.5476C45.4029 34.7354 44.44 35.7012 43.2557 35.7012H39.5086C39.7471 35.0278 39.8786 34.3027 39.8786 33.5476V20.7917H43.2557C44.44 20.7917 45.4029 21.7575 45.4029 22.9454V33.5476Z" />
+                                        <path
+                                            d="M43.2557 16.4929H39.8786V6.45244C39.8786 2.8945 36.9929 0 33.4457 0H6.43286C2.88571 0 0 2.8945 0 6.45244V33.549C0 37.1069 2.88571 40.0014 6.43286 40.0014H43.2571C46.8043 40.0014 49.69 37.1069 49.69 33.549V22.9468C49.69 19.3889 46.8043 16.4944 43.2571 16.4944L43.2557 16.4929ZM35.5929 33.1664C35.5929 34.5664 34.4614 35.7012 33.0657 35.7012C31.67 35.7012 30.5386 34.5664 30.5386 33.1664V22.9454C30.5386 21.756 31.5 20.7917 32.6857 20.7917H35.5929V33.1664ZM35.5929 16.4929H32.6857C29.1386 16.4929 26.2529 19.3874 26.2529 22.9454V33.5476C26.2529 34.3027 26.3843 35.0263 26.6229 35.7012H6.43286C5.24857 35.7012 4.28571 34.7354 4.28571 33.5476V6.45244C4.28571 5.26455 5.24857 4.29876 6.43286 4.29876H33.4471C34.6314 4.29876 35.5943 5.26455 35.5943 6.45244V16.4929H35.5929ZM45.4029 33.5476C45.4029 34.7354 44.44 35.7012 43.2557 35.7012H39.5086C39.7471 35.0278 39.8786 34.3027 39.8786 33.5476V20.7917H43.2557C44.44 20.7917 45.4029 21.7575 45.4029 22.9454V33.5476Z" />
                                     </svg>
                                 </a>
-                                <a id="modalLinkCafe" href="#" target="_blank" class="flex-shrink-0 p-1.5 bg-purple-900/60 hover:bg-purple-800/80 border border-purple-800/40 rounded-xl transition-all flex items-center justify-center active:scale-95 cursor-pointer" title="View on XRP Cafe">
+                                <a id="modalLinkCafe" href="#" target="_blank"
+                                    class="flex-shrink-0 p-1.5 bg-purple-900/60 hover:bg-purple-800/80 border border-purple-800/40 rounded-xl transition-all flex items-center justify-center active:scale-95 cursor-pointer"
+                                    title="View on XRP Cafe">
                                     <svg viewBox="0 0 100 100" class="w-4 h-4 fill-white">
-                                        <path d="M 22,40 A 28,28 0 0,0 78,40 A 8,8 0 0,0 62,40 A 12,12 0 0,1 38,40 A 8,8 0 0,0 22,40 Z" />
+                                        <path
+                                            d="M 22,40 A 28,28 0 0,0 78,40 A 8,8 0 0,0 62,40 A 12,12 0 0,1 38,40 A 8,8 0 0,0 22,40 Z" />
                                     </svg>
                                 </a>
-                                <button id="modalDetailCopyBtn" onclick="copyTokenID()" class="flex-shrink-0 px-3 py-1.5 bg-purple-900/60 hover:bg-purple-800/80 hover:text-white border border-purple-800/40 rounded-xl text-[10px] font-extrabold text-purple-300 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer select-none">
+                                <button id="modalDetailCopyBtn" onclick="copyTokenID()"
+                                    class="flex-shrink-0 px-3 py-1.5 bg-purple-900/60 hover:bg-purple-800/80 hover:text-white border border-purple-800/40 rounded-xl text-[10px] font-extrabold text-purple-300 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer select-none">
                                     <i class="fa-regular fa-copy"></i>
                                     <span id="copyBtnText">Copy</span>
                                 </button>
