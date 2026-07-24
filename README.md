@@ -1,5 +1,8 @@
 # 🌸 KawaiiMarket: Standalone Serverless NFT Explorer & Marketplace
 
+> [!NOTE]
+> **Disclaimer:** This marketplace is not meant to be taken seriously, but it does function. It's not intended to compete with others, and I only have part of it live (that's why it only supports 1 collection). Go support @xrpcafe or @biddsonxrpl so they stick around.
+
 KawaiiMarket is a **100% serverless, client-side, single-page application (SPA)** designed for exploring NFT collection rarities, browsing listing prices, and executing trades on the XRP Ledger. It is optimized to run statically on **GitHub Pages** with zero backend infrastructure.
 
 This open-source demo is configured for the **Dropchans** collection.
