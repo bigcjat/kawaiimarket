@@ -3668,30 +3668,16 @@
                 } catch (e) {}
             }
 
-            // Attempt fetch from imgNode.src
-            if (imgNode.src && imgNode.src.startsWith('http')) {
-                try {
-                    const res = await fetch(imgNode.src);
-                    if (res.ok) {
-                        const text = await res.text();
-                        if (text && (text.includes('<svg') || text.includes('<?xml'))) return text;
-                    }
-                } catch (e) {}
-            }
-
             return null;
         }
 
         async function fetchSvgFileContent(id) {
-            const urlsToTry = [];
-            const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
-            const primaryUrl = IMAGE_BASE_URL.startsWith('http') ? `${cleanBase}${id}.svg` : `${cleanBase}${ISSUER}/${TAXON}/${id}.svg`;
-            urlsToTry.push(primaryUrl);
-
-            IPFS_GATEWAYS.forEach(gw => {
-                const cleanGw = gw.endsWith('/') ? gw : gw + '/';
-                urlsToTry.push(`${cleanGw}${IMAGE_CID}/${id}.svg`);
-            });
+            const urlsToTry = [
+                `https://gateway.pinata.cloud/ipfs/${IMAGE_CID}/${id}.svg`,
+                `https://cloudflare-ipfs.com/ipfs/${IMAGE_CID}/${id}.svg`,
+                `https://ipfs.io/ipfs/${IMAGE_CID}/${id}.svg`,
+                `https://favicon.bot/ipfs/${IMAGE_CID}/${id}.svg`
+            ];
 
             for (let url of urlsToTry) {
                 try {
