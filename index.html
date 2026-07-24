@@ -156,6 +156,10 @@
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
                             <i class="fa-solid fa-camera-retro text-cyan-400"></i> Tweet Image Showcase
                         </button>
+                        <button id="btnStatsTweetStudio" onclick="openStatsTweetStudio()"
+                            class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
+                            <i class="fa-solid fa-chart-line text-yellow-400"></i> Daily Stats Tweet Maker
+                        </button>
                         <div class="h-[1px] bg-purple-900/20 my-0.5"></div>
                         <button id="btnDisconnectWallet" onclick="disconnectXamanWallet()"
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-red-400 hover:text-red-300 hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer w-full font-bold">
@@ -2845,6 +2849,12 @@
             if (dropdown) dropdown.classList.add('hidden');
             const addr = connectedWallet || localStorage.getItem('xaman_address') || MY_WALLET;
             window.location.href = `tweet-image.html?wallet=${addr}`;
+        }
+
+        function openStatsTweetStudio() {
+            const dropdown = document.getElementById('walletDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+            window.location.href = `stats-tweet.html`;
         }
 
         // Close dropdown when clicking outside
