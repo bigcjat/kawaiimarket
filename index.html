@@ -510,6 +510,23 @@
             }
         }
 
+        // Helper to fetch with retry for public API rate limits (429)
+        async function fetchWithRetry(url, options = {}, retries = 3, delayMs = 500) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (res.status === 429 && i < retries - 1) {
+                        await new Promise(r => setTimeout(r, delayMs * (i + 1)));
+                        continue;
+                    }
+                    return res;
+                } catch (e) {
+                    if (i === retries - 1) throw e;
+                    await new Promise(r => setTimeout(r, delayMs));
+                }
+            }
+        }
+
         // Initialize App
         window.onload = async function () {
             changeLanguage(currentLang);
@@ -526,8 +543,8 @@
                 // 2. Fetch all minted NFTs to check owners & mint status
                 let mintedCount = 0;
                 try {
-                    const mintedResponse = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/issuer/${ISSUER}/taxon/${TAXON}`);
-                    if (mintedResponse.ok) {
+                    const mintedResponse = await fetchWithRetry(`https://api.xrpldata.com/api/v1/xls20-nfts/issuer/${ISSUER}/taxon/${TAXON}`);
+                    if (mintedResponse && mintedResponse.ok) {
                         const resJson = await mintedResponse.json();
                         const nftsList = resJson.data?.nfts || [];
                         mintedCount = nftsList.length;
@@ -549,24 +566,32 @@
                 }
                 document.getElementById('statTotalMinted').innerText = `${mintedCount.toLocaleString()} / 10,000`;
 
+                // Stagger requests to prevent 429 rate limiting
+                await new Promise(r => setTimeout(r, 400));
+
                 // Fetch collection level stats (unique owners, market distribution)
                 try {
-                    const statsResponse = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/stats/issuer/${ISSUER}`);
-                    if (statsResponse.ok) {
+                    const statsResponse = await fetchWithRetry(`https://api.xrpldata.com/api/v1/xls20-nfts/stats/issuer/${ISSUER}`);
+                    if (statsResponse && statsResponse.ok) {
                         const statsJson = await statsResponse.json();
                         const collInfo = statsJson.data?.collection_info || {};
                         if (collInfo.unique_owners) {
                             document.getElementById('statUniqueOwners').innerText = `${collInfo.unique_owners.toLocaleString()} Holders`;
                         }
                         renderAnalyticsCharts(collInfo);
+                    } else {
+                        renderAnalyticsCharts(null);
                     }
                 } catch (e) {
                     console.warn("Stats API error:", e);
                     renderAnalyticsCharts(null);
                 }
 
+                // Stagger requests to prevent 429 rate limiting
+                await new Promise(r => setTimeout(r, 400));
+
                 // 3. Fetch live listings
-                const offersResponse = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/offers/issuer/${ISSUER}/taxon/${TAXON}`);
+                const offersResponse = await fetchWithRetry(`https://api.xrpldata.com/api/v1/xls20-nfts/offers/issuer/${ISSUER}/taxon/${TAXON}`);
                 if (offersResponse.ok) {
                     const resJson = await offersResponse.json();
                     const offersList = resJson.data?.offers || [];
