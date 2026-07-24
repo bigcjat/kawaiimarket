@@ -148,10 +148,6 @@
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
                             <i class="fa-solid fa-filter text-kawaii-accentAqua"></i> Filter by My Wallet
                         </button>
-                        <button id="btnDownloadMySvgsHeader" onclick="downloadWalletSvgs(connectedWallet)"
-                            class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-emerald-300 hover:text-emerald-200 hover:bg-emerald-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
-                            <i class="fa-solid fa-file-arrow-down text-emerald-400"></i> Download My SVGs (.zip)
-                        </button>
                         <div class="h-[1px] bg-purple-900/20 my-0.5"></div>
                         <button id="btnDisconnectWallet" onclick="disconnectXamanWallet()"
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-red-400 hover:text-red-300 hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer w-full font-bold">
@@ -387,14 +383,11 @@
             </button>
 
             <!-- Wallet Download Section (Appears at bottom once all wallet NFTs are loaded into DOM) -->
-            <div id="walletDownloadSection" class="hidden flex flex-col items-center gap-2">
+            <div id="walletDownloadSection" class="hidden">
                 <button id="btnDownloadWalletDom" onclick="downloadLoadedWalletSvgsFromDom()"
-                    class="px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs tracking-wider uppercase rounded-2xl shadow-2xl transition-all active:scale-95 cursor-pointer flex items-center gap-3 border border-emerald-400/30">
-                    <i class="fa-solid fa-file-arrow-down text-base"></i> Download All Wallet SVGs (.zip)
+                    class="px-8 py-3.5 bg-purple-900/40 hover:bg-purple-900/60 border border-purple-500/20 rounded-2xl text-xs font-black text-purple-200 tracking-wider hover:text-white transition-all shadow-md active:scale-95 flex items-center gap-2 cursor-pointer uppercase">
+                    <i class="fa-solid fa-file-arrow-down text-sm text-kawaii-accentAqua"></i> Download All Wallet SVGs (.zip)
                 </button>
-                <span id="walletDownloadSubtitle" class="text-[11px] text-emerald-300 font-bold">
-                    All wallet NFTs loaded in browser — ready to package ZIP
-                </span>
             </div>
         </div>
 
@@ -1255,7 +1248,7 @@
                     downloadSection.classList.remove('hidden');
                     const downloadBtn = document.getElementById('btnDownloadWalletDom');
                     if (downloadBtn) {
-                        downloadBtn.innerHTML = `<i class="fa-solid fa-file-arrow-down text-base"></i> Download All ${processedList.length} Wallet SVGs (.zip)`;
+                        downloadBtn.innerHTML = `<i class="fa-solid fa-file-arrow-down text-sm text-kawaii-accentAqua"></i> DOWNLOAD ALL ${processedList.length} WALLET SVGS (.ZIP)`;
                     }
                 } else if (downloadSection) {
                     downloadSection.classList.add('hidden');
