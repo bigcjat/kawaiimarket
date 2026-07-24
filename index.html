@@ -3576,6 +3576,13 @@
                     if (modal) modal.classList.add('hidden');
                     showToast(`Downloaded ${successCount} Dropchan SVGs as ZIP!`, "success");
                 }, 600);
+            } catch (err) {
+                console.error("[ZIP DOWNLOAD ERROR]", err);
+                if (modal) modal.classList.add('hidden');
+                showToast("Error creating ZIP file: " + err.message, "error");
+            }
+        }
+
         // Download all rendered DOM SVGs directly from the browser without network requests
         async function downloadLoadedWalletSvgsFromDom() {
             const targetAddr = activeFilteredAddress || connectedWallet;
