@@ -77,7 +77,7 @@
 
         #statsCanvas {
             max-width: 100%;
-            max-height: 70vh;
+            max-height: 72vh;
             display: block;
             object-fit: contain;
         }
@@ -99,9 +99,9 @@
                 </a>
                 <div>
                     <h1 class="text-lg font-black tracking-tight text-white flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line text-yellow-400"></i> Daily Dropchan Market Report Studio
+                        <i class="fa-solid fa-chart-line text-yellow-400"></i> Daily Dropchan Market Report Studio <span class="px-2.5 py-0.5 text-[9px] bg-gradient-to-r from-cyan-400 to-pink-500 rounded-full font-black tracking-widest uppercase text-white shadow-lg">CHARTS PRO</span>
                     </h1>
-                    <p class="text-[11px] text-purple-300/70">Generate daily market graphics & copyable tweet text for @dropchans</p>
+                    <p class="text-[11px] text-purple-300/70">Generate daily market graphics with 7-day trend charts & copyable tweet text</p>
                 </div>
             </div>
 
@@ -123,7 +123,7 @@
         <div class="space-y-3 mb-8">
             <div class="flex items-center justify-between px-1">
                 <div class="flex items-center gap-2 text-xs font-bold text-purple-200">
-                    <i class="fa-solid fa-image text-kawaii-accentPink"></i> Live Daily Graphic Preview
+                    <i class="fa-solid fa-image text-kawaii-accentPink"></i> Live Daily Graphic Preview (With Neon Charts)
                 </div>
                 <div id="canvasResBadge" class="text-xs font-mono text-cyan-300 font-bold bg-purple-950/80 px-3 py-1 rounded-full border border-purple-700/50">
                     1200 × 675 px (16:9 Landscape)
@@ -141,15 +141,12 @@
             <!-- Left 2 Cols: Stats Form & Visual Controls -->
             <div class="lg:col-span-2 space-y-6">
 
-                <!-- 1. Daily Market Metrics Data Input -->
+                <!-- 1. Daily Market Metrics Input -->
                 <div class="glass-panel p-5 rounded-2xl space-y-4">
                     <div class="flex items-center justify-between">
                         <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
                             <i class="fa-solid fa-calculator text-yellow-400"></i> 1. Today's Market Metrics
                         </h3>
-                        <button onclick="fetchAutoStats()" class="text-[11px] font-bold text-cyan-300 bg-purple-900/60 hover:bg-purple-800 border border-purple-700/40 px-3 py-1 rounded-lg transition-all">
-                            <i class="fa-solid fa-rotate-right mr-1"></i> Auto-Fetch XRPData
-                        </button>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -180,10 +177,44 @@
                     </div>
                 </div>
 
-                <!-- 2. Floor Highlight Dropchans (Select 3 NFTs) -->
+                <!-- 2. 7-Day Chart Data Controls (NEW!) -->
+                <div class="glass-panel p-5 rounded-2xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-area text-cyan-400"></i> 2. 7-Day Trend Chart Settings
+                        </h3>
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-cyan-300">
+                            <input type="checkbox" id="chkShowChart" onchange="updateAll()" checked class="rounded border-purple-800 bg-purple-950 text-kawaii-accentPink focus:ring-0">
+                            <span>Display Chart on Graphic</span>
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-purple-200">Chart Visualization Type</label>
+                            <select id="chartType" onchange="updateAll()" class="w-full bg-purple-950/90 border border-purple-700/50 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                                <option value="line" selected>Neon Line (Floor Price Trend)</option>
+                                <option value="bar">Glowing Bars (24h Volume Spikes)</option>
+                                <option value="combined">Dual Chart (Floor Line + Volume Bars)</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-purple-200">7-Day Floor Trend Data (comma separated)</label>
+                            <input type="text" id="statTrendData" value="18, 19, 21, 20.5, 23, 24.5, 25.0" oninput="updateAll()" class="w-full bg-purple-950/90 border border-purple-700/50 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none">
+                        </div>
+
+                        <div class="sm:col-span-2 space-y-1.5">
+                            <label class="text-xs font-bold text-purple-200">7-Day Sales Volume Data (comma separated)</label>
+                            <input type="text" id="statVolData" value="400, 650, 900, 500, 1100, 1300, 1450" oninput="updateAll()" class="w-full bg-purple-950/90 border border-purple-700/50 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Floor Highlight Dropchans (Select 3 Cards) -->
                 <div class="glass-panel p-5 rounded-2xl space-y-4">
                     <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-trophy text-kawaii-accentPink"></i> 2. Floor Highlight Dropchans (Select 3 Cards)
+                        <i class="fa-solid fa-trophy text-kawaii-accentPink"></i> 3. Floor Highlight Dropchans (Select 3 Cards)
                     </h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -207,10 +238,10 @@
                     </div>
                 </div>
 
-                <!-- 3. Visual Styling & Aspect Ratio -->
+                <!-- 4. Visual Styling & Aspect Ratio -->
                 <div class="glass-panel p-5 rounded-2xl space-y-4">
                     <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-palette text-kawaii-accentAqua"></i> 3. Visual Styling & Theme
+                        <i class="fa-solid fa-palette text-kawaii-accentAqua"></i> 4. Visual Styling & Theme
                     </h3>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -379,7 +410,7 @@
         }
 
         // =========================================================================
-        // DAILY STATS GRAPHIC CANVAS RENDERER
+        // DAILY STATS GRAPHIC CANVAS RENDERER WITH NEON CHARTS
         // =========================================================================
         function renderGraphic() {
             const canvas = document.getElementById('statsCanvas');
@@ -423,44 +454,38 @@
             // 2. Draw Top Header Banner
             ctx.save();
             ctx.fillStyle = '#ffffff'; ctx.shadowColor = 'rgba(0, 0, 0, 0.9)'; ctx.shadowBlur = 18;
-            ctx.font = '900 42px Montserrat, sans-serif'; ctx.textAlign = 'left';
-            ctx.fillText('🌸 DROPCHAN MARKET REPORT', 50, 75);
+            ctx.font = '900 40px Montserrat, sans-serif'; ctx.textAlign = 'left';
+            ctx.fillText('🌸 DROPCHAN MARKET REPORT', 50, 72);
 
-            ctx.fillStyle = '#00e5ff'; ctx.font = '700 20px Inter, sans-serif';
+            ctx.fillStyle = '#00e5ff'; ctx.font = '700 18px Inter, sans-serif';
             const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            ctx.fillText(`Daily Statistics & Floor Highlights • ${todayStr}`, 50, 112);
+            ctx.fillText(`Daily Statistics & 7-Day Market Trend • ${todayStr}`, 50, 108);
             ctx.restore();
 
-            // 3. Draw Stats Cards Row
+            // 3. Draw Stats Metric Boxes
             const floorVal = document.getElementById('statFloorPrice').value + ' XRP';
             const volVal = document.getElementById('statVolume24h').value + ' XRP';
             const tradesVal = document.getElementById('statTrades24h').value + ' Trades';
             const topSaleVal = document.getElementById('statTopSale').value;
 
             const boxW = (W - 130) / 3;
-            drawStatMetricBox(ctx, 50, 145, boxW, 110, '📉 FLOOR PRICE', floorVal, '#00e5ff');
-            drawStatMetricBox(ctx, 50 + boxW + 15, 145, boxW, 110, '🔥 24H VOLUME', volVal, '#ff69b4');
-            drawStatMetricBox(ctx, 50 + (boxW + 15) * 2, 145, boxW, 110, '👑 TOP SALE (24H)', topSaleVal, '#ffd700');
+            drawStatMetricBox(ctx, 50, 135, boxW, 100, '📉 FLOOR PRICE', floorVal, '#00e5ff');
+            drawStatMetricBox(ctx, 50 + boxW + 15, 135, boxW, 100, '🔥 24H VOLUME', volVal, '#ff69b4');
+            drawStatMetricBox(ctx, 50 + (boxW + 15) * 2, 135, boxW, 100, '👑 TOP SALE (24H)', topSaleVal, '#ffd700');
 
-            // 4. Draw Best Value Deal Box
-            const bestDeal = document.getElementById('statBestDeal').value;
-            ctx.save();
-            ctx.fillStyle = 'rgba(24, 14, 46, 0.9)';
-            ctx.beginPath(); ctx.roundRect(50, 275, W - 100, 65, 16); ctx.fill();
-            ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.stroke();
+            // 4. Draw 7-Day Neon Chart Section
+            const showChart = document.getElementById('chkShowChart').checked;
+            let chartOffsetY = 250;
+            if (showChart) {
+                drawCanvasChart(ctx, 50, 250, W - 100, 135);
+                chartOffsetY = 400;
+            }
 
-            ctx.fillStyle = '#ffd700'; ctx.font = '800 14px Inter'; ctx.textAlign = 'left';
-            ctx.fillText('💎 BEST VALUE / DEAL OF THE DAY:', 70, 312);
+            // 5. Draw 3 Floor Dropchan Cards & Highlights
+            ctx.fillStyle = '#ffffff'; ctx.font = '900 22px Montserrat'; ctx.textAlign = 'left';
+            ctx.fillText('🛒 FLOOR HIGHLIGHTS', 50, chartOffsetY + 30);
 
-            ctx.fillStyle = '#ffffff'; ctx.font = '700 16px Inter'; ctx.textAlign = 'left';
-            ctx.fillText(bestDeal, 350, 312);
-            ctx.restore();
-
-            // 5. Draw 3 Floor Dropchan Cards
-            ctx.fillStyle = '#ffffff'; ctx.font = '900 24px Montserrat'; ctx.textAlign = 'left';
-            ctx.fillText('🛒 FLOOR HIGHLIGHTS', 50, 385);
-
-            const cardW = 200; const cardH = 200; const startX = (W - (3 * cardW + 2 * 40)) / 2;
+            const cardW = 180; const cardH = 180; const startX = (W - (3 * cardW + 2 * 35)) / 2;
             const frameStyle = document.getElementById('cardStyle').value;
 
             const cardsData = [
@@ -470,9 +495,93 @@
             ];
 
             cardsData.forEach((c, idx) => {
-                const x = startX + idx * (cardW + 40); const y = 410;
-                drawFloorNFTCard(ctx, x, y, cardW, cardH, c.id, c.price, c.img, frameStyle);
+                const x = startX + idx * (cardW + 35); const y = chartOffsetY + 45;
+                if (y + cardH <= H - 20) drawFloorNFTCard(ctx, x, y, cardW, cardH, c.id, c.price, c.img, frameStyle);
             });
+        }
+
+        // Draw Native Canvas Neon Chart (Line / Bar / Combined)
+        function drawCanvasChart(ctx, x, y, w, h) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(24, 14, 46, 0.9)';
+            ctx.beginPath(); ctx.roundRect(x, y, w, h, 16); ctx.fill();
+            ctx.strokeStyle = 'rgba(0, 229, 255, 0.35)'; ctx.lineWidth = 1; ctx.stroke();
+
+            const chartType = document.getElementById('chartType').value;
+            const trendDataRaw = document.getElementById('statTrendData').value.split(',').map(v => parseFloat(v.trim()) || 0);
+            const volDataRaw = document.getElementById('statVolData').value.split(',').map(v => parseFloat(v.trim()) || 0);
+
+            const days = ['7d ago', '6d ago', '5d ago', '4d ago', '3d ago', 'Yesterday', 'Today'];
+            const padL = 60; const padR = 40; const padT = 30; const padB = 30;
+            const graphW = w - padL - padR; const graphH = h - padT - padB;
+
+            // Draw Gridlines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; ctx.lineWidth = 1;
+            for (let i = 0; i <= 3; i++) {
+                const gy = y + padT + (graphH / 3) * i;
+                ctx.beginPath(); ctx.moveTo(x + padL, gy); ctx.lineTo(x + w - padR, gy); ctx.stroke();
+            }
+
+            // Draw Bar Chart (Volume)
+            if (chartType === 'bar' || chartType === 'combined') {
+                const maxVol = Math.max(...volDataRaw, 100);
+                const barW = graphW / volDataRaw.length * 0.45;
+                volDataRaw.forEach((v, i) => {
+                    const bx = x + padL + (i * (graphW / (volDataRaw.length - 1))) - barW / 2;
+                    const barH = (v / maxVol) * graphH;
+                    const by = y + padT + graphH - barH;
+
+                    const barGrad = ctx.createLinearGradient(bx, by, bx, by + barH);
+                    barGrad.addColorStop(0, 'rgba(255, 105, 180, 0.85)'); barGrad.addColorStop(1, 'rgba(168, 85, 247, 0.2)');
+                    ctx.fillStyle = barGrad; ctx.fillRect(bx, by, barW, barH);
+                    ctx.strokeStyle = '#ff69b4'; ctx.lineWidth = 1; ctx.strokeRect(bx, by, barW, barH);
+                });
+            }
+
+            // Draw Line Chart (Floor Trend)
+            if (chartType === 'line' || chartType === 'combined') {
+                const minF = Math.min(...trendDataRaw);
+                const maxF = Math.max(...trendDataRaw, minF + 1);
+
+                const points = trendDataRaw.map((val, i) => {
+                    const px = x + padL + (i * (graphW / (trendDataRaw.length - 1)));
+                    const py = y + padT + graphH - ((val - minF) / (maxF - minF || 1)) * graphH;
+                    return { x: px, y: py, val: val };
+                });
+
+                // Area Fill under Curve
+                const areaGrad = ctx.createLinearGradient(0, y + padT, 0, y + h - padB);
+                areaGrad.addColorStop(0, 'rgba(0, 229, 255, 0.35)'); areaGrad.addColorStop(1, 'transparent');
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, y + h - padB);
+                points.forEach(p => ctx.lineTo(p.x, p.y));
+                ctx.lineTo(points[points.length - 1].x, y + h - padB);
+                ctx.closePath();
+                ctx.fillStyle = areaGrad; ctx.fill();
+
+                // Smooth Glowing Line
+                ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 3; ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 12;
+                ctx.beginPath();
+                points.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+                ctx.stroke();
+
+                // Glowing Node Points
+                points.forEach((p, i) => {
+                    ctx.fillStyle = '#00e5ff'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 9px Inter'; ctx.textAlign = 'center';
+                    ctx.fillText(`${p.val}`, p.x, p.y - 8);
+                });
+            }
+
+            // X-Axis Day Labels
+            ctx.shadowBlur = 0;
+            days.forEach((day, i) => {
+                const lx = x + padL + (i * (graphW / (days.length - 1)));
+                ctx.fillStyle = '#a855f7'; ctx.font = '700 10px Inter'; ctx.textAlign = 'center';
+                ctx.fillText(day, lx, y + h - 10);
+            });
+
+            ctx.restore();
         }
 
         function drawStatMetricBox(ctx, x, y, w, h, label, val, color) {
@@ -481,11 +590,11 @@
             ctx.beginPath(); ctx.roundRect(x, y, w, h, 16); ctx.fill();
             ctx.strokeStyle = 'rgba(0, 229, 255, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
 
-            ctx.fillStyle = color; ctx.font = '800 13px Inter'; ctx.textAlign = 'center';
-            ctx.fillText(label, x + w / 2, y + 38);
+            ctx.fillStyle = color; ctx.font = '800 12px Inter'; ctx.textAlign = 'center';
+            ctx.fillText(label, x + w / 2, y + 34);
 
-            ctx.fillStyle = '#ffffff'; ctx.font = '900 22px Montserrat'; ctx.textAlign = 'center';
-            ctx.fillText(val, x + w / 2, y + 80);
+            ctx.fillStyle = '#ffffff'; ctx.font = '900 20px Montserrat'; ctx.textAlign = 'center';
+            ctx.fillText(val, x + w / 2, y + 72);
             ctx.restore();
         }
 
@@ -494,7 +603,7 @@
             ctx.shadowColor = 'rgba(0, 0, 0, 0.7)'; ctx.shadowBlur = 18;
 
             ctx.fillStyle = '#180e2e';
-            ctx.beginPath(); ctx.roundRect(x, y, w, h + 45, 16); ctx.fill();
+            ctx.beginPath(); ctx.roundRect(x, y, w, h + 42, 16); ctx.fill();
 
             if (img) {
                 ctx.beginPath(); ctx.roundRect(x, y, w, h, 16); ctx.clip();
@@ -509,12 +618,11 @@
                 ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 4; ctx.stroke();
             }
 
-            // Bottom Label
-            ctx.fillStyle = '#ffffff'; ctx.font = '800 14px Inter'; ctx.textAlign = 'left';
-            ctx.fillText(`Dropchan #${id}`, x + 15, y + h + 28);
+            ctx.fillStyle = '#ffffff'; ctx.font = '800 13px Inter'; ctx.textAlign = 'left';
+            ctx.fillText(`Dropchan #${id}`, x + 12, y + h + 26);
 
-            ctx.fillStyle = '#00e5ff'; ctx.font = '900 15px Montserrat'; ctx.textAlign = 'right';
-            ctx.fillText(price, x + w - 15, y + h + 28);
+            ctx.fillStyle = '#00e5ff'; ctx.font = '900 14px Montserrat'; ctx.textAlign = 'right';
+            ctx.fillText(price, x + w - 12, y + h + 26);
 
             ctx.restore();
         }
