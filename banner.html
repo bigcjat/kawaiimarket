@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropchan Twitter Banner Studio ULTRA v3.0 | Kawaii Marketplace</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        kawaii: {
+                            bg: '#0f081d',
+                            cardBg: '#180e2e',
+                            accentPink: '#ff69b4',
+                            accentPurple: '#a855f7',
+                            accentAqua: '#00e5ff',
+                            accentGold: '#ffd700',
+                            border: '#3b1c6e'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Outfit', 'sans-serif'],
+                        pixel: ['"Press Start 2P"', 'monospace'],
+                        cursive: ['Satisfy', 'cursive'],
+                        display: ['"Fredoka One"', 'cursive'],
+                        retro: ['Bungee', 'cursive'],
+                        arcade: ['Silkscreen', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Outfit:wght@400;600;800&family=Press+Start+2P&family=Satisfy&family=Fredoka+One&family=Montserrat:wght@800;900&family=Bungee&family=Silkscreen:wght@400;700&family=Righteous&family=Monoton&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Dropchan Precompiled Data -->
+    <script src="dropchan_metadata.js"></script>
+    <script src="dropchan_ranks.js"></script>
+
+    <style>
+        body {
+            background-color: #0f081d;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(168, 85, 247, 0.2) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 229, 255, 0.18) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(255, 105, 180, 0.1) 0px, transparent 60%);
+            background-attachment: fixed;
+            color: #f3e8ff;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(24, 14, 46, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(168, 85, 247, 0.35);
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 3 / 1;
+            max-width: 1240px;
+            margin: 0 auto;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 25px 65px rgba(0, 0, 0, 0.75), 0 0 45px rgba(168, 85, 247, 0.3);
+        }
+
+        #bannerCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+        }
+
+        .twitter-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .twitter-avatar-guide {
+            position: absolute;
+            left: 2.5%;
+            bottom: -20%;
+            width: 26.6%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: 4px dashed rgba(255, 255, 255, 0.85);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 0 25px rgba(0,0,0,0.6);
+        }
+
+        .safe-zone-top, .safe-zone-bottom {
+            height: 12%;
+            background: rgba(239, 68, 68, 0.2);
+            border-bottom: 1px dashed rgba(239, 68, 68, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #fca5a5;
+            letter-spacing: 0.05em;
+        }
+
+        .safe-zone-bottom {
+            border-top: 1px dashed rgba(239, 68, 68, 0.6);
+            border-bottom: none;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 8, 29, 0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.5); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 105, 180, 0.7); }
+    </style>
+</head>
+<body class="min-h-screen pb-16">
+
+    <!-- Header -->
+    <header class="border-b border-purple-900/40 glass-panel sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="p-2.5 rounded-xl bg-purple-950/60 border border-purple-800/40 text-purple-300 hover:text-white hover:bg-purple-900/50 transition-all cursor-pointer">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="text-lg font-black tracking-tight text-white flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-yellow-400"></i> Dropchan Banner Studio <span class="px-2.5 py-0.5 text-[9px] bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-400 rounded-full font-black tracking-widest uppercase text-white shadow-lg shadow-purple-500/30">ULTRA v3.0</span>
+                    </h1>
+                    <p class="text-[11px] text-purple-300/70">Craft professional 1500×500 Twitter headers with 12 layouts, VFX overlays & custom gradients</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div id="walletBadge" class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-purple-950/90 border border-purple-700/50 text-xs font-mono font-bold text-purple-200">
+                    <i class="fa-solid fa-wallet text-green-400"></i>
+                    <span id="walletAddressText">Loading...</span>
+                    <span id="nftCountBadge" class="px-2 py-0.5 rounded-full bg-purple-800/80 text-[10px] text-purple-200 font-black">0 NFTs</span>
+                </div>
+
+                <button id="btnExport" onclick="exportBannerPNG()" class="px-4 py-2.5 bg-gradient-to-r from-purple-600 via-pink-500 to-kawaii-accentAqua hover:from-purple-500 hover:to-cyan-400 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-purple-500/25 active:scale-95 transition-all cursor-pointer flex items-center gap-2">
+                    <i class="fa-solid fa-download"></i> Export 1500×500 PNG
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-6">
+
+        <!-- Quick Preset Style Kits -->
+        <div class="glass-panel p-3.5 rounded-2xl mb-6 flex flex-wrap items-center justify-between gap-3 border border-purple-800/40">
+            <div class="flex items-center gap-2 text-xs font-extrabold text-white">
+                <i class="fa-solid fa-bolt text-yellow-400"></i> 1-Click Style Kits:
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="applyStyleKit('cyberpunk')" class="px-3 py-1.5 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-700/50 text-[11px] font-bold text-cyan-300 transition-all">⚡ Cyberpunk Scanlines</button>
+                <button onclick="applyStyleKit('vaporwave')" class="px-3 py-1.5 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-700/50 text-[11px] font-bold text-pink-300 transition-all">🌅 80s Sunset Arcade</button>
+                <button onclick="applyStyleKit('sakura')" class="px-3 py-1.5 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-700/50 text-[11px] font-bold text-rose-300 transition-all">🌸 Magical Kirakira</button>
+                <button onclick="applyStyleKit('gold')" class="px-3 py-1.5 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-700/50 text-[11px] font-bold text-yellow-300 transition-all">👑 Luxe Gold Foil</button>
+                <button onclick="applyStyleKit('mosaic')" class="px-3 py-1.5 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-700/50 text-[11px] font-bold text-purple-200 transition-all">🧱 Endless Wallpaper</button>
+            </div>
+        </div>
+
+        <!-- Canvas Banner Preview -->
+        <div class="space-y-3 mb-8">
+            <div class="flex items-center justify-between px-1">
+                <div class="flex items-center gap-2 text-xs font-bold text-purple-200">
+                    <i class="fa-solid fa-eye text-kawaii-accentAqua"></i> Live 1500×500 Canvas Studio
+                </div>
+                <div class="flex items-center gap-4 text-xs">
+                    <label class="flex items-center gap-2 text-purple-300 cursor-pointer select-none font-semibold">
+                        <input type="checkbox" id="chkTwitterOverlay" onchange="toggleTwitterOverlay()" checked class="rounded border-purple-800 bg-purple-950 text-kawaii-accentPink focus:ring-0">
+                        <span>Twitter Avatar & Safe Zone Guide</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="canvas-container border-2 border-purple-700/50">
+                <canvas id="bannerCanvas" width="1500" height="500"></canvas>
+                
+                <!-- Twitter Guide Overlay -->
+                <div id="twitterOverlay" class="twitter-overlay">
+                    <div class="safe-zone-top">MOBILE CROPPING RISK ZONE (TOP 60PX)</div>
+                    <div class="twitter-avatar-guide">
+                        <i class="fa-brands fa-x-twitter mr-1.5 text-base"></i> Avatar Safe Zone
+                    </div>
+                    <div class="safe-zone-bottom">MOBILE CROPPING RISK ZONE (BOTTOM 60PX)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Left 2 Cols: Layouts, Themes, VFX & Frame Customization -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- 1. Layout Presets (12 Presets) -->
+                <div class="glass-panel p-5 rounded-2xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-table-cells text-kawaii-accentPink"></i> 1. Choose Layout Preset (12 Presets)
+                        </h3>
+                        <span class="text-[10px] text-purple-300/70 font-semibold">Supports 1 to 100+ NFTs</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        <button onclick="selectLayout('bento')" id="preset-bento" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-grip text-kawaii-accentAqua mr-1"></i> Bento Grid</div>
+                            <div class="text-[10px] text-purple-300/70">Balanced rounded 1:1 cards</div>
+                        </button>
+
+                        <button onclick="selectLayout('fan')" id="preset-fan" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-layer-group text-yellow-400 mr-1"></i> 3D Fan Deck</div>
+                            <div class="text-[10px] text-purple-300/70">Angled overlapping cards</div>
+                        </button>
+
+                        <button onclick="selectLayout('mosaic')" id="preset-mosaic" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-border-all text-pink-400 mr-1"></i> Mosaic Wall</div>
+                            <div class="text-[10px] text-purple-300/70">Repeating wallpaper fill</div>
+                        </button>
+
+                        <button onclick="selectLayout('spotlight')" id="preset-spotlight" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-star text-amber-300 mr-1"></i> Hero Spotlight</div>
+                            <div class="text-[10px] text-purple-300/70">Large cards + radial aura</div>
+                        </button>
+
+                        <button onclick="selectLayout('cosmic')" id="preset-cosmic" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-meteor text-indigo-400 mr-1"></i> Cosmic Cluster</div>
+                            <div class="text-[10px] text-purple-300/70">Floating 3D cluster</div>
+                        </button>
+
+                        <button onclick="selectLayout('ribbon')" id="preset-ribbon" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-tape text-emerald-400 mr-1"></i> Angled Ribbon</div>
+                            <div class="text-[10px] text-purple-300/70">15° cascading filmstrip</div>
+                        </button>
+
+                        <button onclick="selectLayout('arc')" id="preset-arc" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-circle-notch text-rose-400 mr-1"></i> Curved Arc</div>
+                            <div class="text-[10px] text-purple-300/70">Sweeping curved carousel</div>
+                        </button>
+
+                        <button onclick="selectLayout('honeycomb')" id="preset-honeycomb" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-cubes text-cyan-300 mr-1"></i> Honeycomb</div>
+                            <div class="text-[10px] text-purple-300/70">Offset hexagon tiles</div>
+                        </button>
+
+                        <button onclick="selectLayout('diamond')" id="preset-diamond" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-diamond text-purple-300 mr-1"></i> Diamond Rhombus</div>
+                            <div class="text-[10px] text-purple-300/70">45° rotated diamond cards</div>
+                        </button>
+
+                        <button onclick="selectLayout('wave')" id="preset-wave" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-water text-blue-400 mr-1"></i> Wave Cascade</div>
+                            <div class="text-[10px] text-purple-300/70">Sine-wave dipping deck</div>
+                        </button>
+
+                        <button onclick="selectLayout('scatter')" id="preset-scatter" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-shuffle text-pink-300 mr-1"></i> Scatter Collage</div>
+                            <div class="text-[10px] text-purple-300/70">Dynamic floating scatter</div>
+                        </button>
+
+                        <button onclick="selectLayout('dualrow')" id="preset-dualrow" class="preset-btn p-3 rounded-xl border border-purple-700/50 bg-purple-950/50 hover:bg-purple-900/50 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-white mb-1"><i class="fa-solid fa-align-justify text-amber-400 mr-1"></i> Dual-Row Split</div>
+                            <div class="text-[10px] text-purple-300/70">Top/bottom tracks + text gap</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Background Themes & Custom Gradient Picker (12 Themes) -->
+                <div class="glass-panel p-5 rounded-2xl space-y-5">
+                    <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-palette text-kawaii-accentAqua"></i> 2. Background Themes & Custom Dual-Color Picker
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <!-- Theme Selector -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-purple-200">Theme Preset</label>
+                            <select id="bgTheme" onchange="toggleCustomColorPicker(); renderBanner();" class="w-full bg-purple-950/90 border border-purple-700/50 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-accentPink">
+                                <option value="cyberpunk">Cyberpunk Neon Grid</option>
+                                <option value="vaporwave">Vaporwave 80s Sunset</option>
+                                <option value="pastel">Kawaii Soft Pastel</option>
+                                <option value="galaxy">Deep Space Galaxy & Stars</option>
+                                <option value="warpstars">Hyperdrive Warp Stars</option>
+                                <option value="sakura">Cherry Blossom Pink Glow</option>
+                                <option value="tokyorain">Tokyo Cyber-Rain Night</option>
+                                <option value="iridescent">Holographic Iridescent</option>
+                                <option value="heartgrid">Kawaii Heart Grid</option>
+                                <option value="darkpurple" selected>Midnight Purple (Classic)</option>
+                                <option value="nftblur">NFT Art Soft Cover Blur</option>
+                                <option value="custom">🎨 Custom Dual-Color Gradient / Solid</option>
+                            </select>
+                        </div>
+
+                        <!-- Gradient Direction -->
+                        <div id="gradDirContainer" class="space-y-1.5">
+                            <label class="text-xs font-bold text-purple-200">Gradient Flow Direction</label>
+                            <select id="bgGradDir" onchange="renderBanner()" class="w-full bg-purple-950/90 border border-purple-700/50 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                                <option value="horizontal">Horizontal (Left → Right)</option>
+                                <option value="vertical">Vertical (Top → Bottom)</option>
+                                <option value="diagonal1" selected>Diagonal (Top-Left → Bottom-Right)</option>
+                                <option value="diagonal2">Diagonal (Bottom-Left → Top-Right)</option>
+                                <option value="radial">Radial Burst (Center Outward)</option>
+                            </select>
+                        </div>
+
+                        <!-- Angle Rotation Slider -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-bold text-purple-200">
+                                <span>Gradient Angle</span>
+                                <span id="valGradAngle">45°</span>
+                            </div>
+                            <input type="range" id="sliderGradAngle" min="0" max="360" step="15" value="45" oninput="document.getElementById('valGradAngle').innerText = this.value + '°'; renderBanner();" class="w-full accent-kawaii-accentAqua">
+                        </div>
+                    </div>
+
+                    <!-- Custom Dual Color Pickers (Visible when Theme = Custom) -->
+                    <div id="customColorPickerRow" class="hidden p-3.5 rounded-xl bg-purple-950/60 border border-purple-700/40 grid grid-cols-2 gap-4">
+                        <div class="flex items-center gap-3">
+                            <input type="color" id="bgGradColor1" value="#ff69b4" oninput="renderBanner()" class="w-9 h-9 rounded-lg border-0 cursor-pointer bg-transparent">
+                            <div>
+                                <label class="text-xs font-bold text-white block">Primary Gradient Color</label>
+                                <span class="text-[10px] text-purple-300/70">Start color</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <input type="color" id="bgGradColor2" value="#3b0764" oninput="renderBanner()" class="w-9 h-9 rounded-lg border-0 cursor-pointer bg-transparent">
+                            <div>
+                                <label class="text-xs font-bold text-white block">Secondary Gradient Color</label>
+                                <span class="text-[10px] text-purple-300/70">End color</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. VFX Overlays & Special Effects (NEW!) -->
+                <div class="glass-panel p-5 rounded-2xl space-y-5">
+                    <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-sparkles text-cyan-400"></i> 3. Canvas VFX Overlays & Atmospheric Effects
+                    </h3>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-bold text-purple-200">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="vfxScanlines" onchange="renderBanner()" class="rounded border-purple-800 bg-purple-950 text-kawaii-accentPink focus:ring-0">
+                            <span>Cyber Scanlines</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="vfxSparkles" onchange="renderBanner()" class="rounded border-purple-800 bg-purple-950 text-kawaii-accentPink focus:ring-0">
+                            <span>Kirakira Sparkles</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="vfxVignette" onchange="renderBanner()" checked class="rounded border-purple-800 bg-purple-950 text-kawaii-accentPink focus:ring-0">
+                            <span>Cinematic Vignette</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 4. Frame Styles & Card Sliders (12 Styles) -->
+                <div class="glass-panel p-5 rounded-2xl space-y-5">
+                    <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-crop-simple text-yellow-400"></i> 4. Frame Styles & Card Tuning (12 Styles)
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Frame Style Selector -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-purple-200">Card Frame Style</label>
+                            <select id="cardStyle" onchange="renderBanner()" class="w-full bg-purple-950/90 border border-purple-700/50 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                                <option value="rounded" selected>Glassmorphism Rounded</option>
+                                <option value="glowing">Neon Aqua Glow Border</option>
+                                <option value="pinkglow">Neon Pink Glow Border</option>
+                                <option value="goldluxe">Gold Luxe Foil Frame</option>
+                                <option value="sticker">Vinyl Sticker Outline</option>
+                                <option value="rainbow">Holographic Rainbow Border</option>
+                                <option value="cybercrt">Cyber CRT Twin Glow</option>
+                                <option value="diamondbevel">Diamond Crystal Bevel</option>
+                                <option value="pixel">8-Bit Cyber Pixel Frame</option>
+                                <option value="polaroid">Polaroid Photo Frame</option>
+                                <option value="hairline">Minimalist Hairline Outline</option>
+                                <option value="borderless">Borderless Clean</option>
+                            </select>
+                        </div>
+
+                        <!-- Frame Border Thickness Slider -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-bold text-purple-200">
+                                <span>Border Thickness</span>
+                                <span id="valBorderWidth">3px</span>
+                            </div>
+                            <input type="range" id="sliderBorderWidth" min="1" max="10" step="1" value="3" oninput="document.getElementById('valBorderWidth').innerText = this.value + 'px'; renderBanner();" class="w-full accent-kawaii-accentPink">
+                        </div>
+
+                        <!-- Card Scale Slider -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-bold text-purple-200">
+                                <span>Card Size Scale</span>
+                                <span id="valCardScale">1.0x</span>
+                            </div>
+                            <input type="range" id="sliderCardScale" min="0.4" max="2.0" step="0.05" value="1.0" oninput="document.getElementById('valCardScale').innerText = this.value + 'x'; renderBanner();" class="w-full accent-kawaii-accentPink">
+                        </div>
+
+                        <!-- Card Gap Slider -->
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-bold text-purple-200">
+                                <span>Card Spacing Gap</span>
+                                <span id="valCardGap">16px</span>
+                            </div>
+                            <input type="range" id="sliderCardGap" min="0" max="50" step="2" value="16" oninput="document.getElementById('valCardGap').innerText = this.value + 'px'; renderBanner();" class="w-full accent-kawaii-accentAqua">
+                        </div>
+                    </div>
+
+                    <div class="border-t border-purple-900/40 pt-4 flex flex-wrap gap-6 text-xs text-purple-200 font-bold">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="chkRandomTilt" onchange="renderBanner()" class="rounded border-purple-800 bg-purple-950 text-kawaii-accentPink focus:ring-0">
+                            <span>Random Card Tilt Angles</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="chkShowRankBadge" onchange="renderBanner()" class="rounded border-purple-800 bg-purple-950 text-kawaii-accentPink focus:ring-0">
+                            <span>Show Dropchan Rarity Rank Badges</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 5. Twitter Handle, Subtitle & Typography -->
+                <div class="glass-panel p-5 rounded-2xl space-y-5">
+                    <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-font text-purple-400"></i> 5. Twitter Handle, Subtitle & Typography
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Custom Text Handle -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-purple-200">Main Title / Handle</label>
+                            <input type="text" id="txtTwitterHandle" placeholder="@DropchanCollector" oninput="renderBanner()" class="w-full bg-purple-950/90 border border-purple-700/50 rounded-xl px-3 py-2 text-xs text-white placeholder-purple-500/60 focus:outline-none focus:ring-1 focus:ring-kawaii-accentAqua">
+                        </div>
+
+                        <!-- Subtitle Line -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-purple-200">Subtitle Tagline</label>
+                            <input type="text" id="txtSubtitle" placeholder="XRPL NFT Collector • #Dropchans" oninput="renderBanner()" class="w-full bg-purple-950/90 border border-purple-700/50 rounded-xl px-3 py-2 text-xs text-white placeholder-purple-500/60 focus:outline-none focus:ring-1 focus:ring-kawaii-accentPink">
+                        </div>
+
+                        <!-- Font Family -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-purple-200">Font Style</label>
+                            <select id="txtFont" onchange="renderBanner()" class="w-full bg-purple-950/90 border border-purple-700/50 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                                <option value="Montserrat" selected>Montserrat (Heavy Black)</option>
+                                <option value="Inter">Inter (Clean Modern)</option>
+                                <option value="Outfit">Outfit (Display Bold)</option>
+                                <option value="Fredoka One">Fredoka One (Playful Bubble)</option>
+                                <option value="Bungee">Bungee (Heavy Retro Block)</option>
+                                <option value="Silkscreen">Silkscreen (8-Bit Arcade)</option>
+                                <option value="Righteous">Righteous (Synthwave Display)</option>
+                                <option value="Press Start 2P">Press Start 2P (Pixel 8-Bit)</option>
+                                <option value="Satisfy">Satisfy (Cursive Signature)</option>
+                            </select>
+                        </div>
+
+                        <!-- Position -->
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-bold text-purple-200">Text Position</label>
+                            <select id="txtPos" onchange="renderBanner()" class="w-full bg-purple-950/90 border border-purple-700/50 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
+                                <option value="topright" selected>Top Right</option>
+                                <option value="bottomright">Bottom Right</option>
+                                <option value="topcenter">Center Top</option>
+                                <option value="topleft">Top Left</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Col: NFT Selection & Inventory -->
+            <div class="space-y-6">
+
+                <div class="glass-panel p-5 rounded-2xl space-y-4 sticky top-24">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-images text-yellow-400"></i> Select Dropchans
+                        </h3>
+                        <div class="flex gap-2">
+                            <button onclick="selectAllNFTs(true)" class="text-[10px] font-bold text-purple-300 hover:text-white bg-purple-900/60 px-2.5 py-1 rounded-lg transition-colors">All</button>
+                            <button onclick="selectAllNFTs(false)" class="text-[10px] font-bold text-purple-300 hover:text-white bg-purple-900/60 px-2.5 py-1 rounded-lg transition-colors">None</button>
+                        </div>
+                    </div>
+
+                    <!-- NFT Selection Grid -->
+                    <div id="nftInventoryGrid" class="grid grid-cols-4 gap-2 max-h-[480px] overflow-y-auto pr-1">
+                        <div class="col-span-4 text-center py-8 text-xs text-purple-300/60 animate-pulse">
+                            Querying XRPData for Dropchan inventory...
+                        </div>
+                    </div>
+
+                    <div class="text-[10px] text-purple-300/70 text-center font-semibold pt-1">
+                        <span id="selectedCountText">0 selected</span> for banner rendering
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Main Banner Studio Logic -->
+    <script>
+        const ISSUER = "rDropCHANEgmG7FBz1nzPpG27BGzWjnCnn";
+        const TAXON = 0;
+        const IMAGE_CID = "bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy";
+        const IMAGE_BASE_URL = `https://favicon.bot/ipfs/${IMAGE_CID}/`;
+
+        let targetWallet = null;
+        let ownedDropchans = []; // Array of { id, rank, imageUrl, selected: bool, imgLoaded: bool, imgElement: Image }
+        let currentLayout = 'bento';
+
+        function getDropchanImageUrl(id) {
+            return `${IMAGE_BASE_URL}${id}.svg`;
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            targetWallet = urlParams.get('wallet') || localStorage.getItem('xaman_address');
+
+            if (!targetWallet) {
+                alert("No wallet address provided. Redirecting back to Kawaii Marketplace...");
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.getElementById('walletAddressText').innerText = `${targetWallet.substring(0, 6)}...${targetWallet.substring(targetWallet.length - 4)}`;
+            document.getElementById('walletBadge').classList.remove('hidden');
+
+            await loadWalletDropchans(targetWallet);
+        });
+
+        function hexToString(hex) {
+            if (!hex) return '';
+            let str = '';
+            for (let i = 0; i < hex.length; i += 2) {
+                str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+            }
+            return str;
+        }
+
+        async function loadWalletDropchans(address) {
+            const grid = document.getElementById('nftInventoryGrid');
+            grid.innerHTML = `<div class="col-span-4 text-center py-8 text-xs text-purple-300/60 animate-pulse"><i class="fa-solid fa-spinner fa-spin text-purple-400 mr-2"></i> Querying XRPData for Dropchans...</div>`;
+
+            try {
+                const resp = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/owner/${address}`);
+                const result = await resp.json();
+                const nfts = result.data?.nfts || [];
+
+                const targetNFTs = nfts.filter(nft => nft.Issuer === ISSUER);
+                document.getElementById('nftCountBadge').innerText = `${targetNFTs.length} NFTs`;
+
+                if (targetNFTs.length === 0) {
+                    grid.innerHTML = `<div class="col-span-4 text-center py-6 text-xs text-purple-300/70">No Dropchans found in wallet ${address.substring(0, 6)}...</div>`;
+                    return;
+                }
+
+                ownedDropchans = targetNFTs.map(nft => {
+                    let idInt = 0;
+                    if (nft.URI) {
+                        try {
+                            const decodedUri = hexToString(nft.URI);
+                            const parsed = parseInt(decodedUri.split('/').pop().split('.')[0]);
+                            if (!isNaN(parsed)) idInt = parsed;
+                        } catch (e) {}
+                    }
+                    if (!idInt) {
+                        const hexId = nft.NFTokenID.substring(nft.NFTokenID.length - 8);
+                        idInt = parseInt(hexId, 16);
+                    }
+
+                    const rankData = window.DROPCHAN_RANKS ? window.DROPCHAN_RANKS[idInt.toString()] : null;
+                    const rank = rankData ? (rankData.xrplto_rank || rankData.standard_rank || 9999) : 9999;
+
+                    return {
+                        nftokenId: nft.NFTokenID,
+                        id: idInt,
+                        rank: rank,
+                        imageUrl: getDropchanImageUrl(idInt),
+                        selected: true,
+                        imgLoaded: false,
+                        imgElement: null
+                    };
+                });
+
+                ownedDropchans.sort((a, b) => a.rank - b.rank);
+                renderInventoryGrid();
+                preloadNFTImages();
+
+            } catch (err) {
+                console.error("Failed to load account NFTs:", err);
+                grid.innerHTML = `<div class="col-span-4 text-center py-6 text-xs text-red-400">Failed to connect to XRPData API. Please refresh.</div>`;
+            }
+        }
+
+        async function fetchImageAsDataURI(url) {
+            try {
+                const resp = await fetch(url);
+                if (!resp.ok) return null;
+                const blob = await resp.blob();
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = () => resolve(null);
+                    reader.readAsDataURL(blob);
+                });
+            } catch (err) {
+                return null;
+            }
+        }
+
+        async function preloadNFTImages() {
+            for (const item of ownedDropchans) {
+                let dataUri = await fetchImageAsDataURI(item.imageUrl);
+                if (!dataUri) {
+                    dataUri = await fetchImageAsDataURI(`cache/thumbnails/${ISSUER}/${TAXON}/${item.id}.avif`);
+                }
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = () => {
+                    item.imgLoaded = true;
+                    item.imgElement = img;
+                    renderBanner();
+                };
+                img.onerror = () => {
+                    const fallbackImg = new Image();
+                    fallbackImg.crossOrigin = "anonymous";
+                    fallbackImg.onload = () => {
+                        item.imgLoaded = true;
+                        item.imgElement = fallbackImg;
+                        renderBanner();
+                    };
+                    fallbackImg.src = `cache/thumbnails/${ISSUER}/${TAXON}/${item.id}.avif`;
+                };
+                if (dataUri) {
+                    img.src = dataUri;
+                } else {
+                    img.src = item.imageUrl;
+                }
+            }
+        }
+
+        function renderInventoryGrid() {
+            const grid = document.getElementById('nftInventoryGrid');
+            grid.innerHTML = '';
+
+            let selectedCount = 0;
+            ownedDropchans.forEach((item, index) => {
+                if (item.selected) selectedCount++;
+
+                const card = document.createElement('div');
+                card.className = `relative aspect-square rounded-xl overflow-hidden border cursor-pointer transition-all ${item.selected ? 'border-kawaii-accentPink shadow-md shadow-pink-500/20 ring-2 ring-pink-500/40' : 'border-purple-900/40 opacity-40 hover:opacity-75'}`;
+                card.onclick = () => toggleSelectNFT(index);
+
+                card.innerHTML = `
+                    <img src="${item.imageUrl}" class="w-full h-full object-cover">
+                    <div class="absolute bottom-0 inset-x-0 bg-black/75 px-1 py-0.5 text-[8px] font-mono text-center text-purple-200">
+                        #${item.id}
+                    </div>
+                    ${item.selected ? `<div class="absolute top-1 right-1 w-3.5 h-3.5 bg-kawaii-accentPink text-white text-[8px] rounded-full flex items-center justify-center"><i class="fa-solid fa-check"></i></div>` : ''}
+                `;
+
+                grid.appendChild(card);
+            });
+
+            document.getElementById('selectedCountText').innerText = `${selectedCount} of ${ownedDropchans.length} selected`;
+        }
+
+        function toggleSelectNFT(index) {
+            ownedDropchans[index].selected = !ownedDropchans[index].selected;
+            renderInventoryGrid();
+            renderBanner();
+        }
+
+        function selectAllNFTs(selectState) {
+            ownedDropchans.forEach(item => item.selected = selectState);
+            renderInventoryGrid();
+            renderBanner();
+        }
+
+        function selectLayout(layoutType) {
+            currentLayout = layoutType;
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('border-kawaii-accentPink', 'ring-2', 'ring-pink-500/40', 'bg-purple-900/60');
+            });
+            const activeBtn = document.getElementById(`preset-${layoutType}`);
+            if (activeBtn) {
+                activeBtn.classList.add('border-kawaii-accentPink', 'ring-2', 'ring-pink-500/40', 'bg-purple-900/60');
+            }
+            renderBanner();
+        }
+
+        function toggleCustomColorPicker() {
+            const theme = document.getElementById('bgTheme').value;
+            const customRow = document.getElementById('customColorPickerRow');
+            if (theme === 'custom') {
+                customRow.classList.remove('hidden');
+            } else {
+                customRow.classList.add('hidden');
+            }
+        }
+
+        function toggleTwitterOverlay() {
+            const overlay = document.getElementById('twitterOverlay');
+            const chk = document.getElementById('chkTwitterOverlay');
+            if (chk.checked) overlay.classList.remove('hidden');
+            else overlay.classList.add('hidden');
+        }
+
+        function applyStyleKit(kit) {
+            if (kit === 'cyberpunk') {
+                document.getElementById('bgTheme').value = 'cyberpunk';
+                document.getElementById('cardStyle').value = 'glowing';
+                document.getElementById('vfxScanlines').checked = true;
+                document.getElementById('vfxSparkles').checked = false;
+                selectLayout('bento');
+            } else if (kit === 'vaporwave') {
+                document.getElementById('bgTheme').value = 'vaporwave';
+                document.getElementById('cardStyle').value = 'pixel';
+                document.getElementById('txtFont').value = 'Bungee';
+                document.getElementById('vfxScanlines').checked = true;
+                selectLayout('ribbon');
+            } else if (kit === 'sakura') {
+                document.getElementById('bgTheme').value = 'sakura';
+                document.getElementById('cardStyle').value = 'pinkglow';
+                document.getElementById('vfxSparkles').checked = true;
+                selectLayout('fan');
+            } else if (kit === 'gold') {
+                document.getElementById('bgTheme').value = 'darkpurple';
+                document.getElementById('cardStyle').value = 'goldluxe';
+                document.getElementById('txtFont').value = 'Montserrat';
+                selectLayout('spotlight');
+            } else if (kit === 'mosaic') {
+                document.getElementById('bgTheme').value = 'iridescent';
+                document.getElementById('cardStyle').value = 'rounded';
+                selectLayout('mosaic');
+            }
+            toggleCustomColorPicker();
+            renderBanner();
+        }
+
+        // =========================================================================
+        // CANVAS BANNER RENDER ENGINE ULTRA v3.0 (1500x500 Resolution)
+        // =========================================================================
+        function renderBanner() {
+            const canvas = document.getElementById('bannerCanvas');
+            const ctx = canvas.getContext('2d');
+            const W = 1500;
+            const H = 500;
+
+            ctx.clearRect(0, 0, W, H);
+            const activeItems = ownedDropchans.filter(item => item.selected && item.imgLoaded);
+
+            // 1. Draw Background Theme
+            const bgTheme = document.getElementById('bgTheme').value;
+            drawBackground(ctx, W, H, bgTheme, activeItems);
+
+            // 2. Draw Layout Presets
+            const scale = parseFloat(document.getElementById('sliderCardScale').value);
+            const gap = parseInt(document.getElementById('sliderCardGap').value);
+            const borderWidth = parseInt(document.getElementById('sliderBorderWidth').value);
+            const frameStyle = document.getElementById('cardStyle').value;
+            const randomTilt = document.getElementById('chkRandomTilt').checked;
+            const showRank = document.getElementById('chkShowRankBadge').checked;
+
+            if (activeItems.length > 0) {
+                if (currentLayout === 'bento') drawBentoLayout(ctx, W, H, activeItems, scale, gap, frameStyle, borderWidth, randomTilt, showRank);
+                else if (currentLayout === 'fan') drawFanLayout(ctx, W, H, activeItems, scale, gap, frameStyle, borderWidth, randomTilt, showRank);
+                else if (currentLayout === 'mosaic') drawMosaicLayout(ctx, W, H, activeItems, scale, gap, frameStyle, borderWidth, showRank);
+                else if (currentLayout === 'spotlight') drawSpotlightLayout(ctx, W, H, activeItems, scale, frameStyle, borderWidth, randomTilt, showRank);
+                else if (currentLayout === 'cosmic') drawCosmicLayout(ctx, W, H, activeItems, scale, frameStyle, borderWidth, randomTilt, showRank);
+                else if (currentLayout === 'ribbon') drawRibbonLayout(ctx, W, H, activeItems, scale, gap, frameStyle, borderWidth, showRank);
+                else if (currentLayout === 'arc') drawArcLayout(ctx, W, H, activeItems, scale, gap, frameStyle, borderWidth, showRank);
+                else if (currentLayout === 'honeycomb') drawHoneycombLayout(ctx, W, H, activeItems, scale, gap, frameStyle, borderWidth, showRank);
+                else if (currentLayout === 'diamond') drawDiamondLayout(ctx, W, H, activeItems, scale, gap, frameStyle, borderWidth, showRank);
+                else if (currentLayout === 'wave') drawWaveLayout(ctx, W, H, activeItems, scale, gap, frameStyle, borderWidth, showRank);
+                else if (currentLayout === 'scatter') drawScatterLayout(ctx, W, H, activeItems, scale, frameStyle, borderWidth, showRank);
+                else if (currentLayout === 'dualrow') drawDualRowLayout(ctx, W, H, activeItems, scale, gap, frameStyle, borderWidth, showRank);
+            } else {
+                ctx.fillStyle = '#a855f7'; ctx.font = 'bold 24px Inter'; ctx.textAlign = 'center';
+                ctx.fillText('Select Dropchans on the right to render banner', W / 2, H / 2);
+            }
+
+            // 3. Draw VFX Overlays
+            drawVFXOverlays(ctx, W, H);
+
+            // 4. Draw Custom Text Handle & Subtitle Typography
+            const handleText = document.getElementById('txtTwitterHandle').value.trim();
+            const subtitleText = document.getElementById('txtSubtitle').value.trim();
+
+            if (handleText || subtitleText) {
+                const fontName = document.getElementById('txtFont').value;
+                const pos = document.getElementById('txtPos').value;
+
+                ctx.save();
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+                ctx.shadowBlur = 18;
+
+                let tx = W - 60, ty = 85;
+                if (pos === 'topright') { tx = W - 60; ty = 85; ctx.textAlign = 'right'; }
+                else if (pos === 'bottomright') { tx = W - 60; ty = H - 55; ctx.textAlign = 'right'; }
+                else if (pos === 'topcenter') { tx = W / 2 + 100; ty = 85; ctx.textAlign = 'center'; }
+                else if (pos === 'topleft') { tx = 380; ty = 85; ctx.textAlign = 'left'; }
+
+                if (handleText) {
+                    ctx.font = `900 44px "${fontName}", sans-serif`;
+                    ctx.fillText(handleText, tx, ty);
+                }
+
+                if (subtitleText) {
+                    ctx.fillStyle = '#ff69b4';
+                    ctx.font = `700 20px Inter, sans-serif`;
+                    ctx.fillText(subtitleText, tx, ty + 30);
+                }
+                ctx.restore();
+            }
+        }
+
+        // Draw VFX Overlays (Scanlines, Sparkles, Vignette, Watermark)
+        function drawVFXOverlays(ctx, W, H) {
+            // Cyber Scanlines
+            if (document.getElementById('vfxScanlines').checked) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+                for (let y = 0; y < H; y += 4) {
+                    ctx.fillRect(0, y, W, 2);
+                }
+            }
+
+            // Kirakira Sparkles
+            if (document.getElementById('vfxSparkles').checked) {
+                ctx.fillStyle = '#ffd700';
+                for (let i = 0; i < 30; i++) {
+                    const sx = (i * 137) % W;
+                    const sy = (i * 93) % H;
+                    ctx.globalAlpha = 0.7;
+                    ctx.font = '14px sans-serif';
+                    ctx.fillText('✦', sx, sy);
+                }
+                ctx.globalAlpha = 1.0;
+            }
+
+            // Cinematic Vignette
+            if (document.getElementById('vfxVignette').checked) {
+                const vig = ctx.createRadialGradient(W/2, H/2, W/4, W/2, H/2, W/1.2);
+                vig.addColorStop(0, 'transparent');
+                vig.addColorStop(1, 'rgba(0, 0, 0, 0.65)');
+                ctx.fillStyle = vig;
+                ctx.fillRect(0, 0, W, H);
+            }
+        }
+
+        // Draw Background Themes & Custom Dual Gradients
+        function drawBackground(ctx, W, H, theme, activeItems) {
+            if (theme === 'custom') {
+                const c1 = document.getElementById('bgGradColor1').value;
+                const c2 = document.getElementById('bgGradColor2').value;
+                const dir = document.getElementById('bgGradDir').value;
+                const angleDeg = parseInt(document.getElementById('sliderGradAngle').value);
+
+                let grad;
+                if (dir === 'radial') {
+                    grad = ctx.createRadialGradient(W/2, H/2, 20, W/2, H/2, W/2);
+                } else {
+                    const rad = (angleDeg * Math.PI) / 180;
+                    const x1 = W/2 - Math.cos(rad) * W/2;
+                    const y1 = H/2 - Math.sin(rad) * H/2;
+                    const x2 = W/2 + Math.cos(rad) * W/2;
+                    const y2 = H/2 + Math.sin(rad) * H/2;
+                    grad = ctx.createLinearGradient(x1, y1, x2, y2);
+                }
+
+                grad.addColorStop(0, c1);
+                grad.addColorStop(1, c2);
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, W, H);
+
+            } else if (theme === 'cyberpunk') {
+                const grad = ctx.createLinearGradient(0, 0, W, H);
+                grad.addColorStop(0, '#090514'); grad.addColorStop(0.5, '#1e0836'); grad.addColorStop(1, '#051329');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+                ctx.strokeStyle = 'rgba(0, 229, 255, 0.08)'; ctx.lineWidth = 1;
+                for (let x = 0; x < W; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+                for (let y = 0; y < H; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+            } else if (theme === 'vaporwave') {
+                const grad = ctx.createLinearGradient(0, 0, 0, H);
+                grad.addColorStop(0, '#0f051d'); grad.addColorStop(0.5, '#5b1069'); grad.addColorStop(0.8, '#ff2a85'); grad.addColorStop(1, '#ffb800');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+                const sunGrad = ctx.createLinearGradient(0, 180, 0, 360);
+                sunGrad.addColorStop(0, '#ffee00'); sunGrad.addColorStop(1, '#ff2a85');
+                ctx.fillStyle = sunGrad;
+                ctx.beginPath(); ctx.arc(W / 2, 280, 110, 0, Math.PI * 2); ctx.fill();
+
+            } else if (theme === 'pastel') {
+                const grad = ctx.createLinearGradient(0, 0, W, H);
+                grad.addColorStop(0, '#ff9a9e'); grad.addColorStop(0.5, '#fecfef'); grad.addColorStop(1, '#a1c4fd');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+            } else if (theme === 'galaxy') {
+                ctx.fillStyle = '#05020a'; ctx.fillRect(0, 0, W, H);
+                ctx.fillStyle = '#ffffff';
+                for (let i = 0; i < 180; i++) {
+                    const x = (i * 37) % W; const y = (i * 73) % H; const r = (i % 3) + 1;
+                    ctx.globalAlpha = (i % 5 + 1) / 5;
+                    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.globalAlpha = 1.0;
+
+            } else if (theme === 'warpstars') {
+                ctx.fillStyle = '#020008'; ctx.fillRect(0, 0, W, H);
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.4)'; ctx.lineWidth = 1.5;
+                for (let i = 0; i < 80; i++) {
+                    const x1 = (i * 47) % W; const y1 = (i * 31) % H;
+                    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 + 40, y1 + 15); ctx.stroke();
+                }
+
+            } else if (theme === 'sakura') {
+                const grad = ctx.createLinearGradient(0, 0, W, H);
+                grad.addColorStop(0, '#2d0a1e'); grad.addColorStop(0.6, '#6b1d48'); grad.addColorStop(1, '#ff9ebb');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+            } else if (theme === 'tokyorain') {
+                const grad = ctx.createLinearGradient(0, 0, W, H);
+                grad.addColorStop(0, '#030b14'); grad.addColorStop(0.5, '#082538'); grad.addColorStop(1, '#021019');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+            } else if (theme === 'iridescent') {
+                const grad = ctx.createLinearGradient(0, 0, W, H);
+                grad.addColorStop(0, '#a855f7'); grad.addColorStop(0.35, '#ff69b4'); grad.addColorStop(0.7, '#00e5ff'); grad.addColorStop(1, '#ffd700');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+            } else if (theme === 'heartgrid') {
+                const grad = ctx.createLinearGradient(0, 0, W, H);
+                grad.addColorStop(0, '#1f041b'); grad.addColorStop(1, '#4c0d3f');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+            } else if (theme === 'nftblur' && activeItems.length > 0) {
+                drawCoverImage(ctx, activeItems[0].imgElement, 0, 0, W, H);
+                ctx.fillStyle = 'rgba(15, 8, 29, 0.78)';
+                ctx.fillRect(0, 0, W, H);
+
+            } else {
+                const grad = ctx.createLinearGradient(0, 0, W, H);
+                grad.addColorStop(0, '#0f081d'); grad.addColorStop(1, '#251147');
+                ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+            }
+        }
+
+        function drawCoverImage(ctx, img, x, y, w, h) {
+            const imgAspect = (img.naturalWidth || img.width || 1) / (img.naturalHeight || img.height || 1);
+            const boxAspect = w / h;
+            let sx = 0, sy = 0, sw = img.naturalWidth || img.width, sh = img.naturalHeight || img.height;
+            if (imgAspect > boxAspect) { sw = sh * boxAspect; sx = ((img.naturalWidth || img.width) - sw) / 2; }
+            else { sh = sw / boxAspect; sy = ((img.naturalHeight || img.height) - sh) / 2; }
+            ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+        }
+
+        // Layout 1: Bento Grid
+        function drawBentoLayout(ctx, W, H, items, scale, gap, frameStyle, borderWidth, randomTilt, showRank) {
+            const cardSize = 220 * scale; const startX = 380; const startY = (H - cardSize) / 2;
+            const count = Math.min(items.length, 6);
+            items.slice(0, count).forEach((item, i) => {
+                const x = startX + i * (cardSize + gap); if (x + cardSize > W - 20) return;
+                const angle = randomTilt ? (i % 2 === 0 ? -0.04 : 0.04) : 0;
+                ctx.save(); ctx.translate(x + cardSize/2, startY + cardSize/2); ctx.rotate(angle);
+                drawCardFrame(ctx, -cardSize/2, -cardSize/2, cardSize, cardSize, item, frameStyle, borderWidth, showRank);
+                ctx.restore();
+            });
+        }
+
+        // Layout 2: 3D Fan Deck
+        function drawFanLayout(ctx, W, H, items, scale, gap, frameStyle, borderWidth, randomTilt, showRank) {
+            const cardSize = 210 * scale; const count = Math.min(items.length, 8); const startX = 400;
+            items.slice(0, count).forEach((item, i) => {
+                const x = startX + i * (cardSize * 0.65); const y = (H - cardSize) / 2 + (i % 2 === 0 ? -15 : 15);
+                const angle = (i - count / 2) * 0.06;
+                ctx.save(); ctx.translate(x + cardSize / 2, y + cardSize / 2); ctx.rotate(angle);
+                drawCardFrame(ctx, -cardSize / 2, -cardSize / 2, cardSize, cardSize, item, frameStyle, borderWidth, showRank);
+                ctx.restore();
+            });
+        }
+
+        // Layout 3: Mosaic Wall
+        function drawMosaicLayout(ctx, W, H, items, scale, gap, frameStyle, borderWidth, showRank) {
+            const cardW = Math.max(35, Math.round(120 * scale));
+            const stepX = cardW + gap; const stepY = cardW + gap;
+            const cols = Math.ceil(W / stepX) + 1; const rows = Math.ceil(H / stepY) + 1;
+            let itemIndex = 0;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const x = c * stepX; const y = r * stepY;
+                    const item = items[itemIndex % items.length]; itemIndex++;
+                    drawCardFrame(ctx, x, y, cardW, cardW, item, frameStyle, borderWidth, showRank);
+                }
+            }
+        }
+
+        // Layout 4: Hero Spotlight
+        function drawSpotlightLayout(ctx, W, H, items, scale, frameStyle, borderWidth, randomTilt, showRank) {
+            const count = Math.min(items.length, 3); const cardSize = 320 * scale; const startX = 450;
+            items.slice(0, count).forEach((item, i) => {
+                const x = startX + i * (cardSize + 40); const y = (H - cardSize) / 2;
+                const aura = ctx.createRadialGradient(x + cardSize/2, y + cardSize/2, 10, x + cardSize/2, y + cardSize/2, cardSize);
+                aura.addColorStop(0, 'rgba(255, 105, 180, 0.45)'); aura.addColorStop(1, 'transparent');
+                ctx.fillStyle = aura; ctx.fillRect(x - 60, y - 60, cardSize + 120, cardSize + 120);
+                drawCardFrame(ctx, x, y, cardSize, cardSize, item, frameStyle, borderWidth, showRank);
+            });
+        }
+
+        // Layout 5: Cosmic Cluster
+        function drawCosmicLayout(ctx, W, H, items, scale, frameStyle, borderWidth, randomTilt, showRank) {
+            items.forEach((item, i) => {
+                const size = (120 + (i % 3) * 50) * scale;
+                const x = 380 + (i * 190) % (W - 450); const y = 40 + (i * 110) % (H - size - 40);
+                drawCardFrame(ctx, x, y, size, size, item, frameStyle, borderWidth, showRank);
+            });
+        }
+
+        // Layout 6: Angled Ribbon
+        function drawRibbonLayout(ctx, W, H, items, scale, gap, frameStyle, borderWidth, showRank) {
+            const cardSize = 190 * scale; const count = Math.min(items.length, 10); const startX = 360;
+            ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(-0.08); ctx.translate(-W / 2, -H / 2);
+            items.slice(0, count).forEach((item, i) => {
+                const x = startX + i * (cardSize + gap); const y = (H - cardSize) / 2;
+                drawCardFrame(ctx, x, y, cardSize, cardSize, item, frameStyle, borderWidth, showRank);
+            });
+            ctx.restore();
+        }
+
+        // Layout 7: Curved Arc
+        function drawArcLayout(ctx, W, H, items, scale, gap, frameStyle, borderWidth, showRank) {
+            const cardSize = 200 * scale; const count = Math.min(items.length, 7); const startX = 390;
+            items.slice(0, count).forEach((item, i) => {
+                const progress = i / (count - 1 || 1);
+                const x = startX + i * (cardSize * 0.75); const y = (H - cardSize) / 2 + Math.sin(progress * Math.PI) * -50 + 25;
+                const angle = (progress - 0.5) * 0.3;
+                ctx.save(); ctx.translate(x + cardSize/2, y + cardSize/2); ctx.rotate(angle);
+                drawCardFrame(ctx, -cardSize/2, -cardSize/2, cardSize, cardSize, item, frameStyle, borderWidth, showRank);
+                ctx.restore();
+            });
+        }
+
+        // Layout 8: Honeycomb Offset Grid
+        function drawHoneycombLayout(ctx, W, H, items, scale, gap, frameStyle, borderWidth, showRank) {
+            const cardSize = 160 * scale; const cols = 5; const startX = 380;
+            items.slice(0, 10).forEach((item, i) => {
+                const col = i % cols; const row = Math.floor(i / cols);
+                const offsetX = (row % 2 === 1) ? cardSize / 2 : 0;
+                const x = startX + col * (cardSize + gap) + offsetX; const y = 30 + row * (cardSize * 0.85 + gap);
+                if (x + cardSize <= W) drawCardFrame(ctx, x, y, cardSize, cardSize, item, frameStyle, borderWidth, showRank);
+            });
+        }
+
+        // Layout 9: Diamond Rhombus
+        function drawDiamondLayout(ctx, W, H, items, scale, gap, frameStyle, borderWidth, showRank) {
+            const cardSize = 170 * scale; const count = Math.min(items.length, 6); const startX = 400;
+            items.slice(0, count).forEach((item, i) => {
+                const x = startX + i * (cardSize + gap * 1.5); const y = (H - cardSize) / 2;
+                ctx.save(); ctx.translate(x + cardSize/2, y + cardSize/2); ctx.rotate(Math.PI / 4);
+                drawCardFrame(ctx, -cardSize/2, -cardSize/2, cardSize, cardSize, item, frameStyle, borderWidth, showRank);
+                ctx.restore();
+            });
+        }
+
+        // Layout 10: Wave Cascade
+        function drawWaveLayout(ctx, W, H, items, scale, gap, frameStyle, borderWidth, showRank) {
+            const cardSize = 190 * scale; const count = Math.min(items.length, 8); const startX = 380;
+            items.slice(0, count).forEach((item, i) => {
+                const x = startX + i * (cardSize * 0.8);
+                const y = (H - cardSize) / 2 + Math.sin(i * 0.8) * 45;
+                drawCardFrame(ctx, x, y, cardSize, cardSize, item, frameStyle, borderWidth, showRank);
+            });
+        }
+
+        // Layout 11: Scatter Collage
+        function drawScatterLayout(ctx, W, H, items, scale, frameStyle, borderWidth, showRank) {
+            items.forEach((item, i) => {
+                const size = (140 + (i * 37) % 80) * scale;
+                const x = 380 + (i * 170) % (W - 480);
+                const y = 30 + (i * 90) % (H - size - 30);
+                const angle = ((i % 5) - 2) * 0.12;
+                ctx.save(); ctx.translate(x + size/2, y + size/2); ctx.rotate(angle);
+                drawCardFrame(ctx, -size/2, -size/2, size, size, item, frameStyle, borderWidth, showRank);
+                ctx.restore();
+            });
+        }
+
+        // Layout 12: Dual-Row Split
+        function drawDualRowLayout(ctx, W, H, items, scale, gap, frameStyle, borderWidth, showRank) {
+            const cardSize = 150 * scale; const count = Math.min(items.length, 12); const startX = 380;
+            items.slice(0, count).forEach((item, i) => {
+                const row = i % 2; const col = Math.floor(i / 2);
+                const x = startX + col * (cardSize + gap);
+                const y = row === 0 ? 25 : H - cardSize - 25;
+                if (x + cardSize <= W - 20) drawCardFrame(ctx, x, y, cardSize, cardSize, item, frameStyle, borderWidth, showRank);
+            });
+        }
+
+        // Helper: Draw Individual Card with Frame Styles (12 Styles)
+        function drawCardFrame(ctx, x, y, w, h, item, frameStyle, borderWidth, showRank) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 8;
+
+            if (frameStyle === 'rounded') {
+                ctx.beginPath(); ctx.roundRect(x, y, w, h, 18); ctx.clip();
+                ctx.drawImage(item.imgElement, x, y, w, h);
+                ctx.strokeStyle = 'rgba(168, 85, 247, 0.5)'; ctx.lineWidth = borderWidth; ctx.stroke();
+
+            } else if (frameStyle === 'glowing') {
+                ctx.beginPath(); ctx.roundRect(x, y, w, h, 14); ctx.clip();
+                ctx.drawImage(item.imgElement, x, y, w, h);
+                ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = borderWidth;
+                ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 20; ctx.stroke();
+
+            } else if (frameStyle === 'pinkglow') {
+                ctx.beginPath(); ctx.roundRect(x, y, w, h, 14); ctx.clip();
+                ctx.drawImage(item.imgElement, x, y, w, h);
+                ctx.strokeStyle = '#ff69b4'; ctx.lineWidth = borderWidth;
+                ctx.shadowColor = '#ff69b4'; ctx.shadowBlur = 20; ctx.stroke();
+
+            } else if (frameStyle === 'goldluxe') {
+                ctx.beginPath(); ctx.roundRect(x, y, w, h, 16); ctx.clip();
+                ctx.drawImage(item.imgElement, x, y, w, h);
+                const goldGrad = ctx.createLinearGradient(x, y, x + w, y + h);
+                goldGrad.addColorStop(0, '#ffd700'); goldGrad.addColorStop(0.5, '#fff8dc'); goldGrad.addColorStop(1, '#b8860b');
+                ctx.strokeStyle = goldGrad; ctx.lineWidth = borderWidth + 2; ctx.stroke();
+
+            } else if (frameStyle === 'sticker') {
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.roundRect(x - 8, y - 8, w + 16, h + 16, 20); ctx.fill();
+                ctx.beginPath(); ctx.roundRect(x, y, w, h, 14); ctx.clip();
+                ctx.drawImage(item.imgElement, x, y, w, h);
+
+            } else if (frameStyle === 'rainbow') {
+                ctx.beginPath(); ctx.roundRect(x, y, w, h, 16); ctx.clip();
+                ctx.drawImage(item.imgElement, x, y, w, h);
+                const rbGrad = ctx.createLinearGradient(x, y, x + w, y + h);
+                rbGrad.addColorStop(0, '#ff0000'); rbGrad.addColorStop(0.25, '#ffff00');
+                rbGrad.addColorStop(0.5, '#00ff00'); rbGrad.addColorStop(0.75, '#00e5ff'); rbGrad.addColorStop(1, '#ff00ff');
+                ctx.strokeStyle = rbGrad; ctx.lineWidth = borderWidth + 1; ctx.stroke();
+
+            } else if (frameStyle === 'cybercrt') {
+                ctx.beginPath(); ctx.roundRect(x, y, w, h, 12); ctx.clip();
+                ctx.drawImage(item.imgElement, x, y, w, h);
+                ctx.strokeStyle = '#ff007f'; ctx.lineWidth = borderWidth + 1; ctx.stroke();
+                ctx.strokeStyle = '#00f0ff'; ctx.lineWidth = Math.max(1, borderWidth - 1); ctx.strokeRect(x + 3, y + 3, w - 6, h - 6);
+
+            } else if (frameStyle === 'diamondbevel') {
+                ctx.beginPath(); ctx.roundRect(x, y, w, h, 14); ctx.clip();
+                ctx.drawImage(item.imgElement, x, y, w, h);
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = borderWidth + 2;
+                ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 12; ctx.stroke();
+
+            } else if (frameStyle === 'pixel') {
+                ctx.drawImage(item.imgElement, x, y, w, h);
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = borderWidth + 3; ctx.strokeRect(x, y, w, h);
+
+            } else if (frameStyle === 'polaroid') {
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(x, y, w, h + 38);
+                ctx.drawImage(item.imgElement, x + 10, y + 10, w - 20, w - 20);
+                ctx.fillStyle = '#111111'; ctx.font = 'bold 13px Inter'; ctx.textAlign = 'center';
+                ctx.fillText(`Dropchan #${item.id}`, x + w / 2, y + h + 24);
+
+            } else if (frameStyle === 'hairline') {
+                ctx.drawImage(item.imgElement, x, y, w, h);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)'; ctx.lineWidth = 1; ctx.strokeRect(x, y, w, h);
+
+            } else {
+                ctx.drawImage(item.imgElement, x, y, w, h);
+            }
+
+            if (showRank && item.rank && frameStyle !== 'polaroid') {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                ctx.beginPath(); ctx.roundRect(x + 8, y + 8, 65, 20, 6); ctx.fill();
+                ctx.fillStyle = '#ffd700'; ctx.font = 'bold 10px Inter'; ctx.textAlign = 'center';
+                ctx.fillText(`#Rank ${item.rank}`, x + 40, y + 22);
+            }
+
+            ctx.restore();
+        }
+
+        function exportBannerPNG() {
+            try {
+                const canvas = document.getElementById('bannerCanvas');
+                const link = document.createElement('a');
+                link.download = `dropchan-twitter-banner-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (err) {
+                console.error("Canvas export error:", err);
+                alert("Security Error exporting canvas: " + err.message + "\n\nPlease view this page on http://localhost:5556/banner.html instead of file://");
+            }
+        }
+    </script>
+</body>
+</html>
