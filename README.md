@@ -1,5 +1,7 @@
 # 🌸 KawaiiMarket: Standalone Serverless NFT Explorer & Marketplace
 
+🌐 **Live Demo:** [https://bigcjat.github.io/kawaiimarket/index.html](https://bigcjat.github.io/kawaiimarket/index.html)
+
 > [!NOTE]
 > **Disclaimer:** This marketplace is not meant to be taken seriously, but it does function. It's not intended to compete with others, and I only have part of it live (that's why it only supports 1 collection). Go support @xrpcafe or @biddsonxrpl so they stick around.
 
