@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark notranslate" translate="no">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
     <title>dropchan - Rarity & Price Explorer</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,6 +18,8 @@
     <script src="https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js"></script>
     <!-- Chart.js for Market & Rarity Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- JSZip for client-side SVG zip downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Inter & Quicksand -->
@@ -140,10 +143,14 @@
                         <i class="fa-solid fa-wallet"></i> Connect Xaman
                     </button>
                     <div id="walletDropdown"
-                        class="absolute right-0 mt-2 w-44 bg-kawaii-cardBg border border-purple-800/40 rounded-xl shadow-2xl p-1 hidden z-50 flex flex-col gap-0.5">
+                        class="absolute right-0 mt-2 w-48 bg-kawaii-cardBg border border-purple-800/40 rounded-xl shadow-2xl p-1 hidden z-50 flex flex-col gap-0.5">
                         <button onclick="filterByConnectedWallet()"
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
                             <i class="fa-solid fa-filter text-kawaii-accentAqua"></i> Filter by My Wallet
+                        </button>
+                        <button onclick="downloadWalletSvgs(connectedWallet)"
+                            class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-emerald-300 hover:text-emerald-200 hover:bg-emerald-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
+                            <i class="fa-solid fa-file-arrow-down text-emerald-400"></i> Download My SVGs (.zip)
                         </button>
                         <button onclick="filterByOffersToAccept()"
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
@@ -340,10 +347,16 @@
 
             <!-- Quick Clear Button -->
             <div id="filterStatus"
-                class="hidden flex justify-between items-center text-xs text-kawaii-accentAqua bg-kawaii-accentAqua/10 border border-kawaii-accentAqua/20 px-4 py-2 rounded-xl">
+                class="hidden flex flex-wrap justify-between items-center text-xs text-kawaii-accentAqua bg-kawaii-accentAqua/10 border border-kawaii-accentAqua/20 px-4 py-2 rounded-xl gap-2">
                 <span id="filterLabel">Filtering 71 NFTs owned by active address.</span>
-                <button onclick="clearAllFilters()" data-i18n="clear_filter"
-                    class="font-extrabold hover:text-white transition-colors underline">Clear Filter</button>
+                <div class="flex items-center gap-2">
+                    <button id="btnDownloadWalletSvgs" onclick="downloadWalletSvgs()"
+                        class="px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-[10px] rounded-lg shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-arrow-down text-emerald-200"></i> Download Wallet SVGs (.zip)
+                    </button>
+                    <button onclick="clearAllFilters()" data-i18n="clear_filter"
+                        class="font-extrabold text-purple-300 hover:text-white transition-colors underline text-xs">Clear Filter</button>
+                </div>
             </div>
         </div>
 
@@ -416,7 +429,21 @@
 
         let processedList = [];    // Filtered and sorted ready to display
         let displayedCount = 0;
-        const BATCH_SIZE = 10;
+        const BATCH_SIZE = 15;
+        let isBatchLoading = false;
+
+        // Infinite Scroll Auto-loader
+        window.addEventListener('scroll', () => {
+            if (isBatchLoading) return;
+            if (displayedCount < processedList.length) {
+                const scrollThreshold = document.documentElement.scrollHeight - window.innerHeight - 400;
+                if (window.scrollY >= scrollThreshold) {
+                    isBatchLoading = true;
+                    loadNextBatch();
+                    setTimeout(() => { isBatchLoading = false; }, 150);
+                }
+            }
+        });
 
         // Decodes HEX URIs to ASCII
         function hexToString(hex) {
@@ -428,17 +455,63 @@
         }
 
         function checkDisclaimer() {
-            const acknowledged = localStorage.getItem('rarity_disclaimer_accepted');
-            if (!acknowledged) {
-                const modal = document.getElementById('disclaimerModal');
-                if (modal) modal.classList.remove('hidden');
-            }
+            const modal = document.getElementById('disclaimerModal');
+            if (modal) modal.classList.remove('hidden');
         }
 
         function dismissDisclaimer() {
-            localStorage.setItem('rarity_disclaimer_accepted', 'true');
             const modal = document.getElementById('disclaimerModal');
             if (modal) modal.classList.add('hidden');
+        }
+
+        // Helper to resolve broker fee info for a listed NFT
+        function getBrokerFeeInfo(id) {
+            const price = activeListings[id];
+            if (price === undefined) return null;
+
+            const offerDetail = activeOffersDetails[id];
+            const isBrokered = offerDetail && offerDetail.Destination && offerDetail.Destination !== '';
+
+            if (!isBrokered) {
+                return {
+                    isBrokered: false,
+                    feePct: 0,
+                    feePctStr: '0% FEE',
+                    feeAmountXrp: 0,
+                    brokerName: 'KawaiiMarket (Direct P2P)',
+                    isZeroFee: true
+                };
+            } else {
+                const dest = offerDetail.Destination;
+                let brokerName = 'Broker';
+                let feePct = 1.589;
+                let feePctStr = '+1.589% Fee';
+                let logoSvg = '<svg viewBox="0 0 100 100" class="w-2.5 h-2.5 fill-pink-300 inline-block mr-0.5"><path d="M 22,40 A 28,28 0 0,0 78,40 A 8,8 0 0,0 62,40 A 12,12 0 0,1 38,40 A 8,8 0 0,0 22,40 Z" /></svg>';
+
+                if (dest === 'rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC') {
+                    brokerName = 'xrp.cafe';
+                    feePct = 1.589;
+                    feePctStr = '+1.589% Fee';
+                    logoSvg = '<svg viewBox="0 0 100 100" class="w-2.5 h-2.5 fill-pink-300 inline-block mr-0.5"><path d="M 22,40 A 28,28 0 0,0 78,40 A 8,8 0 0,0 62,40 A 12,12 0 0,1 38,40 A 8,8 0 0,0 22,40 Z" /></svg>';
+                } else if (dest === 'rpZqTPC8GvrSvEfFsUuHkmPCg29GdQuXhC') {
+                    brokerName = 'Bidds';
+                    feePct = 1.5;
+                    feePctStr = '+1.5% Fee';
+                    logoSvg = '<svg viewBox="0 0 50 40" class="w-2.5 h-2.5 fill-purple-300 inline-block mr-0.5"><path d="M43.2557 16.4929H39.8786V6.45244C39.8786 2.8945 36.9929 0 33.4457 0H6.43286C2.88571 0 0 2.8945 0 6.45244V33.549C0 37.1069 2.88571 40.0014 6.43286 40.0014H43.2571C46.8043 40.0014 49.69 37.1069 49.69 33.549V22.9468C49.69 19.3889 46.8043 16.4944 43.2571 16.4944L43.2557 16.4929ZM35.5929 33.1664C35.5929 34.5664 34.4614 35.7012 33.0657 35.7012C31.67 35.7012 30.5386 34.5664 30.5386 33.1664V22.9454C30.5386 21.756 31.5 20.7917 32.6857 20.7917H35.5929V33.1664ZM35.5929 16.4929H32.6857C29.1386 16.4929 26.2529 19.3874 26.2529 22.9454V33.5476C26.2529 34.3027 26.3843 35.0263 26.6229 35.7012H6.43286C5.24857 35.7012 4.28571 34.7354 4.28571 33.5476V6.45244C4.28571 5.26455 5.24857 4.29876 6.43286 4.29876H33.4471C34.6314 4.29876 35.5943 5.26455 35.5943 6.45244V16.4929H35.5929ZM45.4029 33.5476C45.4029 34.7354 44.44 35.7012 43.2557 35.7012H39.5086C39.7471 35.0278 39.8786 34.3027 39.8786 33.5476V20.7917H43.2557C44.44 20.7917 45.4029 21.7575 45.4029 22.9454V33.5476Z" /></svg>';
+                }
+
+                const feeAmountXrp = price * (feePct / 100);
+
+                return {
+                    isBrokered: true,
+                    feePct: feePct,
+                    feePctStr: feePctStr,
+                    feeAmountXrp: feeAmountXrp,
+                    brokerName: brokerName,
+                    iconHtml: logoSvg,
+                    isZeroFee: false
+                };
+            }
         }
 
         // Initialize App
@@ -660,27 +733,21 @@
             if (ctxTier) {
                 if (tierSupplyChartInstance) tierSupplyChartInstance.destroy();
                 tierSupplyChartInstance = new Chart(ctxTier, {
-                    type: 'bar',
+                    type: 'doughnut',
                     data: {
                         labels: ['⭐ Legendary (1-100)', '💎 Mythic (101-500)', '🔮 Rare (501-1500)', '🌸 Common (1501+)'],
                         datasets: [{
-                            label: 'Collection Supply',
                             data: [100, 400, 1000, 8500],
-                            backgroundColor: 'rgba(139, 92, 246, 0.5)',
-                            borderColor: 'rgba(167, 139, 250, 0.9)',
-                            borderWidth: 1.5,
-                            borderRadius: 6
+                            backgroundColor: ['#eab308', '#a855f7', '#3b82f6', '#ec4899'],
+                            borderColor: '#111322',
+                            borderWidth: 2
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { labels: { color: '#e9d5ff', font: { size: 10 } } }
-                        },
-                        scales: {
-                            x: { ticks: { color: '#c084fc', font: { size: 9 } }, grid: { color: 'rgba(109, 40, 217, 0.1)' } },
-                            y: { ticks: { color: '#c084fc', font: { size: 9 } }, grid: { color: 'rgba(109, 40, 217, 0.1)' } }
+                            legend: { position: 'right', labels: { color: '#e9d5ff', font: { size: 10 } } }
                         }
                     }
                 });
@@ -694,21 +761,27 @@
 
                 if (marketDepthChartInstance) marketDepthChartInstance.destroy();
                 marketDepthChartInstance = new Chart(ctxDepth, {
-                    type: 'doughnut',
+                    type: 'bar',
                     data: {
-                        labels: ['XRP Cafe Listings', 'Direct Open Market', 'Active Buy Bids'],
+                        labels: ['XRP Cafe Listings', 'Direct Open Market (0% Fee)', 'Active Buy Bids'],
                         datasets: [{
+                            label: 'Count',
                             data: [cafeListings, openMarket, buyOffers],
-                            backgroundColor: ['#8b5cf6', '#06b6d4', '#ec4899'],
-                            borderColor: '#111322',
-                            borderWidth: 2
+                            backgroundColor: ['rgba(139, 92, 246, 0.6)', 'rgba(16, 185, 129, 0.7)', 'rgba(236, 72, 153, 0.6)'],
+                            borderColor: ['#a78bfa', '#34d399', '#f472b6'],
+                            borderWidth: 1.5,
+                            borderRadius: 6
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
-                            legend: { position: 'right', labels: { color: '#e9d5ff', font: { size: 10 } } }
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#c084fc', font: { size: 9 } }, grid: { color: 'rgba(109, 40, 217, 0.1)' } },
+                            y: { ticks: { color: '#c084fc', font: { size: 9 } }, grid: { color: 'rgba(109, 40, 217, 0.1)' } }
                         }
                     }
                 });
@@ -969,6 +1042,38 @@
                 priceClass = 'text-green-400';
             }
 
+            // Broker fee resolution for listed NFTs
+            const feeInfo = getBrokerFeeInfo(item.id);
+            let imageOverlayBadge = '';
+            let priceFeeTag = '';
+
+            if (feeInfo) {
+                if (feeInfo.isZeroFee) {
+                    imageOverlayBadge = `
+                        <div class="absolute top-2 right-2 z-10">
+                            <span class="inline-flex items-center gap-1 text-[9px] font-black px-2.5 py-0.5 rounded-full bg-slate-950/90 text-emerald-300 border-2 border-emerald-400 shadow-xl shadow-black/80 backdrop-blur-md tracking-wider uppercase animate-pulse" title="Direct P2P listing with 0% KawaiiMarket broker fee!">
+                                <i class="fa-solid fa-bolt text-[8px] text-emerald-400 drop-shadow-[0_0_3px_rgba(52,211,153,0.8)]"></i>
+                                <span class="drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">0% FEE</span>
+                            </span>
+                        </div>
+                    `;
+                    priceFeeTag = `
+                        <span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-slate-950/90 text-emerald-300 border border-emerald-400/80 shadow-sm tracking-wider">0% FEE</span>
+                    `;
+                } else {
+                    imageOverlayBadge = `
+                        <div class="absolute top-2 right-2 z-10">
+                            <span class="inline-flex items-center gap-1 text-[8px] font-bold px-2 py-0.5 rounded-full bg-purple-950/90 text-purple-200 border border-purple-800/60 shadow-md backdrop-blur-md tracking-tight" title="${feeInfo.brokerName} Fee: ${feeInfo.feePctStr} (~${feeInfo.feeAmountXrp.toFixed(3)} XRP)">
+                                ${feeInfo.iconHtml} ${feeInfo.feePctStr}
+                            </span>
+                        </div>
+                    `;
+                    priceFeeTag = `
+                        <span class="text-[8px] font-bold px-1.5 py-0.2 rounded bg-purple-950/50 text-purple-300 border border-purple-800/40 tracking-tight" title="+${feeInfo.feeAmountXrp.toFixed(3)} XRP ${feeInfo.brokerName} fee">+${feeInfo.feePct}%</span>
+                    `;
+                }
+            }
+
             // Format score output
             let scoreStr = score.toFixed(1);
             if (model === 'statistical') {
@@ -1033,6 +1138,7 @@
             card.innerHTML = `
                 <!-- Image Container -->
                 <div class="w-full aspect-square rounded-xl bg-purple-950/20 overflow-hidden relative border border-purple-900/30 flex items-center justify-center" id="img-container-${item.id}">
+                    ${imageOverlayBadge}
                 </div>
                 
                 <!-- Info -->
@@ -1063,7 +1169,10 @@
 
                 <!-- Price Indicator -->
                 <div class="flex justify-between items-center border-t border-purple-900/20 pt-2.5 mt-auto">
-                    <span class="text-[9px] text-purple-400 uppercase tracking-wide font-bold">${priceLabel}</span>
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="text-[9px] text-purple-400 uppercase tracking-wide font-bold">${priceLabel}</span>
+                        ${priceFeeTag}
+                    </div>
                     <span class="text-xs font-black ${priceClass}">
                         ${priceVal}
                     </span>
@@ -1185,6 +1294,16 @@
             const price = deal.price;
             const rank = deal.rank;
 
+            const feeInfo = getBrokerFeeInfo(item.id);
+            let dealFeeBadgeHtml = '';
+            if (feeInfo) {
+                if (feeInfo.isZeroFee) {
+                    dealFeeBadgeHtml = `<span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-slate-950/90 text-emerald-300 border border-emerald-400/80 tracking-wider flex items-center gap-1"><i class="fa-solid fa-bolt text-[7px] text-emerald-400"></i> 0% FEE</span>`;
+                } else {
+                    dealFeeBadgeHtml = `<span class="text-[8px] font-bold px-1.5 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-800/60 tracking-tight">${feeInfo.iconHtml} ${feeInfo.feePctStr}</span>`;
+                }
+            }
+
             // Generate image element with sequential fallback rotation
             const img = document.createElement('img');
             img.className = "w-full h-full object-cover";
@@ -1211,7 +1330,7 @@
             container.innerHTML = `
                 <div onclick="openDetailsModal(${item.id})" class="flex items-center gap-3 p-3 bg-purple-950/20 hover:bg-purple-950/40 border border-purple-800/20 hover:border-purple-600/30 rounded-2xl cursor-pointer transition-all active:scale-98 select-none">
                     <!-- Image -->
-                    <div id="deal-img-container-${item.id}" class="w-14 h-14 rounded-xl bg-purple-900/10 border border-purple-800/10 overflow-hidden flex items-center justify-center flex-shrink-0">
+                    <div id="deal-img-container-${item.id}" class="w-14 h-14 rounded-xl bg-purple-900/10 border border-purple-800/10 overflow-hidden flex items-center justify-center flex-shrink-0 relative">
                     </div>
                     <!-- Info -->
                     <div class="flex-grow min-w-0">
@@ -1222,6 +1341,7 @@
                         <h4 class="font-bold text-xs text-white truncate">${item.name}</h4>
                         <div class="flex items-center gap-2 mt-0.5 text-[10px]">
                             <span class="font-black text-kawaii-accentAqua">${price.toLocaleString()} XRP</span>
+                            ${dealFeeBadgeHtml}
                             <span class="text-purple-300 font-bold">${currentLang === 'ja' ? '順位' : (currentLang === 'ko' ? '순위' : 'Rank')} #${rank.toLocaleString()}</span>
                         </div>
                     </div>
@@ -3312,6 +3432,108 @@
             }
         }
 
+        // Batch download all owned SVGs in target wallet as a ZIP archive
+        async function downloadWalletSvgs(walletAddr) {
+            const searchInput = document.getElementById('searchWalletInput')?.value?.trim();
+            const targetAddr = walletAddr || activeWalletFilter || searchInput || connectedWallet;
+            if (!targetAddr) {
+                showToast("Please filter by a wallet or connect Xaman first.", "error");
+                return;
+            }
+
+            // Collect all matching token IDs owned by targetAddr
+            const ownedItems = allItemsData.filter(item => {
+                const owner = mintedOwners[item.id];
+                return owner && owner.toLowerCase() === targetAddr.toLowerCase();
+            });
+
+            if (ownedItems.length === 0) {
+                showToast("No Dropchans found for this wallet address.", "error");
+                return;
+            }
+
+            if (typeof JSZip === 'undefined') {
+                showToast("ZIP library is loading, please try again in a moment.", "error");
+                return;
+            }
+
+            const modal = document.getElementById('downloadProgressModal');
+            const pBar = document.getElementById('downloadProgressBar');
+            const pText = document.getElementById('downloadProgressText');
+            const pSub = document.getElementById('downloadProgressSubtitle');
+
+            if (modal) modal.classList.remove('hidden');
+            if (pBar) pBar.style.width = '0%';
+            if (pText) pText.innerText = `0 / ${ownedItems.length}`;
+            if (pSub) pSub.innerText = `Downloading ${ownedItems.length} Dropchan SVGs...`;
+
+            const zip = new JSZip();
+            const folderName = `dropchans_${targetAddr.substring(0, 6)}_${targetAddr.substring(targetAddr.length - 4)}`;
+            const folder = zip.folder(folderName);
+
+            let successCount = 0;
+
+            for (let i = 0; i < ownedItems.length; i++) {
+                const item = ownedItems[i];
+                const id = item.id;
+                const pct = Math.round(((i + 1) / ownedItems.length) * 85);
+                if (pBar) pBar.style.width = `${pct}%`;
+                if (pText) pText.innerText = `${i + 1} / ${ownedItems.length}`;
+                if (pSub) pSub.innerText = `Fetching SVG #${id} (${item.name})...`;
+
+                const svgText = await fetchSvgFileContent(id);
+                if (svgText) {
+                    const filename = `dropchan_${String(id).padStart(4, '0')}.svg`;
+                    folder.file(filename, svgText);
+                    successCount++;
+                }
+            }
+
+            if (successCount === 0) {
+                if (modal) modal.classList.add('hidden');
+                showToast("Failed to fetch SVG files from storage.", "error");
+                return;
+            }
+
+            if (pSub) pSub.innerText = "Building ZIP archive...";
+            if (pBar) pBar.style.width = '95%';
+
+            const blob = await zip.generateAsync({ type: "blob" });
+            if (pBar) pBar.style.width = '100%';
+            if (pSub) pSub.innerText = "Download Ready!";
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${folderName}.zip`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => {
+                if (modal) modal.classList.add('hidden');
+                showToast(`Downloaded ${successCount} Dropchan SVGs as ZIP!`, "success");
+            }, 600);
+        }
+
+        async function fetchSvgFileContent(id) {
+            const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
+            const primaryUrl = IMAGE_BASE_URL.startsWith('http') ? `${cleanBase}${id}.svg` : `${cleanBase}${ISSUER}/${TAXON}/${id}.svg`;
+
+            try {
+                const res = await fetch(primaryUrl);
+                if (res.ok) return await res.text();
+            } catch (e) {}
+
+            for (let i = 0; i < IPFS_GATEWAYS.length; i++) {
+                try {
+                    const url = `${IPFS_GATEWAYS[i]}${IMAGE_CID}/${id}.svg`;
+                    const res = await fetch(url);
+                    if (res.ok) return await res.text();
+                } catch (e) {}
+            }
+            return null;
+        }
+
         // Custom Premium Toast
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
@@ -3336,9 +3558,27 @@
         }
     </script>
 
+    <!-- Download Progress Modal -->
+    <div id="downloadProgressModal" translate="no"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md hidden px-4 select-none notranslate">
+        <div class="glass-panel max-w-sm w-full rounded-3xl p-6 flex flex-col items-center text-center gap-4 shadow-2xl border border-emerald-500/40">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 text-2xl shadow-lg animate-bounce">
+                <i class="fa-solid fa-file-arrow-down"></i>
+            </div>
+            <div>
+                <h3 class="font-black text-lg text-white">Packaging SVGs</h3>
+                <p id="downloadProgressSubtitle" class="text-xs text-purple-300 mt-1">Downloading SVGs for ZIP package...</p>
+            </div>
+            <div class="w-full bg-purple-950/60 rounded-full h-3 border border-purple-800/40 overflow-hidden p-0.5 relative">
+                <div id="downloadProgressBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-200 w-0"></div>
+            </div>
+            <span id="downloadProgressText" class="font-mono text-xs font-bold text-emerald-300">0 / 0</span>
+        </div>
+    </div>
+
     <!-- Disclaimer Modal -->
-    <div id="disclaimerModal"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden px-4 select-none">
+    <div id="disclaimerModal" translate="no"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden px-4 select-none notranslate">
         <div
             class="glass-panel max-w-md w-full rounded-3xl p-6 flex flex-col gap-4 shadow-2xl border border-purple-500/30">
             <div class="flex items-center gap-3 text-kawaii-accentPink">
