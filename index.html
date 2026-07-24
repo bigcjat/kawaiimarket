@@ -144,20 +144,20 @@
                     </button>
                     <div id="walletDropdown"
                         class="absolute right-0 mt-2 w-48 bg-kawaii-cardBg border border-purple-800/40 rounded-xl shadow-2xl p-1 hidden z-50 flex flex-col gap-0.5">
-                        <button onclick="filterByConnectedWallet()"
+                        <button id="btnFilterMyWallet" onclick="filterByConnectedWallet()"
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
                             <i class="fa-solid fa-filter text-kawaii-accentAqua"></i> Filter by My Wallet
                         </button>
-                        <button onclick="downloadWalletSvgs(connectedWallet)"
+                        <button id="btnDownloadMySvgsHeader" onclick="downloadWalletSvgs(connectedWallet)"
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-emerald-300 hover:text-emerald-200 hover:bg-emerald-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
                             <i class="fa-solid fa-file-arrow-down text-emerald-400"></i> Download My SVGs (.zip)
                         </button>
-                        <button onclick="filterByOffersToAccept()"
+                        <button id="btnViewOffersToAccept" onclick="filterByOffersToAccept()"
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
                             <i class="fa-solid fa-hand-holding-dollar text-green-400"></i> View Offers to Accept
                         </button>
                         <div class="h-[1px] bg-purple-900/20 my-0.5"></div>
-                        <button onclick="disconnectXamanWallet()"
+                        <button id="btnDisconnectWallet" onclick="disconnectXamanWallet()"
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-red-400 hover:text-red-300 hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer w-full font-bold">
                             <i class="fa-solid fa-power-off text-red-500"></i> Disconnect
                         </button>
@@ -1358,6 +1358,7 @@
                 explore_subtitle: "Verify collection rarity ranks in real-time, view live on-ledger listing prices, and filter by wallet inventory.",
                 connect_xaman: "Connect Xaman",
                 filter_my_wallet: "Filter by My Wallet",
+                download_my_svgs: "Download My SVGs (.zip)",
                 view_offers_accept: "View Offers to Accept",
                 disconnect: "Disconnect",
                 cheapest_listing: "Cheapest Listing",
@@ -1759,13 +1760,16 @@
                 }
             }
 
-            // Translate dropdown subelements
-            const dropdownButtons = document.getElementById('walletDropdown')?.querySelectorAll('button');
-            if (dropdownButtons && dropdownButtons.length >= 3) {
-                dropdownButtons[0].innerHTML = `<i class="fa-solid fa-filter text-kawaii-accentAqua"></i> ${dict.filter_my_wallet}`;
-                dropdownButtons[1].innerHTML = `<i class="fa-solid fa-hand-holding-dollar text-green-400"></i> ${dict.view_offers_accept}`;
-                dropdownButtons[2].innerHTML = `<i class="fa-solid fa-power-off text-red-500"></i> ${dict.disconnect}`;
-            }
+            // Translate dropdown subelements by ID
+            const btnFilter = document.getElementById('btnFilterMyWallet');
+            const btnDownloadHeader = document.getElementById('btnDownloadMySvgsHeader');
+            const btnOffersAccept = document.getElementById('btnViewOffersToAccept');
+            const btnDisconnect = document.getElementById('btnDisconnectWallet');
+
+            if (btnFilter) btnFilter.innerHTML = `<i class="fa-solid fa-filter text-kawaii-accentAqua"></i> ${dict.filter_my_wallet}`;
+            if (btnDownloadHeader) btnDownloadHeader.innerHTML = `<i class="fa-solid fa-file-arrow-down text-emerald-400"></i> ${dict.download_my_svgs || 'Download My SVGs (.zip)'}`;
+            if (btnOffersAccept) btnOffersAccept.innerHTML = `<i class="fa-solid fa-hand-holding-dollar text-green-400"></i> ${dict.view_offers_accept}`;
+            if (btnDisconnect) btnDisconnect.innerHTML = `<i class="fa-solid fa-power-off text-red-500"></i> ${dict.disconnect}`;
 
             // Translate modal static subelements if active
             const btnTraits = document.getElementById('btnDetailTabTraits');
