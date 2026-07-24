@@ -3672,24 +3672,20 @@
         }
 
         async function fetchSvgFileContent(id) {
-            const urlsToTry = [
-                `https://gateway.pinata.cloud/ipfs/${IMAGE_CID}/${id}.svg`,
-                `https://cloudflare-ipfs.com/ipfs/${IMAGE_CID}/${id}.svg`,
-                `https://ipfs.io/ipfs/${IMAGE_CID}/${id}.svg`,
-                `https://favicon.bot/ipfs/${IMAGE_CID}/${id}.svg`
-            ];
+            const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
+            const url = IMAGE_BASE_URL.startsWith('http') ? `${cleanBase}${id}.svg` : `${cleanBase}${ISSUER}/${TAXON}/${id}.svg`;
 
-            for (let url of urlsToTry) {
-                try {
-                    const res = await fetch(url);
-                    if (res.ok) {
-                        const text = await res.text();
-                        if (text && (text.includes('<svg') || text.includes('<?xml'))) return text;
-                    }
-                } catch (e) { }
+            try {
+                const res = await fetch(url);
+                if (res.ok) {
+                    const text = await res.text();
+                    if (text && (text.includes('<svg') || text.includes('<?xml'))) return text;
+                }
+            } catch (e) {
+                console.error(`[SVG FETCH ERROR] Failed to fetch ${url}:`, e);
             }
 
-            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#1e1b4b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#a78bfa" font-family="sans-serif" font-size="14">Dropchan #${id}</text></svg>`;
+            return null;
         }
 
         // Custom Premium Toast
