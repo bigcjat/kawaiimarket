@@ -423,17 +423,7 @@
         const TAXON = 0;
         const MY_WALLET = "raMenv8MTe6nBk9C5iFk6Gh6vZLs5MoYcg";
         const IMAGE_CID = "bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy";
-        // Host the 982 MB image cache on your own fast server/CDN and configure the URL below.
-        // E.g. "https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/"
         const IMAGE_BASE_URL = `https://favicon.bot/ipfs/${IMAGE_CID}/`;
-        const IPFS_GATEWAYS = [
-            'https://favicon.bot/ipfs/',
-            'https://gateway.pinata.cloud/ipfs/',
-            'https://ipfs.io/ipfs/',
-            'https://dweb.link/ipfs/',
-            'https://nftstorage.link/ipfs/',
-            'https://w3s.link/ipfs/'
-        ];
 
         let fullCollection = [];   // Loaded from dropchan_ranks.json
         let activeListings = {};   // NFTokenID -> lowestSellPrice (XRP)
@@ -1204,21 +1194,10 @@
             img.alt = item.name;
             img.loading = "lazy";
 
-            // Try loading from configured base image URL first, then fall back to IPFS gateways
             const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
-            img.src = IMAGE_BASE_URL.startsWith('http') ? `${cleanBase}${item.id}.svg` : `${cleanBase}${ISSUER}/${TAXON}/${item.id}.svg`;
+            img.src = `${cleanBase}${item.id}.svg`;
             img.onerror = () => {
-                let gwIndex = 0;
-                function tryLoadImage() {
-                    if (gwIndex >= IPFS_GATEWAYS.length) {
-                        img.src = "https://placehold.co/200x200?text=dropchan";
-                        return;
-                    }
-                    img.src = `${IPFS_GATEWAYS[gwIndex]}${IMAGE_CID}/${item.id}.svg`;
-                    gwIndex++;
-                }
-                img.onerror = tryLoadImage;
-                tryLoadImage();
+                img.src = `https://placehold.co/400x400/180e38/ff69b4?text=dropchan+%23${item.id}`;
             };
 
             card.innerHTML = `
@@ -1414,17 +1393,11 @@
             if (gridCardImg && gridCardImg.src && !gridCardImg.src.includes('placehold.co')) {
                 img.src = gridCardImg.src;
             } else {
-                let gwIndex = 0;
-                function tryLoadDealImage() {
-                    if (gwIndex >= IPFS_GATEWAYS.length) {
-                        img.src = "https://placehold.co/200x200?text=dropchan";
-                        return;
-                    }
-                    img.src = `${IPFS_GATEWAYS[gwIndex]}${IMAGE_CID}/${item.id}.svg`;
-                    gwIndex++;
-                }
-                img.onerror = tryLoadDealImage;
-                tryLoadDealImage();
+                const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
+                img.src = `${cleanBase}${item.id}.svg`;
+                img.onerror = () => {
+                    img.src = `https://placehold.co/200x200?text=dropchan+%23${item.id}`;
+                };
             }
 
             container.innerHTML = `
