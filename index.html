@@ -156,6 +156,10 @@
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
                             <i class="fa-solid fa-camera-retro text-cyan-400"></i> Tweet Image Showcase
                         </button>
+                        <button id="btnRarityFloorsStudio" onclick="window.location.href='rarity-floors.html'"
+                            class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
+                            <i class="fa-solid fa-gem text-pink-400"></i> 3-Cheapest Rarity Floors
+                        </button>
                         <button id="btnStatsTweetStudio" onclick="openStatsTweetStudio()"
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
                             <i class="fa-solid fa-chart-line text-yellow-400"></i> Daily Stats Tweet Maker
@@ -175,14 +179,21 @@
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 md:py-10 flex flex-col gap-6">
 
         <!-- Dashboard Intro -->
-        <div class="flex flex-col gap-2">
-            <h1 class="kawaii-title font-extrabold text-3xl text-white tracking-wide" data-i18n="explore_title">
-                dropchan Rarity & Listings Explorer
-            </h1>
-            <p class="text-sm text-purple-300" data-i18n="explore_subtitle">
-                Verify collection rarity ranks in real-time, view live on-ledger listing prices, and filter by wallet
-                inventory.
-            </p>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex flex-col gap-1">
+                <h1 class="kawaii-title font-extrabold text-3xl text-white tracking-wide" data-i18n="explore_title">
+                    dropchan Rarity & Listings Explorer
+                </h1>
+                <p class="text-sm text-purple-300" data-i18n="explore_subtitle">
+                    Verify collection rarity ranks in real-time, view live on-ledger listing prices, and filter by wallet
+                    inventory.
+                </p>
+            </div>
+            <a href="rarity-floors.html" class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500/20 via-purple-600/20 to-cyan-500/20 border border-purple-600/40 text-purple-200 hover:text-white hover:border-pink-400 font-extrabold text-xs flex items-center gap-2 transition-all shrink-0 shadow-lg shadow-purple-950/40">
+                <i class="fa-solid fa-gem text-pink-400"></i>
+                <span>Rarity Floors Twitter Studio</span>
+                <i class="fa-solid fa-arrow-right text-[10px] text-cyan-400"></i>
+            </a>
         </div>
 
         <!-- Collection Summary Cards Banner -->
@@ -564,7 +575,10 @@
                 // 2. Fetch all minted NFTs to check owners & mint status
                 let mintedCount = 0;
                 try {
-                    const mintedResponse = await fetchWithRetry(`https://api.xrpldata.com/api/v1/xls20-nfts/issuer/${ISSUER}/taxon/${TAXON}`);
+                    let mintedResponse = await fetchWithRetry(`/api/market/minted?issuer=${ISSUER}&taxon=${TAXON}`);
+                    if (!mintedResponse || !mintedResponse.ok) {
+                        mintedResponse = await fetchWithRetry(`https://api.xrpldata.com/api/v1/xls20-nfts/issuer/${ISSUER}/taxon/${TAXON}`);
+                    }
                     if (mintedResponse && mintedResponse.ok) {
                         const resJson = await mintedResponse.json();
                         const nftsList = resJson.data?.nfts || [];
@@ -587,9 +601,6 @@
                 }
                 document.getElementById('statTotalMinted').innerText = `${mintedCount.toLocaleString()} / 10,000`;
 
-                // Stagger requests to prevent 429 rate limiting
-                await new Promise(r => setTimeout(r, 400));
-
                 // Fetch collection level stats (unique owners, market distribution)
                 try {
                     const statsResponse = await fetchWithRetry(`https://api.xrpldata.com/api/v1/xls20-nfts/stats/issuer/${ISSUER}`);
@@ -608,11 +619,11 @@
                     renderAnalyticsCharts(null);
                 }
 
-                // Stagger requests to prevent 429 rate limiting
-                await new Promise(r => setTimeout(r, 400));
-
                 // 3. Fetch live listings
-                const offersResponse = await fetchWithRetry(`https://api.xrpldata.com/api/v1/xls20-nfts/offers/issuer/${ISSUER}/taxon/${TAXON}`);
+                let offersResponse = await fetchWithRetry(`/api/market/offers?issuer=${ISSUER}&taxon=${TAXON}`);
+                if (!offersResponse || !offersResponse.ok) {
+                    offersResponse = await fetchWithRetry(`https://api.xrpldata.com/api/v1/xls20-nfts/offers/issuer/${ISSUER}/taxon/${TAXON}`);
+                }
                 if (offersResponse.ok) {
                     const resJson = await offersResponse.json();
                     const offersList = resJson.data?.offers || [];
@@ -696,6 +707,43 @@
                 updateProcessList();
                 updateWalletButtonLabel();
                 changeLanguage(currentLang);
+
+                // Deep-link query parameter handling (auto-opens target NFT detail modal)
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const targetId = urlParams.get('id') || urlParams.get('nft');
+                    if (targetId) {
+                        let targetNum = null;
+                        const cleanTargetId = targetId.trim().toLowerCase();
+
+                        // 1. First check if targetId matches a 64-hex NFTokenID in tokenToIdMap
+                        const foundEntry = Object.entries(tokenToIdMap).find(([idNum, hexToken]) => 
+                            hexToken && hexToken.toLowerCase() === cleanTargetId
+                        );
+
+                        if (foundEntry) {
+                            targetNum = parseInt(foundEntry[0]);
+                        } else {
+                            // 2. Otherwise validate numeric ID range (1..10000)
+                            const parsed = parseInt(cleanTargetId, 10);
+                            if (!isNaN(parsed) && parsed >= 1 && parsed <= 10000) {
+                                targetNum = parsed;
+                            }
+                        }
+
+                        if (targetNum && targetNum > 0) {
+                            dismissDisclaimer();
+                            setTimeout(() => {
+                                dismissDisclaimer();
+                                if (typeof openDetailsModal === 'function') {
+                                    openDetailsModal(targetNum);
+                                }
+                            }, 250);
+                        }
+                    }
+                } catch (errParams) {
+                    console.warn("Error parsing URL deep link parameters:", errParams);
+                }
 
             } catch (e) {
                 console.error(e);
@@ -1983,29 +2031,30 @@
             const model = document.getElementById('rarityModel').value;
             const rankKey = `${model}_rank`;
 
-            const item = fullCollection.find(x => x.id === id);
+            const targetIdNum = parseInt(id);
+            const item = fullCollection.find(x => parseInt(x.id) === targetIdNum);
             if (!item) return;
 
             const rank = item[rankKey];
-            const price = activeListings[id];
-            const owner = mintedOwners[id];
+            const price = activeListings[targetIdNum];
+            const owner = mintedOwners[targetIdNum];
             const isMinted = owner !== undefined;
 
             const dict = I18N_DICTS[currentLang];
             const ownerFriendly = isMinted ? `${owner.substring(0, 8)}...${owner.substring(owner.length - 8)}` : dict.not_minted;
 
             // Set basic details immediately
-            document.getElementById('modalCardName').innerText = `dropchan #${id}`;
-            document.getElementById('modalDetailName').innerText = `dropchan #${id}`;
+            document.getElementById('modalCardName').innerText = `dropchan #${targetIdNum}`;
+            document.getElementById('modalDetailName').innerText = `dropchan #${targetIdNum}`;
             const rankLabel = currentLang === 'ja' ? '順位' : (currentLang === 'ko' ? '순위' : 'RANK');
             document.getElementById('modalCardHp').innerText = `${rankLabel} #${rank.toLocaleString()}`;
             document.getElementById('modalDetailOwner').innerText = ownerFriendly;
             document.getElementById('modalDetailOwner').title = owner || '';
             document.getElementById('modalDetailPrice').innerText = price !== undefined ? `${price.toLocaleString()} XRP` : dict.not_listed;
-            renderModalActions(id);
+            renderModalActions(targetIdNum);
 
             // Populate NFTokenID & External links
-            const tokenID = tokenToIdMap[id];
+            const tokenID = tokenToIdMap[targetIdNum];
             const isTokenMinted = tokenID && !tokenID.startsWith('unminted') && !tokenID.startsWith('lazy');
             const tokenIDText = isTokenMinted ? tokenID : dict.unminted;
 
@@ -2084,8 +2133,8 @@
             document.getElementById('modalCardRarityBadge').className = `font-bold ${rank <= 1500 ? 'text-yellow-400' : 'text-purple-300'}`;
 
             // Set active nft id and open traits tab or offers tab by default
-            activeNftId = id;
-            if (isMinted && owner === connectedWallet && (activeBuyOffersMap[id] || []).length > 0) {
+            activeNftId = targetIdNum;
+            if (isMinted && owner === connectedWallet && (activeBuyOffersMap[targetIdNum] || []).length > 0) {
                 setDetailTab('offers');
             } else {
                 setDetailTab('traits');
@@ -2097,7 +2146,7 @@
                 modalImgContainer.innerHTML = '';
             }
 
-            const gridCardImg = document.querySelector(`#img-container-${id} img`);
+            const gridCardImg = document.querySelector(`#img-container-${targetIdNum} img`);
             if (gridCardImg && gridCardImg.src && !gridCardImg.src.includes('placehold.co')) {
                 // Store references for restoring when closed
                 activeModalImgNode = gridCardImg;
@@ -2107,30 +2156,21 @@
                 modalImgContainer.appendChild(gridCardImg);
                 gridCardImg.style.opacity = isMinted ? '1' : '0.4';
             } else {
-                // Fallback to creating a new img element and loading sequentially
+                // Fallback to creating a new img element with reliable thumbnail URL
                 const fallbackImg = document.createElement('img');
                 fallbackImg.className = "w-full h-full object-cover";
                 fallbackImg.style.opacity = '0';
                 modalImgContainer.appendChild(fallbackImg);
 
-                const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
-                fallbackImg.src = IMAGE_BASE_URL.startsWith('http') ? `${cleanBase}${id}.svg` : `${cleanBase}${ISSUER}/${TAXON}/${id}.svg`;
+                fallbackImg.src = `/cache/thumbnails/${ISSUER}/${TAXON}/${targetIdNum}.jpg`;
                 fallbackImg.onload = () => {
                     fallbackImg.style.opacity = isMinted ? '1' : '0.4';
                 };
                 fallbackImg.onerror = () => {
-                    let gwIndex = 0;
-                    function tryLoadModalImage() {
-                        if (gwIndex >= IPFS_GATEWAYS.length) {
-                            fallbackImg.src = "https://placehold.co/200x200?text=dropchan";
-                            fallbackImg.style.opacity = '1';
-                            return;
-                        }
-                        fallbackImg.src = `${IPFS_GATEWAYS[gwIndex]}${IMAGE_CID}/${id}.svg`;
-                        gwIndex++;
-                    }
-                    fallbackImg.onerror = tryLoadModalImage;
-                    tryLoadModalImage();
+                    fallbackImg.src = `https://favicon.bot/ipfs/${DROPCHAN_IMG_CID}/${targetIdNum}.svg`;
+                    fallbackImg.onload = () => {
+                        fallbackImg.style.opacity = isMinted ? '1' : '0.4';
+                    };
                 };
             }
 
