@@ -71,6 +71,10 @@
             box-sizing: border-box;
             position: relative;
             overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+        }
+        .twitter-stage span, .twitter-stage p, .twitter-stage h2, .twitter-stage div {
+            box-sizing: border-box;
         }
 
         /* 🌸 Dropchan Official Pastel Sky Theme */
@@ -193,7 +197,7 @@
                         <div>
                             <div class="flex items-center gap-2">
                                 <h2 class="text-2xl font-black tracking-tight font-display text-white">dropchan</h2>
-                                <span class="text-xs font-black uppercase px-3 py-0.5 bg-pink-400 text-white rounded-full shadow-sm">Rarity Floor Snapshot</span>
+                                <span class="text-xs font-black uppercase px-3 h-6 bg-pink-400 text-white rounded-full shadow-sm inline-flex items-center justify-center leading-none">Rarity Floor Snapshot</span>
                             </div>
                             <p class="text-[11px] font-bold text-pink-200">3 Cheapest Listed NFTs Per Rarity Tier</p>
                         </div>
@@ -222,7 +226,7 @@
                             <span id="title-legendary" class="text-sm font-black flex items-center gap-1.5">
                                 👑 LEGENDARY <span class="text-[11px] opacity-80 font-semibold">(Rank 1 - 100)</span>
                             </span>
-                            <span id="badge-legendary" class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full">3 Cheapest</span>
+                            <span id="badge-legendary" class="text-[10px] font-black uppercase px-2 h-5 rounded-full inline-flex items-center justify-center leading-none">3 Cheapest</span>
                         </div>
                         <div id="tier-legendary-slots" class="grid grid-cols-3 gap-2.5 flex-1 items-center">
                             <!-- 3 Full Image Cards -->
@@ -235,7 +239,7 @@
                             <span id="title-mythic" class="text-sm font-black flex items-center gap-1.5">
                                 🔥 MYTHIC <span class="text-[11px] opacity-80 font-semibold">(Rank 101 - 500)</span>
                             </span>
-                            <span id="badge-mythic" class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full">3 Cheapest</span>
+                            <span id="badge-mythic" class="text-[10px] font-black uppercase px-2 h-5 rounded-full inline-flex items-center justify-center leading-none">3 Cheapest</span>
                         </div>
                         <div id="tier-mythic-slots" class="grid grid-cols-3 gap-2.5 flex-1 items-center">
                             <!-- 3 Full Image Cards -->
@@ -248,7 +252,7 @@
                             <span id="title-rare" class="text-sm font-black flex items-center gap-1.5">
                                 💎 RARE <span class="text-[11px] opacity-80 font-semibold">(Rank 501 - 1500)</span>
                             </span>
-                            <span id="badge-rare" class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full">3 Cheapest</span>
+                            <span id="badge-rare" class="text-[10px] font-black uppercase px-2 h-5 rounded-full inline-flex items-center justify-center leading-none">3 Cheapest</span>
                         </div>
                         <div id="tier-rare-slots" class="grid grid-cols-3 gap-2.5 flex-1 items-center">
                             <!-- 3 Full Image Cards -->
@@ -261,7 +265,7 @@
                             <span id="title-common" class="text-sm font-black flex items-center gap-1.5">
                                 🌸 COMMON <span class="text-[11px] opacity-80 font-semibold">(Rank 1501+)</span>
                             </span>
-                            <span id="badge-common" class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full">3 Cheapest</span>
+                            <span id="badge-common" class="text-[10px] font-black uppercase px-2 h-5 rounded-full inline-flex items-center justify-center leading-none">3 Cheapest</span>
                         </div>
                         <div id="tier-common-slots" class="grid grid-cols-3 gap-2.5 flex-1 items-center">
                             <!-- 3 Full Image Cards -->
@@ -280,7 +284,7 @@
                     </div>
                     <div class="flex items-center gap-2 text-xs font-black">
                         <span id="footerDomain" class="tracking-wide">kawaii.market</span>
-                        <span id="footerPill" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold">#XRPL #NFTs</span>
+                        <span id="footerPill" class="px-2.5 h-5 rounded-full text-[10px] font-bold inline-flex items-center justify-center leading-none">#XRPL #NFTs</span>
                     </div>
                 </div>
 
@@ -698,17 +702,18 @@
                     }
                 }));
 
+                // Wait for all web fonts to load and resolve metrics before html2canvas capture
+                if (document.fonts && document.fonts.ready) {
+                    await document.fonts.ready;
+                }
+
                 const canvas = await html2canvas(card, {
                     scale: 2,
                     useCORS: true,
                     allowTaint: true,
-                    scrollX: 0,
-                    scrollY: 0,
-                    x: 0,
-                    y: 0,
-                    windowWidth: 1200,
-                    windowHeight: 675,
-                    backgroundColor: currentTheme === 'dropchan' ? '#b8cfff' : '#080314'
+                    foreignObjectRendering: true,
+                    backgroundColor: currentTheme === 'dropchan' ? '#b8cfff' : '#080314',
+                    logging: false
                 });
 
                 // Restore original image sources
