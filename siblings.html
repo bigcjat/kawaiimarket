@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropchan NFT Siblings & Trait Inspector | KawaiiMarket</title>
+    <meta name="description" content="Select any Dropchan NFT or enter an XRPL wallet address to view its full traits, rarity rank, and find its closest trait-matched siblings in the collection.">
+    
+    <!-- OpenGraph & Twitter -->
+    <meta property="og:title" content="Dropchan NFT Siblings & Trait Inspector | KawaiiMarket">
+    <meta property="og:description" content="Inspect traits, rarity ranks, and find the most similar sibling NFTs in the Dropchan collection.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kawaii.market/siblings.html">
+
+    <!-- Tailwind CSS (CDN) & Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+
+    <!-- Load Dropchan Static Data -->
+    <script src="dropchan_metadata.js"></script>
+    <script src="dropchan_ranks.js"></script>
+
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #080314;
+            color: #f3f4f6;
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 123, 176, 0.4);
+            box-shadow: 0 12px 30px -10px rgba(255, 123, 176, 0.25);
+        }
+        .glow-pink {
+            box-shadow: 0 0 35px -5px rgba(255, 123, 176, 0.35);
+        }
+        .badge-legendary { background: linear-gradient(135deg, #ffd043 0%, #ff9500 100%); color: #4a3200; }
+        .badge-mythic { background: linear-gradient(135deg, #ff7bb0 0%, #e6005c 100%); color: #ffffff; }
+        .badge-rare { background: linear-gradient(135deg, #36d6c3 0%, #009688 100%); color: #003d36; }
+        .badge-common { background: linear-gradient(135deg, #a370ff 0%, #6200ea 100%); color: #ffffff; }
+    </style>
+</head>
+<body class="antialiased selection:bg-pink-500 selection:text-white pb-20">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-white/10 px-4 lg:px-8 py-3.5 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <a href="index.html" class="flex items-center space-x-2">
+                <span class="text-2xl font-black tracking-tight text-white">dropchan</span>
+                <span class="text-xs font-extrabold px-2 py-0.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white">MARKET</span>
+            </a>
+        </div>
+        <nav class="flex items-center space-x-2 md:space-x-4">
+            <a href="index.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Home</a>
+            <a href="rarity-floors.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Rarity Floors</a>
+            <a href="siblings.html" class="text-xs md:text-sm font-bold text-pink-400 bg-pink-500/10 border border-pink-500/30 px-3 py-1.5 rounded-lg transition">Siblings Finder</a>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+
+        <!-- Title Banner -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-400 tracking-tight">
+                Dropchan Trait & Sibling Inspector
+            </h1>
+            <p class="mt-2 text-sm sm:text-base text-gray-400 max-w-2xl mx-auto">
+                Explore trait breakdowns, rarity scores, and uncover the closest matching sibling NFTs across all 10,000 Dropchans.
+            </p>
+        </div>
+
+        <!-- Wallet / Token ID Selector Controls -->
+        <div class="glass-panel rounded-2xl p-4 md:p-6 mb-10 border border-white/10 shadow-2xl">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                
+                <!-- Token ID Direct Lookup -->
+                <div class="md:col-span-5 flex items-center space-x-2">
+                    <div class="relative w-full">
+                        <input type="number" id="nftIdInput" min="1" max="9999" placeholder="Enter Token ID (e.g. 23)" 
+                            class="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition" />
+                    </div>
+                    <button id="btnLoadNft" class="px-5 py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-sm rounded-xl transition shadow-lg shrink-0">
+                        Inspect
+                    </button>
+                    <button id="btnRandomNft" class="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white font-bold text-sm rounded-xl transition border border-white/10 shrink-0" title="Random NFT">
+                        🎲
+                    </button>
+                </div>
+
+                <!-- Wallet Address Lookup -->
+                <div class="md:col-span-7 flex items-center space-x-2">
+                    <input type="text" id="walletInput" placeholder="Enter XRPL Wallet Address (r...)" 
+                        class="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition" />
+                    <button id="btnLoadWallet" class="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-sm rounded-xl transition shadow-lg shrink-0">
+                        Fetch Owned
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Wallet Owned Quick Picker Bar -->
+            <div id="walletOwnedContainer" class="hidden mt-4 pt-4 border-t border-white/10">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-pink-400 tracking-wider uppercase" id="walletOwnedTitle">Owned Dropchans</span>
+                    <span class="text-xs text-gray-400" id="walletCountBadge">0 found</span>
+                </div>
+                <div id="walletOwnedGrid" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+        <!-- Selected NFT Showcase Grid -->
+        <div id="nftInspectSection" class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+            
+            <!-- Left: Hero NFT Display -->
+            <div class="lg:col-span-4 flex flex-col items-center">
+                <div class="glass-panel p-4 rounded-3xl w-full border border-pink-500/20 glow-pink relative">
+                    <div class="aspect-square rounded-2xl overflow-hidden bg-indigo-950/60 relative group">
+                        <img id="heroNftImage" src="" alt="Dropchan NFT" class="w-full h-full object-cover transition transform group-hover:scale-105 duration-300" 
+                            onerror="this.onerror=null; this.src='https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/'+currentInspectId+'.svg';" />
+                    </div>
+                    <div class="mt-4 flex items-center justify-between">
+                        <div>
+                            <h2 id="heroNftTitle" class="text-2xl font-black text-white">dropchan #--</h2>
+                            <p id="heroRarityScore" class="text-xs text-gray-400 mt-0.5">Rarity Score: --</p>
+                        </div>
+                        <div id="heroRarityBadge" class="px-3.5 py-1.5 rounded-full text-xs font-black tracking-wide uppercase badge-common">
+                            COMMON
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Trait Breakdown Grid -->
+            <div class="lg:col-span-8">
+                <div class="glass-panel p-6 rounded-3xl border border-white/10 h-full">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center justify-between">
+                        <span>Attribute Breakdown</span>
+                        <span id="traitCountBadge" class="text-xs font-bold text-pink-400 bg-pink-500/10 px-2.5 py-1 rounded-full border border-pink-500/20">0 Traits</span>
+                    </h3>
+                    
+                    <div id="traitsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <!-- Trait Cards rendered dynamically -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Section: Sibling Matching NFTs -->
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-white/10 shadow-2xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-white/10 gap-2">
+                <div>
+                    <h2 class="text-2xl font-black text-white flex items-center space-x-2">
+                        <span>Closest Trait Siblings</span>
+                        <span class="text-pink-400 text-lg">👯</span>
+                    </h2>
+                    <p class="text-xs sm:text-sm text-gray-400 mt-1">
+                        NFTs in the collection sharing the highest number of identical attributes with <span id="siblingSourceTitle" class="font-bold text-pink-300">dropchan</span>.
+                    </p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-extrabold text-purple-400 bg-purple-500/10 px-3 py-1.5 rounded-full border border-purple-500/20">
+                        10,000 Collection Scanned
+                    </span>
+                </div>
+            </div>
+
+            <!-- Sibling Cards Grid -->
+            <div id="siblingsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        let currentInspectId = 23;
+        const TRAIT_COUNTS = {}; // Trait value occurrence counts across collection
+
+        // Precompute Trait Frequencies across 10,000 collection
+        function initTraitFrequencies() {
+            if (!window.DROPCHAN_METADATA) return;
+            Object.values(window.DROPCHAN_METADATA).forEach(traitsArr => {
+                traitsArr.forEach(t => {
+                    if (t.value && t.value !== "none") {
+                        const key = `${t.trait_type}:${t.value}`;
+                        TRAIT_COUNTS[key] = (TRAIT_COUNTS[key] || 0) + 1;
+                    }
+                });
+            });
+        }
+
+        // Calculate Rarity Tier Badge
+        function getRarityBadgeInfo(rank) {
+            if (rank <= 100) return { label: 'LEGENDARY', class: 'badge-legendary' };
+            if (rank <= 500) return { label: 'MYTHIC', class: 'badge-mythic' };
+            if (rank <= 1500) return { label: 'RARE', class: 'badge-rare' };
+            return { label: 'COMMON', class: 'badge-common' };
+        }
+
+        // Render Hero NFT Details
+        function inspectNft(tokenId) {
+            tokenId = parseInt(tokenId);
+            if (isNaN(tokenId) || tokenId < 1 || tokenId > 9999) tokenId = 23;
+            currentInspectId = tokenId;
+
+            const metadata = window.DROPCHAN_METADATA ? window.DROPCHAN_METADATA[tokenId] : null;
+            const rankData = window.DROPCHAN_RANKS ? window.DROPCHAN_RANKS[tokenId] : null;
+
+            // Update Hero Image & Title
+            document.getElementById('heroNftTitle').innerText = `dropchan #${tokenId}`;
+            document.getElementById('heroNftImage').src = `https://favicon.bot/png/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${tokenId}.png`;
+            document.getElementById('siblingSourceTitle').innerText = `dropchan #${tokenId}`;
+
+            const rank = rankData ? rankData.standard_rank : ((tokenId % 9999) + 1);
+            const score = rankData ? rankData.standard_score.toFixed(1) : '120.5';
+
+            document.getElementById('heroRarityScore').innerText = `Standard Rank #${rank} • Score: ${score}`;
+            
+            const badgeInfo = getRarityBadgeInfo(rank);
+            const badgeEl = document.getElementById('heroRarityBadge');
+            badgeEl.className = `px-3.5 py-1.5 rounded-full text-xs font-black tracking-wide uppercase ${badgeInfo.class}`;
+            badgeEl.innerText = badgeInfo.label;
+
+            // Render Trait Grid
+            const traitsGrid = document.getElementById('traitsGrid');
+            traitsGrid.innerHTML = '';
+
+            if (metadata && Array.isArray(metadata)) {
+                const activeTraits = metadata.filter(t => t.value && t.value !== "none");
+                document.getElementById('traitCountBadge').innerText = `${activeTraits.length} Active Traits`;
+
+                activeTraits.forEach(t => {
+                    const freqKey = `${t.trait_type}:${t.value}`;
+                    const count = TRAIT_COUNTS[freqKey] || 1;
+                    const pct = ((count / 10000) * 100).toFixed(1);
+
+                    const card = document.createElement('div');
+                    card.className = 'glass-card p-3 rounded-xl border border-white/10';
+                    card.innerHTML = `
+                        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">${t.trait_type}</div>
+                        <div class="text-xs sm:text-sm font-extrabold text-pink-300 truncate mt-0.5" title="${t.value}">${t.value}</div>
+                        <div class="text-[10px] text-gray-400 mt-1 flex items-center justify-between">
+                            <span>${count} in collection</span>
+                            <span class="font-bold text-purple-300">${pct}%</span>
+                        </div>
+                    `;
+                    traitsGrid.appendChild(card);
+                });
+            } else {
+                traitsGrid.innerHTML = `<div class="col-span-full text-center text-gray-400 text-sm py-4">No metadata attributes found.</div>`;
+            }
+
+            // Find and Render Siblings
+            renderSiblings(tokenId, metadata);
+        }
+
+        // Sibling Similarity Engine
+        function renderSiblings(targetId, targetMetadata) {
+            const siblingsGrid = document.getElementById('siblingsGrid');
+            siblingsGrid.innerHTML = `<div class="col-span-full text-center text-gray-400 py-8 text-sm">Searching 10,000 collection for closest matching siblings...</div>`;
+
+            if (!targetMetadata || !window.DROPCHAN_METADATA) return;
+
+            // Build target trait map
+            const targetMap = {};
+            targetMetadata.forEach(t => {
+                if (t.value && t.value !== "none") {
+                    targetMap[t.trait_type] = t.value;
+                }
+            });
+
+            // Score similarity against all 10,000 items
+            const scores = [];
+            Object.entries(window.DROPCHAN_METADATA).forEach(([idStr, traitsArr]) => {
+                const id = parseInt(idStr);
+                if (id === targetId) return; // Skip self
+
+                let matchCount = 0;
+                const matchedTraits = [];
+
+                traitsArr.forEach(t => {
+                    if (t.value && t.value !== "none" && targetMap[t.trait_type] === t.value) {
+                        matchCount++;
+                        matchedTraits.push(t.trait_type);
+                    }
+                });
+
+                if (matchCount > 0) {
+                    scores.push({ id, matchCount, matchedTraits });
+                }
+            });
+
+            // Sort by match count descending
+            scores.sort((a, b) => b.matchCount - a.matchCount);
+            const topSiblings = scores.slice(0, 8);
+
+            siblingsGrid.innerHTML = '';
+            if (topSiblings.length === 0) {
+                siblingsGrid.innerHTML = `<div class="col-span-full text-center text-gray-400 py-6 text-sm">No siblings with matching traits found.</div>`;
+                return;
+            }
+
+            topSiblings.forEach(sib => {
+                const rankData = window.DROPCHAN_RANKS ? window.DROPCHAN_RANKS[sib.id] : null;
+                const rank = rankData ? rankData.standard_rank : (sib.id % 9999 + 1);
+                const badge = getRarityBadgeInfo(rank);
+
+                const card = document.createElement('div');
+                card.className = 'glass-card p-3 rounded-2xl cursor-pointer border border-white/10 group';
+                card.onclick = () => inspectNft(sib.id);
+
+                card.innerHTML = `
+                    <div class="aspect-square rounded-xl overflow-hidden bg-indigo-950/40 relative mb-3">
+                        <img src="https://favicon.bot/png/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${sib.id}.png" alt="Dropchan #${sib.id}" 
+                            class="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
+                            onerror="this.onerror=null; this.src='https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${sib.id}.svg';" />
+                        <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${badge.class}">
+                            Rank #${rank}
+                        </span>
+                        <span class="absolute bottom-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-black bg-pink-500 text-white shadow-lg">
+                            ${sib.matchCount} Matches
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-extrabold text-white group-hover:text-pink-300 transition">#${sib.id}</h4>
+                        <span class="text-[10px] font-bold text-gray-400">${badge.label}</span>
+                    </div>
+                    <div class="mt-1.5 flex flex-wrap gap-1">
+                        ${sib.matchedTraits.slice(0, 3).map(tr => `<span class="text-[9px] font-semibold bg-white/10 text-gray-300 px-1.5 py-0.5 rounded">${tr}</span>`).join('')}
+                        ${sib.matchedTraits.length > 3 ? `<span class="text-[9px] font-semibold bg-white/10 text-pink-300 px-1.5 py-0.5 rounded">+${sib.matchedTraits.length - 3}</span>` : ''}
+                    </div>
+                `;
+                siblingsGrid.appendChild(card);
+            });
+        }
+
+        // Fetch Wallet Owned Dropchans from XRPL
+        async function fetchWalletOwned(address) {
+            const container = document.getElementById('walletOwnedContainer');
+            const grid = document.getElementById('walletOwnedGrid');
+            const countBadge = document.getElementById('walletCountBadge');
+
+            if (!address || !address.startsWith('r')) {
+                alert('Please enter a valid XRPL wallet address starting with r...');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            grid.innerHTML = `<span class="text-xs text-gray-400 py-2">Fetching wallet NFTs from XRP Ledger...</span>`;
+
+            try {
+                const resp = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/owner/${address}`);
+                const data = await resp.json();
+                const nfts = data.data?.nfts || [];
+
+                const ISSUER = "rDropCHANEgmG7FBz1nzPpG27BGzWjnCnn";
+                const ownedDropchans = [];
+
+                nfts.forEach(nft => {
+                    if (nft.Issuer === ISSUER && nft.URI) {
+                        try {
+                            let decodedUri = "";
+                            for (let i = 0; i < nft.URI.length; i += 2) {
+                                decodedUri += String.fromCharCode(parseInt(nft.URI.substr(i, 2), 16));
+                            }
+                            const tokenIdNum = parseInt(decodedUri.split("/").pop().split(".")[0]);
+                            if (!isNaN(tokenIdNum)) ownedDropchans.push(tokenIdNum);
+                        } catch (e) {}
+                    }
+                });
+
+                countBadge.innerText = `${ownedDropchans.length} owned`;
+                grid.innerHTML = '';
+
+                if (ownedDropchans.length === 0) {
+                    grid.innerHTML = `<span class="text-xs text-gray-400 py-1">No Dropchan NFTs found in wallet ${address.substring(0, 8)}...</span>`;
+                    return;
+                }
+
+                ownedDropchans.forEach(id => {
+                    const btn = document.createElement('button');
+                    btn.className = 'px-3 py-1.5 bg-pink-500/20 hover:bg-pink-500/40 border border-pink-500/30 text-white font-bold text-xs rounded-xl transition flex items-center space-x-1.5';
+                    btn.innerHTML = `<span>#${id}</span>`;
+                    btn.onclick = () => inspectNft(id);
+                    grid.appendChild(btn);
+                });
+
+                // Auto-inspect first owned NFT
+                inspectNft(ownedDropchans[0]);
+
+            } catch (err) {
+                grid.innerHTML = `<span class="text-xs text-red-400 py-1">Failed to query XRPL wallet. Please try again.</span>`;
+            }
+        }
+
+        // Initialize UI Event Handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            initTraitFrequencies();
+            inspectNft(23); // Default to Dropchan #23
+
+            document.getElementById('btnLoadNft').onclick = () => {
+                const val = document.getElementById('nftIdInput').value;
+                if (val) inspectNft(parseInt(val));
+            };
+
+            document.getElementById('nftIdInput').onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    const val = e.target.value;
+                    if (val) inspectNft(parseInt(val));
+                }
+            };
+
+            document.getElementById('btnRandomNft').onclick = () => {
+                const randId = Math.floor(Math.random() * 9999) + 1;
+                document.getElementById('nftIdInput').value = randId;
+                inspectNft(randId);
+            };
+
+            document.getElementById('btnLoadWallet').onclick = () => {
+                const addr = document.getElementById('walletInput').value.trim();
+                fetchWalletOwned(addr);
+            };
+        });
+    </script>
+</body>
+</html>
