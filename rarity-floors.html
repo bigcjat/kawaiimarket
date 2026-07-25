@@ -531,7 +531,16 @@
         }
 
         function renderGraphic() {
-            document.getElementById('graphicFloorPrice').innerText = overallFloor !== Infinity ? `${overallFloor.toFixed(0)} XRP` : 'N/A';
+            let floorText = 'N/A';
+            if (overallFloor !== Infinity && overallFloor > 0) {
+                if (Number.isInteger(overallFloor)) {
+                    floorText = overallFloor >= 1000 ? `${overallFloor.toLocaleString()} XRP` : `${overallFloor} XRP`;
+                } else {
+                    const p1 = parseFloat(overallFloor.toFixed(1));
+                    floorText = p1 >= 1000 ? `${p1.toLocaleString()} XRP` : `${p1} XRP`;
+                }
+            }
+            document.getElementById('graphicFloorPrice').innerText = floorText;
             document.getElementById('graphicActiveListings').innerText = `${totalActiveListings} Listed`;
             
             const now = new Date();
@@ -643,9 +652,14 @@
                     const slot = document.createElement('div');
                     slot.className = `flex flex-col ${cardStyle} rounded-2xl overflow-hidden shadow-md relative w-full h-[190px] cursor-pointer hover:scale-[1.03] transition-transform`;
                     slot.onclick = () => openNftModal(item.id, item.rank, item.price, item.nftTokenId);
-                    // Formatted price with comma separators for >= 1000
-                    const numPrice = Math.round(item.price);
-                    const priceFormatted = numPrice >= 1000 ? numPrice.toLocaleString() : numPrice.toString();
+                    // Formatted price with max 1 decimal place if fractional, and comma separators for >= 1000
+                    let priceFormatted = "";
+                    if (Number.isInteger(item.price)) {
+                        priceFormatted = item.price >= 1000 ? item.price.toLocaleString() : item.price.toString();
+                    } else {
+                        const p1 = parseFloat(item.price.toFixed(1));
+                        priceFormatted = p1 >= 1000 ? p1.toLocaleString() : p1.toString();
+                    }
                     const fullPriceText = `${priceFormatted} XRP`;
 
                     // Dynamic font size: text-2xl for <= 7 chars, text-xl for <= 10 chars, text-lg for <= 13 chars, text-base for longer
