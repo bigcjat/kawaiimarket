@@ -654,9 +654,9 @@
                                 referrerpolicy="no-referrer"
                             />
                             <!-- Top Overlay Badges -->
-                            <div class="absolute top-1.5 inset-x-1.5 flex items-center justify-between pointer-events-none">
-                                <span class="text-xs font-black text-white px-2 py-0.5 bg-black/75 backdrop-blur-md rounded-lg border border-white/20 font-mono shadow">#${item.id}</span>
-                                <span class="text-[10px] font-black px-2 py-0.5 rounded-lg shadow uppercase ${badgeClass}">Rank #${item.rank}</span>
+                            <div class="absolute top-1.5 left-1.5 right-1.5 flex items-center justify-between pointer-events-none z-10">
+                                <span class="text-[11px] font-black text-white px-2 h-5 leading-5 bg-black/80 backdrop-blur-md rounded-lg border border-white/20 font-mono shadow inline-flex items-center justify-center">#${item.id}</span>
+                                <span class="text-[9.5px] font-black px-2 h-5 leading-5 rounded-lg shadow uppercase inline-flex items-center justify-center ${badgeClass}">Rank #${item.rank}</span>
                             </div>
                         </div>
 
@@ -693,13 +693,11 @@
                         try {
                             const resp = await fetch(img.src, { cache: 'force-cache', referrerPolicy: 'no-referrer' });
                             if (resp.ok) {
-                                const blob = await resp.blob();
-                                const dataUri = await new Promise((resolve) => {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => resolve(reader.result);
-                                    reader.readAsDataURL(blob);
-                                });
-                                img.src = dataUri;
+                                let svgText = await resp.text();
+                                if (svgText.includes('<svg') && !svgText.includes('preserveAspectRatio')) {
+                                    svgText = svgText.replace('<svg', '<svg preserveAspectRatio="xMidYMid slice"');
+                                }
+                                img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText);
                             }
                         } catch (e) {}
                     }
