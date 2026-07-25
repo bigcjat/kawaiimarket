@@ -600,7 +600,7 @@
 
         async function fetchImageAsDataURI(url) {
             try {
-                const resp = await fetch(url);
+                const resp = await fetch(url, { referrerPolicy: 'no-referrer' });
                 if (!resp.ok) return null;
                 const blob = await resp.blob();
                 return new Promise((resolve) => {
