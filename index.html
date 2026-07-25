@@ -181,6 +181,10 @@
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
                             <i class="fa-solid fa-gem text-pink-400"></i> 3-Cheapest Rarity Floors
                         </button>
+                        <button id="btnSiblingsStudio" onclick="window.location.href='siblings.html'"
+                            class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
+                            <i class="fa-solid fa-users text-pink-400"></i> Trait & Sibling Inspector
+                        </button>
                         <div class="h-[1px] bg-purple-900/20 my-0.5"></div>
                         <button id="btnDisconnectWallet" onclick="disconnectXamanWallet()"
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-red-400 hover:text-red-300 hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer w-full font-bold">
@@ -206,11 +210,18 @@
                     inventory.
                 </p>
             </div>
-            <a href="rarity-floors.html" class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500/20 via-purple-600/20 to-cyan-500/20 border border-purple-600/40 text-purple-200 hover:text-white hover:border-pink-400 font-extrabold text-xs flex items-center gap-2 transition-all shrink-0 shadow-lg shadow-purple-950/40">
-                <i class="fa-solid fa-gem text-pink-400"></i>
-                <span>Rarity Floors Twitter Studio</span>
-                <i class="fa-solid fa-arrow-right text-[10px] text-cyan-400"></i>
-            </a>
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="rarity-floors.html" class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500/20 via-purple-600/20 to-cyan-500/20 border border-purple-600/40 text-purple-200 hover:text-white hover:border-pink-400 font-extrabold text-xs flex items-center gap-2 transition-all shrink-0 shadow-lg shadow-purple-950/40">
+                    <i class="fa-solid fa-gem text-pink-400"></i>
+                    <span>Rarity Floors Studio</span>
+                    <i class="fa-solid fa-arrow-right text-[10px] text-cyan-400"></i>
+                </a>
+                <a href="siblings.html" class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-indigo-500/20 border border-purple-600/40 text-purple-200 hover:text-white hover:border-pink-400 font-extrabold text-xs flex items-center gap-2 transition-all shrink-0 shadow-lg shadow-purple-950/40">
+                    <i class="fa-solid fa-users text-pink-400"></i>
+                    <span>Sibling Inspector</span>
+                    <i class="fa-solid fa-arrow-right text-[10px] text-cyan-400"></i>
+                </a>
+            </div>
         </div>
 
         <!-- Collection Summary Cards Banner -->
