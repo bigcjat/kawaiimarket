@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
     <title>Dropchan NFT Siblings & Trait Inspector | KawaiiMarket</title>
     <meta name="description" content="Select any Dropchan NFT or enter an XRPL wallet address to view its full traits, rarity rank, and find its closest trait-matched siblings in the collection.">
     
@@ -10,7 +11,7 @@
     <meta property="og:title" content="Dropchan NFT Siblings & Trait Inspector | KawaiiMarket">
     <meta property="og:description" content="Inspect traits, rarity ranks, and find the most similar sibling NFTs in the Dropchan collection.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://kawaii.market/siblings.html">
+    <meta property="og:url" content="https://kawaii.market/siblings">
 
     <!-- Tailwind CSS (CDN) & Google Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -134,8 +135,7 @@
             <div class="lg:col-span-4 flex flex-col items-center">
                 <div class="glass-panel p-4 rounded-3xl w-full border border-pink-500/20 glow-pink relative">
                     <div class="aspect-square rounded-2xl overflow-hidden bg-indigo-950/60 relative group">
-                        <img id="heroNftImage" src="" alt="Dropchan NFT" class="w-full h-full object-cover transition transform group-hover:scale-105 duration-300" 
-                            onerror="this.onerror=null; this.src='https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/'+currentInspectId+'.svg';" />
+                        <img id="heroNftImage" src="" alt="Dropchan NFT" referrerpolicy="no-referrer" class="w-full h-full object-cover transition transform group-hover:scale-105 duration-300" />
                     </div>
                     <div class="mt-4 flex items-center justify-between">
                         <div>
@@ -228,7 +228,9 @@
 
             // Update Hero Image & Title
             document.getElementById('heroNftTitle').innerText = `dropchan #${tokenId}`;
-            document.getElementById('heroNftImage').src = `https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${tokenId}.svg`;
+            const heroImg = document.getElementById('heroNftImage');
+            heroImg.referrerPolicy = "no-referrer";
+            heroImg.src = `https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${tokenId}.svg`;
             document.getElementById('siblingSourceTitle').innerText = `dropchan #${tokenId}`;
 
             const rank = rankData ? rankData.standard_rank : ((tokenId % 9999) + 1);
@@ -331,7 +333,7 @@
 
                 card.innerHTML = `
                     <div class="aspect-square rounded-xl overflow-hidden bg-indigo-950/40 relative mb-3">
-                        <img src="https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${sib.id}.svg" alt="Dropchan #${sib.id}" 
+                        <img src="https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${sib.id}.svg" alt="Dropchan #${sib.id}" referrerpolicy="no-referrer" 
                             class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
                         <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${badge.class}">
                             Rank #${rank}
