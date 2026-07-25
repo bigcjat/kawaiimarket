@@ -683,11 +683,38 @@
 
             try {
                 const card = document.getElementById('twitterCard');
+
+                // Convert all images inside #twitterCard to base64 Data URIs so html2canvas renders them perfectly
+                const cardImgs = Array.from(card.querySelectorAll('img'));
+                const originalSrcs = cardImgs.map(img => img.src);
+
+                await Promise.all(cardImgs.map(async (img) => {
+                    if (img.src && !img.src.startsWith('data:')) {
+                        try {
+                            const resp = await fetch(img.src, { cache: 'force-cache' });
+                            if (resp.ok) {
+                                const blob = await resp.blob();
+                                const dataUri = await new Promise((resolve) => {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => resolve(reader.result);
+                                    reader.readAsDataURL(blob);
+                                });
+                                img.src = dataUri;
+                            }
+                        } catch (e) {}
+                    }
+                }));
+
                 const canvas = await html2canvas(card, {
                     scale: 2,
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: currentTheme === 'dropchan' ? '#b8cfff' : '#080314'
+                });
+
+                // Restore original image sources
+                cardImgs.forEach((img, idx) => {
+                    img.src = originalSrcs[idx];
                 });
 
                 const link = document.createElement('a');
