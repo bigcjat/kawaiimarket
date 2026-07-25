@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer">
     <title>Dropchan NFT Siblings & Trait Inspector | KawaiiMarket</title>
-    <meta name="description" content="Select any Dropchan NFT or enter an XRPL wallet address to view its full traits, rarity rank, and find its closest trait-matched siblings in the collection.">
+    <meta name="description" content="Select any Dropchan NFT you own with Xaman to view its full traits, rarity rank, and find its closest trait-matched siblings in the collection.">
     
     <!-- OpenGraph & Twitter -->
     <meta property="og:title" content="Dropchan NFT Siblings & Trait Inspector | KawaiiMarket">
-    <meta property="og:description" content="Inspect traits, rarity ranks, and customize similarity weights to find sibling NFTs in the Dropchan collection.">
+    <meta property="og:description" content="Inspect traits, rarity ranks, and find sibling NFTs for your owned Dropchans in the collection.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://kawaii.market/siblings">
 
@@ -18,6 +18,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -62,11 +65,20 @@
 <body class="antialiased selection:bg-pink-500 selection:text-white pb-20">
 
     <!-- Header Navigation -->
-    <header class="sticky top-0 z-50 glass-panel border-b border-white/10 px-4 lg:px-8 py-3.5 flex items-center justify-between">
+    <header class="sticky top-0 z-50 glass-panel border-b border-white/10 px-4 lg:px-8 py-3 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <a href="index.html" class="flex items-center space-x-2">
-                <span class="text-2xl font-black tracking-tight text-white">dropchan</span>
-                <span class="text-xs font-extrabold px-2 py-0.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white">MARKET</span>
+            <a href="index.html" class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <i class="fa-solid fa-droplet text-white text-sm"></i>
+                </div>
+                <div>
+                    <span class="font-black text-lg tracking-wide bg-gradient-to-r from-cyan-400 via-purple-300 to-pink-400 bg-clip-text text-transparent block leading-tight">
+                        KawaiiMarket
+                    </span>
+                    <span class="block text-[8px] text-purple-300 font-bold tracking-wider uppercase">
+                        Rarity Dashboard
+                    </span>
+                </div>
             </a>
         </div>
         <nav class="flex items-center space-x-2 md:space-x-4">
@@ -80,51 +92,58 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
 
         <!-- Title Banner -->
-        <div class="text-center mb-8">
+        <div class="text-center mb-6">
             <h1 class="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-400 tracking-tight">
-                Dropchan Trait & Sibling Inspector
+                Your Owned Dropchans & Sibling Inspector
             </h1>
             <p class="mt-2 text-sm sm:text-base text-gray-400 max-w-2xl mx-auto">
-                Explore trait breakdowns, customize similarity weights, and uncover true sibling matches across all 10,000 Dropchans.
+                Select one of your owned Dropchans to inspect its traits, rarity score, and discover its closest sibling NFTs in the collection.
             </p>
         </div>
 
-        <!-- Wallet / Token ID Selector Controls -->
-        <div class="glass-panel rounded-2xl p-4 md:p-6 mb-8 border border-white/10 shadow-2xl">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                
-                <!-- Token ID Direct Lookup -->
-                <div class="md:col-span-5 flex items-center space-x-2">
-                    <div class="relative w-full">
-                        <input type="number" id="nftIdInput" min="1" max="9999" placeholder="Enter Token ID (e.g. 23)" 
-                            class="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition" />
+        <!-- Xaman Connected Owned NFT Selector Bar -->
+        <div class="glass-panel rounded-3xl p-5 md:p-6 mb-10 border border-pink-500/30 shadow-2xl relative overflow-hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 pb-3 border-b border-white/10">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center text-white text-lg shadow-lg">
+                        <i class="fa-solid fa-wallet"></i>
                     </div>
-                    <button id="btnLoadNft" class="px-5 py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-sm rounded-xl transition shadow-lg shrink-0">
-                        Inspect
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm font-extrabold text-white">Xaman Wallet Inventory</span>
+                            <span id="xamanStatusBadge" class="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase">
+                                Checking...
+                            </span>
+                        </div>
+                        <p id="xamanAddressText" class="text-xs text-gray-400 font-mono mt-0.5">r...</p>
+                    </div>
+                </div>
+                
+                <!-- Manual NFT / Address Override Input -->
+                <div class="flex items-center space-x-2">
+                    <input type="number" id="nftIdInput" min="1" max="9999" placeholder="NFT #ID" 
+                        class="w-28 bg-black/40 border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 transition" />
+                    <button id="btnLoadNft" class="px-3.5 py-1.5 bg-pink-500 hover:bg-pink-600 text-white font-bold text-xs rounded-xl transition shadow">
+                        Go
                     </button>
-                    <button id="btnRandomNft" class="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white font-bold text-sm rounded-xl transition border border-white/10 shrink-0" title="Random NFT">
+                    <button id="btnRandomNft" class="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 text-gray-300 text-xs rounded-xl transition border border-white/10" title="Random NFT">
                         🎲
                     </button>
                 </div>
-
-                <!-- Wallet Address Lookup -->
-                <div class="md:col-span-7 flex items-center space-x-2">
-                    <input type="text" id="walletInput" placeholder="Enter XRPL Wallet Address (r...)" 
-                        class="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition" />
-                    <button id="btnLoadWallet" class="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-sm rounded-xl transition shadow-lg shrink-0">
-                        Fetch Owned
-                    </button>
-                </div>
-
             </div>
 
-            <!-- Wallet Owned Quick Picker Bar -->
-            <div id="walletOwnedContainer" class="hidden mt-4 pt-4 border-t border-white/10">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold text-pink-400 tracking-wider uppercase" id="walletOwnedTitle">Owned Dropchans</span>
-                    <span class="text-xs text-gray-400" id="walletCountBadge">0 found</span>
+            <!-- Owned Dropchans Visual Thumbnail Carousel -->
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-extrabold text-pink-300 tracking-wider uppercase flex items-center space-x-1.5">
+                        <span>Select Your Dropchan</span>
+                        <span id="ownedCountBadge" class="text-[10px] font-black bg-pink-500/20 text-pink-300 px-2 py-0.5 rounded-full">0 owned</span>
+                    </span>
+                    <span class="text-[11px] text-gray-400">Click any owned card below to inspect</span>
                 </div>
-                <div id="walletOwnedGrid" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1"></div>
+                <div id="ownedCarouselGrid" class="flex space-x-3 overflow-x-auto pb-2 pt-1 scrollbar-thin scrollbar-thumb-pink-500">
+                    <div class="text-xs text-gray-400 py-3">Loading your owned Dropchan NFTs...</div>
+                </div>
             </div>
         </div>
 
@@ -224,6 +243,8 @@
 
     <script>
         let currentInspectId = 23;
+        const DEFAULT_WALLET = "raMenv8MTe6nBk9C5iFk6Gh6vZLs5MoYcg";
+        const ISSUER = "rDropCHANEgmG7FBz1nzPpG27BGzWjnCnn";
         const TRAIT_COUNTS = {}; // Trait value occurrence counts across collection
 
         // Configurable Trait Categories & Default Weights
@@ -363,6 +384,13 @@
             const metadata = window.DROPCHAN_METADATA ? window.DROPCHAN_METADATA[tokenId] : null;
             const rankData = window.DROPCHAN_RANKS ? window.DROPCHAN_RANKS[tokenId] : null;
 
+            // Highlight selected in owned carousel
+            document.querySelectorAll('.owned-card-btn').forEach(b => {
+                b.classList.remove('ring-2', 'ring-pink-500', 'border-pink-500');
+            });
+            const selBtn = document.getElementById(`owned-card-${tokenId}`);
+            if (selBtn) selBtn.classList.add('ring-2', 'ring-pink-500', 'border-pink-500');
+
             // Update Hero Image & Title
             document.getElementById('heroNftTitle').innerText = `dropchan #${tokenId}`;
             const heroImg = document.getElementById('heroNftImage');
@@ -495,28 +523,31 @@
             });
         }
 
-        // Fetch Wallet Owned Dropchans from XRPL
-        async function fetchWalletOwned(address) {
-            const container = document.getElementById('walletOwnedContainer');
-            const grid = document.getElementById('walletOwnedGrid');
-            const countBadge = document.getElementById('walletCountBadge');
+        // Fetch User's Owned Dropchans from Xaman Wallet / Address
+        async function loadUserOwnedDropchans() {
+            const xamanAddr = localStorage.getItem('xaman_address') || DEFAULT_WALLET;
+            const statusBadge = document.getElementById('xamanStatusBadge');
+            const addrText = document.getElementById('xamanAddressText');
+            const carousel = document.getElementById('ownedCarouselGrid');
+            const countBadge = document.getElementById('ownedCountBadge');
 
-            if (!address || !address.startsWith('r')) {
-                alert('Please enter a valid XRPL wallet address starting with r...');
-                return;
+            addrText.innerText = xamanAddr;
+            if (localStorage.getItem('xaman_address')) {
+                statusBadge.className = "text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase";
+                statusBadge.innerText = "Xaman Connected";
+            } else {
+                statusBadge.className = "text-[10px] font-black px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase";
+                statusBadge.innerText = "Demo Wallet";
             }
 
-            container.classList.remove('hidden');
-            grid.innerHTML = `<span class="text-xs text-gray-400 py-2">Fetching wallet NFTs from XRP Ledger...</span>`;
+            carousel.innerHTML = `<div class="text-xs text-gray-400 py-3">Fetching owned Dropchans from XRP Ledger...</div>`;
 
             try {
-                const resp = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/owner/${address}`);
+                const resp = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/owner/${xamanAddr}`);
                 const data = await resp.json();
                 const nfts = data.data?.nfts || [];
 
-                const ISSUER = "rDropCHANEgmG7FBz1nzPpG27BGzWjnCnn";
                 const ownedDropchans = [];
-
                 nfts.forEach(nft => {
                     if (nft.Issuer === ISSUER && nft.URI) {
                         try {
@@ -531,26 +562,44 @@
                 });
 
                 countBadge.innerText = `${ownedDropchans.length} owned`;
-                grid.innerHTML = '';
+                carousel.innerHTML = '';
 
                 if (ownedDropchans.length === 0) {
-                    grid.innerHTML = `<span class="text-xs text-gray-400 py-1">No Dropchan NFTs found in wallet ${address.substring(0, 8)}...</span>`;
+                    carousel.innerHTML = `
+                        <div class="text-xs text-gray-400 py-2 flex items-center space-x-2">
+                            <span>No Dropchan NFTs found in ${xamanAddr.substring(0, 10)}...</span>
+                        </div>
+                    `;
+                    inspectNft(23); // Fallback to #23
                     return;
                 }
 
                 ownedDropchans.forEach(id => {
-                    const btn = document.createElement('button');
-                    btn.className = 'px-3 py-1.5 bg-pink-500/20 hover:bg-pink-500/40 border border-pink-500/30 text-white font-bold text-xs rounded-xl transition flex items-center space-x-1.5';
-                    btn.innerHTML = `<span>#${id}</span>`;
-                    btn.onclick = () => inspectNft(id);
-                    grid.appendChild(btn);
+                    const rankData = window.DROPCHAN_RANKS ? window.DROPCHAN_RANKS[id] : null;
+                    const rank = rankData ? rankData.standard_rank : (id % 9999 + 1);
+
+                    const itemBtn = document.createElement('button');
+                    itemBtn.id = `owned-card-${id}`;
+                    itemBtn.className = 'owned-card-btn glass-card p-2 rounded-2xl shrink-0 w-28 border border-white/10 text-left hover:border-pink-500 transition group';
+                    itemBtn.onclick = () => inspectNft(id);
+
+                    itemBtn.innerHTML = `
+                        <div class="aspect-square rounded-xl overflow-hidden bg-indigo-950/40 relative mb-1.5">
+                            <img src="https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${id}.svg" alt="Dropchan #${id}" referrerpolicy="no-referrer" 
+                                class="w-full h-full object-cover group-hover:scale-105 transition" />
+                        </div>
+                        <div class="text-[11px] font-black text-white truncate">#${id}</div>
+                        <div class="text-[9px] font-bold text-gray-400">Rank #${rank}</div>
+                    `;
+                    carousel.appendChild(itemBtn);
                 });
 
-                // Auto-inspect first owned NFT
+                // Auto-select first owned NFT
                 inspectNft(ownedDropchans[0]);
 
             } catch (err) {
-                grid.innerHTML = `<span class="text-xs text-red-400 py-1">Failed to query XRPL wallet. Please try again.</span>`;
+                carousel.innerHTML = `<div class="text-xs text-red-400 py-2">Failed to query XRPL wallet.</div>`;
+                inspectNft(23);
             }
         }
 
@@ -558,7 +607,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initTraitFrequencies();
             renderWeightControls();
-            inspectNft(23); // Default to Dropchan #23
+            loadUserOwnedDropchans(); // Auto-load Xaman connected owned NFTs
 
             document.getElementById('btnLoadNft').onclick = () => {
                 const val = document.getElementById('nftIdInput').value;
@@ -576,11 +625,6 @@
                 const randId = Math.floor(Math.random() * 9999) + 1;
                 document.getElementById('nftIdInput').value = randId;
                 inspectNft(randId);
-            };
-
-            document.getElementById('btnLoadWallet').onclick = () => {
-                const addr = document.getElementById('walletInput').value.trim();
-                fetchWalletOwned(addr);
             };
         });
     </script>
