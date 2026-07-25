@@ -691,7 +691,7 @@
                 await Promise.all(cardImgs.map(async (img) => {
                     if (img.src && !img.src.startsWith('data:')) {
                         try {
-                            const resp = await fetch(img.src, { cache: 'force-cache' });
+                            const resp = await fetch(img.src, { cache: 'force-cache', referrerPolicy: 'no-referrer' });
                             if (resp.ok) {
                                 const blob = await resp.blob();
                                 const dataUri = await new Promise((resolve) => {
