@@ -447,44 +447,12 @@
 
         async function loadRarityFloors() {
             document.getElementById('refreshSpinner').classList.add('animate-spin');
-            document.getElementById('statusText').innerText = 'Verifying live on-ledger NFT owners and active sell offers...';
+            document.getElementById('statusText').innerText = 'Fetching live on-ledger sell offers...';
 
             try {
-                let mintedOwners = {};
-                let nftTokenIds = {};
-                try {
-                    let mintedResponse = await fetch(`/api/market/minted?issuer=${ISSUER}&taxon=${TAXON}`);
-                    if (!mintedResponse || !mintedResponse.ok) {
-                        mintedResponse = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/issuer/${ISSUER}/taxon/${TAXON}`);
-                    }
-                    if (mintedResponse && mintedResponse.ok) {
-                        const resJson = await mintedResponse.json();
-                        const nftsList = resJson.data?.nfts || [];
-                        nftsList.forEach(nft => {
-                            if (nft.URI) {
-                                try {
-                                    let decodedUri = '';
-                                    for (let i = 0; i < nft.URI.length; i += 2) {
-                                        decodedUri += String.fromCharCode(parseInt(nft.URI.substr(i, 2), 16));
-                                    }
-                                    const tokenIdNum = parseInt(decodedUri.split('/').pop().split('.')[0]);
-                                    if (!isNaN(tokenIdNum)) {
-                                        mintedOwners[tokenIdNum] = nft.Owner;
-                                        if (nft.NFTokenID) nftTokenIds[tokenIdNum] = nft.NFTokenID;
-                                    }
-                                } catch (e) {}
-                            }
-                        });
-                    }
-                } catch (e) {
-                    console.warn("Failed to fetch minted owners list:", e);
-                }
-
-                let response = await fetch(`/api/market/offers?issuer=${ISSUER}&taxon=${TAXON}`);
-                if (!response || !response.ok) {
-                    response = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/offers/issuer/${ISSUER}/taxon/${TAXON}`);
-                }
-                if (!response.ok) throw new Error("Failed to fetch on-ledger offers");
+                // Perform exactly 1 single request to fetch live offers
+                const response = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/offers/issuer/${ISSUER}/taxon/${TAXON}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch on-ledger offers`);
 
                 const resJson = await response.json();
                 const offersList = resJson.data?.offers || [];
