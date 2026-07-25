@@ -647,6 +647,7 @@
                 }
                 const img = new Image();
                 img.crossOrigin = "anonymous";
+                img.referrerPolicy = "no-referrer";
                 img.onload = () => {
                     item.imgLoaded = true;
                     item.imgElement = img;
@@ -655,6 +656,7 @@
                 img.onerror = () => {
                     const fallbackImg = new Image();
                     fallbackImg.crossOrigin = "anonymous";
+                    fallbackImg.referrerPolicy = "no-referrer";
                     fallbackImg.onload = () => {
                         item.imgLoaded = true;
                         item.imgElement = fallbackImg;

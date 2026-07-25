@@ -622,6 +622,7 @@
                 }
                 const img = new Image();
                 img.crossOrigin = "anonymous";
+                img.referrerPolicy = "no-referrer";
                 img.onload = () => {
                     item.imgLoaded = true;
                     item.imgElement = img;
@@ -631,6 +632,7 @@
                     // Fallback to local cache thumbnail
                     const fallbackImg = new Image();
                     fallbackImg.crossOrigin = "anonymous";
+                    fallbackImg.referrerPolicy = "no-referrer";
                     fallbackImg.onload = () => {
                         item.imgLoaded = true;
                         item.imgElement = fallbackImg;
