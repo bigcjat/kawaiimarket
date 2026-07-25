@@ -419,11 +419,7 @@
         }
 
         function getThumbnailUrl(id) {
-            return `/cache/thumbnails/${ISSUER}/${TAXON}/${id}.jpg`;
-        }
-
-        function getFallbackUrl(id) {
-            return `https://favicon.bot/ipfs/${DROPCHAN_IMG_CID}/${id}.svg`;
+            return `https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${id}.svg`;
         }
 
         function openNftModal(id, rank, price, nftTokenId) {
@@ -686,7 +682,7 @@
                                 src="${getThumbnailUrl(item.id)}" 
                                 alt="#${item.id}"
                                 class="w-full h-full object-cover"
-                                onerror="this.onerror=null; this.src='${getFallbackUrl(item.id)}';"
+                                onerror="this.onerror=null; this.src='https://placehold.co/400x400/180e38/ff69b4?text=dropchan+%23${item.id}';"
                             />
                             <!-- Top Overlay Badges -->
                             <div class="absolute top-1.5 inset-x-1.5 flex items-center justify-between pointer-events-none">
