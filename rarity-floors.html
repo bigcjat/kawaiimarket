@@ -37,10 +37,10 @@
         }
     </script>
     
-    <!-- Google Fonts, FontAwesome, and html2canvas -->
+    <!-- Google Fonts, FontAwesome, and html-to-image (replaces html2canvas) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800;900&family=Outfit:wght@600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
 
     <!-- Dropchan Precompiled Data -->
     <script src="dropchan_metadata.js"></script>
@@ -683,7 +683,7 @@
             try {
                 const card = document.getElementById('twitterCard');
 
-                // Convert all images inside #twitterCard to base64 Data URIs so html2canvas renders them perfectly
+                // Convert all images inside #twitterCard to base64 Data URIs so the capture renders them perfectly
                 const cardImgs = Array.from(card.querySelectorAll('img'));
                 const originalSrcs = cardImgs.map(img => img.src);
 
@@ -702,18 +702,18 @@
                     }
                 }));
 
-                // Wait for all web fonts to load and resolve metrics before html2canvas capture
+                // Wait for all web fonts to load and resolve metrics before capture
                 if (document.fonts && document.fonts.ready) {
                     await document.fonts.ready;
                 }
 
-                const canvas = await html2canvas(card, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    foreignObjectRendering: true,
+                // html-to-image renders through a real <foreignObject> in an SVG, so the browser's
+                // own text engine draws the text — this avoids html2canvas's font-metric guessing
+                // entirely, which is what was causing the vertical text offset.
+                const dataUrl = await htmlToImage.toPng(card, {
+                    pixelRatio: 2,
                     backgroundColor: currentTheme === 'dropchan' ? '#b8cfff' : '#080314',
-                    logging: false
+                    cacheBust: true
                 });
 
                 // Restore original image sources
@@ -723,7 +723,7 @@
 
                 const link = document.createElement('a');
                 link.download = `dropchan_rarity_floors_${currentTheme}_${Date.now()}.png`;
-                link.href = canvas.toDataURL('image/png');
+                link.href = dataUrl;
                 link.click();
             } catch (e) {
                 alert("Error generating image: " + e.message);
