@@ -1193,6 +1193,7 @@
             img.className = `w-full h-full object-cover ${isMinted ? '' : 'opacity-40'}`;
             img.alt = item.name;
             img.loading = "lazy";
+            img.referrerPolicy = "no-referrer";
 
             const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
             img.src = `${cleanBase}${item.id}.svg`;
@@ -1387,6 +1388,7 @@
             const img = document.createElement('img');
             img.className = "w-full h-full object-cover";
             img.alt = item.name;
+            img.referrerPolicy = "no-referrer";
 
             // Check if already in grid
             const gridCardImg = document.querySelector(`#img-container-${item.id} img`);
@@ -2128,6 +2130,7 @@
                 // Fallback to creating a new img element with reliable thumbnail URL
                 const fallbackImg = document.createElement('img');
                 fallbackImg.className = "w-full h-full object-cover";
+                fallbackImg.referrerPolicy = "no-referrer";
                 fallbackImg.style.opacity = '0';
                 modalImgContainer.appendChild(fallbackImg);
 
