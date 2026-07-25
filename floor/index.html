@@ -23,12 +23,12 @@
     <!-- Favicon & Web App Icons -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 
-    <!-- Instant Redirect to /rarity-floors.html -->
-    <meta http-equiv="refresh" content="0; url=/rarity-floors.html">
+    <!-- JS Client Redirect for Human Users (Allows Crawlers to read OpenGraph Tags) -->
     <script>
-        window.location.replace('/rarity-floors.html');
+        if (!/bot|crawler|spider|discord|twitter|telegram|facebook/i.test(navigator.userAgent)) {
+            window.location.replace('/rarity-floors.html');
+        }
     </script>
 </head>
 <body style="background-color: #080314; color: #ffffff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;">
