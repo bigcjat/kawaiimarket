@@ -473,16 +473,12 @@
                             }
                             const tokenIdNum = parseInt(decodedUri.split('/').pop().split('.')[0]);
                             if (!isNaN(tokenIdNum) && window.DROPCHAN_RANKS && window.DROPCHAN_RANKS[tokenIdNum]) {
-                                const currentActualOwner = mintedOwners[tokenIdNum];
-                                const tokenHex = nftTokenIds[tokenIdNum] || nft.NFTokenID || '';
+                                const tokenHex = nft.NFTokenID || '';
                                 
                                 const activeSell = (nft.sell || []).filter(offer => {
                                     if (offer.Expiration) {
                                         const exp = parseInt(offer.Expiration);
                                         if (!isNaN(exp) && exp <= rippleNow) return false;
-                                    }
-                                    if (currentActualOwner && offer.Owner !== currentActualOwner) {
-                                        return false;
                                     }
                                     return true;
                                 });
