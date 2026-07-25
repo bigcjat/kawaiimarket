@@ -643,6 +643,21 @@
                     const slot = document.createElement('div');
                     slot.className = `flex flex-col ${cardStyle} rounded-2xl overflow-hidden shadow-md relative w-full h-[190px] cursor-pointer hover:scale-[1.03] transition-transform`;
                     slot.onclick = () => openNftModal(item.id, item.rank, item.price, item.nftTokenId);
+                    // Formatted price with comma separators for >= 1000
+                    const numPrice = Math.round(item.price);
+                    const priceFormatted = numPrice >= 1000 ? numPrice.toLocaleString() : numPrice.toString();
+                    const fullPriceText = `${priceFormatted} XRP`;
+
+                    // Dynamic font size: text-xl for <= 7 chars, text-lg for <= 10 chars, text-base for <= 13 chars, text-sm for longer
+                    let priceSizeClass = 'text-xl';
+                    if (fullPriceText.length > 13) {
+                        priceSizeClass = 'text-sm';
+                    } else if (fullPriceText.length > 10) {
+                        priceSizeClass = 'text-base';
+                    } else if (fullPriceText.length > 7) {
+                        priceSizeClass = 'text-lg';
+                    }
+
                     slot.innerHTML = `
                         <!-- Full-Width Image Container -->
                         <div class="relative w-full h-[142px] bg-purple-950 overflow-hidden">
@@ -660,8 +675,8 @@
                         </div>
 
                         <!-- Price Banner Footer -->
-                        <div class="flex-1 flex items-center justify-center px-1 border-t border-black/10">
-                            <span class="text-base font-black ${textAccentClass} tracking-tight">${item.price.toFixed(0)} XRP</span>
+                        <div class="flex-1 flex items-center justify-center px-1.5 border-t border-black/10 overflow-hidden">
+                            <span class="${priceSizeClass} font-black ${textAccentClass} tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">${fullPriceText}</span>
                         </div>
                     `;
                     container.appendChild(slot);
