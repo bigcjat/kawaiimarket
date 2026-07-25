@@ -648,14 +648,14 @@
                     const priceFormatted = numPrice >= 1000 ? numPrice.toLocaleString() : numPrice.toString();
                     const fullPriceText = `${priceFormatted} XRP`;
 
-                    // Dynamic font size: text-xl for <= 7 chars, text-lg for <= 10 chars, text-base for <= 13 chars, text-sm for longer
-                    let priceSizeClass = 'text-xl';
+                    // Dynamic font size: text-2xl for <= 7 chars, text-xl for <= 10 chars, text-lg for <= 13 chars, text-base for longer
+                    let priceSizeClass = 'text-2xl';
                     if (fullPriceText.length > 13) {
-                        priceSizeClass = 'text-sm';
-                    } else if (fullPriceText.length > 10) {
                         priceSizeClass = 'text-base';
-                    } else if (fullPriceText.length > 7) {
+                    } else if (fullPriceText.length > 10) {
                         priceSizeClass = 'text-lg';
+                    } else if (fullPriceText.length > 7) {
+                        priceSizeClass = 'text-xl';
                     }
 
                     slot.innerHTML = `
