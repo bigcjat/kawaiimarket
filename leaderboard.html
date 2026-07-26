@@ -814,7 +814,7 @@
             } else {
                 allHolders.sort((a, b) => {
                     if (b.worth !== a.worth) return b.worth - a.worth;
-                    return b.count - a.count;
+                    return a.count - b.count; // count ascending (lower amount of NFTs means higher average rarity!)
                 });
             }
         }
