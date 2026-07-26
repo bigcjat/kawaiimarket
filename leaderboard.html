@@ -215,6 +215,7 @@
                                 <th class="py-3 px-3 md:py-4 md:px-6 text-center w-12 md:w-16">Pos</th>
                                 <th class="py-3 px-3 md:py-4 md:px-6">Collector Address</th>
                                 <th class="py-3 px-3 md:py-4 md:px-6 text-center w-16 md:w-24">Holds</th>
+                                <th class="py-3 px-3 md:py-4 md:px-6 text-center w-20 md:w-28">Est. Worth</th>
                                 <th class="hidden md:table-cell py-4 px-6 text-center w-64">Rarity Distribution</th>
                                 <th class="hidden md:table-cell py-4 px-6 text-center w-32">Action</th>
                             </tr>
@@ -238,6 +239,7 @@
         let activeFilterTypes = new Set(); // Holds selected filters
         let expandedRowAddress = null; // Currently expanded address
         let activeSellPrices = {}; // Maps NFTokenID -> lowest price (number)
+        let tierFloors = { mythical: 100, epic: 100, rare: 100, common: 100 };
         
         const urlParams = new URLSearchParams(window.location.search);
         const highlightAddress = urlParams.get('address');
@@ -267,8 +269,54 @@
                 const mintedJson = await mintedRes.json();
                 const nfts = mintedJson.data?.nfts || [];
 
-                // Parse active sell offers
+                // Group NFTs by owner and populate idToTokenMap
+                const ownersMap = {};
+                nfts.forEach(nft => {
+                    const owner = nft.Owner || nft.owner || nft.Account;
+                    const tokenId = nft.NFTokenID || nft.nftoken_id;
+                    if (!owner || !tokenId) return;
+
+                    let seq = nft.nft_serial || nft.Sequence || 0;
+                    if (nft.URI) {
+                        try {
+                            const decoded = hexToString(nft.URI);
+                            const parsed = parseInt(decoded.split('/').pop().split('.')[0]);
+                            if (!isNaN(parsed)) {
+                                seq = parsed;
+                                idToTokenMap[tokenId] = parsed;
+                            }
+                        } catch (e) {}
+                    }
+
+                    const rankData = window.DROPCHAN_RANKS[seq];
+                    const rank = rankData ? rankData.xrplto_rank || rankData.standard_rank : 9999;
+
+                    if (!ownersMap[owner]) {
+                        ownersMap[owner] = {
+                            address: owner,
+                            count: 0,
+                            nfts: [],
+                            mythicalCount: 0,
+                            epicCount: 0,
+                            rareCount: 0,
+                            worth: 0
+                        };
+                    }
+                    ownersMap[owner].count++;
+                    ownersMap[owner].nfts.push({ tokenId, seq, rank });
+
+                    if (rank <= 100) ownersMap[owner].mythicalCount++;
+                    else if (rank <= 500) ownersMap[owner].epicCount++;
+                    else if (rank <= 1500) ownersMap[owner].rareCount++;
+                });
+
+                // Parse active sell offers & calculate floors
                 activeSellPrices = {};
+                let mythicalFloor = Infinity;
+                let epicFloor = Infinity;
+                let rareFloor = Infinity;
+                let commonFloor = Infinity;
+
                 if (offersRes.ok) {
                     try {
                         const offersJson = await offersRes.json();
@@ -299,6 +347,22 @@
                                 });
                                 if (lowestPrice !== Infinity) {
                                     activeSellPrices[tokenId] = lowestPrice;
+
+                                    // Rarity tier floor mapping
+                                    const seq = idToTokenMap[tokenId];
+                                    if (seq !== undefined) {
+                                        const rankData = window.DROPCHAN_RANKS[seq];
+                                        const rank = rankData ? rankData.xrplto_rank || rankData.standard_rank : 9999;
+                                        if (rank <= 100) {
+                                            if (lowestPrice < mythicalFloor) mythicalFloor = lowestPrice;
+                                        } else if (rank <= 500) {
+                                            if (lowestPrice < epicFloor) epicFloor = lowestPrice;
+                                        } else if (rank <= 1500) {
+                                            if (lowestPrice < rareFloor) rareFloor = lowestPrice;
+                                        } else {
+                                            if (lowestPrice < commonFloor) commonFloor = lowestPrice;
+                                        }
+                                    }
                                 }
                             }
                         });
@@ -307,44 +371,35 @@
                     }
                 }
 
-                // Group NFTs by owner
-                const ownersMap = {};
-                nfts.forEach(nft => {
-                    const owner = nft.Owner || nft.owner || nft.Account;
-                    const tokenId = nft.NFTokenID || nft.nftoken_id;
-                    if (!owner || !tokenId) return;
+                // Overall fallbacks
+                const minFloor = Math.min(
+                    mythicalFloor !== Infinity ? mythicalFloor : Infinity,
+                    epicFloor !== Infinity ? epicFloor : Infinity,
+                    rareFloor !== Infinity ? rareFloor : Infinity,
+                    commonFloor !== Infinity ? commonFloor : Infinity
+                );
+                const overallFloor = minFloor !== Infinity ? minFloor : 100; // default backup
 
-                    let seq = nft.nft_serial || nft.Sequence || 0;
-                    if (nft.URI) {
-                        try {
-                            const decoded = hexToString(nft.URI);
-                            const parsed = parseInt(decoded.split('/').pop().split('.')[0]);
-                            if (!isNaN(parsed)) {
-                                seq = parsed;
-                                idToTokenMap[tokenId] = parsed;
-                            }
-                        } catch (e) {}
-                    }
+                tierFloors.mythical = mythicalFloor !== Infinity ? mythicalFloor : overallFloor;
+                tierFloors.epic = epicFloor !== Infinity ? epicFloor : overallFloor;
+                tierFloors.rare = rareFloor !== Infinity ? rareFloor : overallFloor;
+                tierFloors.common = commonFloor !== Infinity ? commonFloor : overallFloor;
 
-                    const rankData = window.DROPCHAN_RANKS[seq];
-                    const rank = rankData ? rankData.xrplto_rank || rankData.standard_rank : 9999;
+                const fMyth = tierFloors.mythical;
+                const fEpic = tierFloors.epic;
+                const fRare = tierFloors.rare;
+                const fComm = tierFloors.common;
 
-                    if (!ownersMap[owner]) {
-                        ownersMap[owner] = {
-                            address: owner,
-                            count: 0,
-                            nfts: [],
-                            mythicalCount: 0,
-                            epicCount: 0,
-                            rareCount: 0
-                        };
-                    }
-                    ownersMap[owner].count++;
-                    ownersMap[owner].nfts.push({ tokenId, seq, rank });
-
-                    if (rank <= 100) ownersMap[owner].mythicalCount++;
-                    else if (rank <= 500) ownersMap[owner].epicCount++;
-                    else if (rank <= 1500) ownersMap[owner].rareCount++;
+                // Calculate worth for each owner
+                Object.values(ownersMap).forEach(owner => {
+                    let worth = 0;
+                    owner.nfts.forEach(nft => {
+                        if (nft.rank <= 100) worth += fMyth;
+                        else if (nft.rank <= 500) worth += fEpic;
+                        else if (nft.rank <= 1500) worth += fRare;
+                        else worth += fComm;
+                    });
+                    owner.worth = Math.round(worth);
                 });
 
                 // Convert to array and sort by count descending
@@ -475,6 +530,7 @@
                         </div>
                     </td>
                     <td class="py-3 px-3 md:py-4 md:px-6 text-center font-black text-sm text-cyan-400">${holder.count}</td>
+                    <td class="py-3 px-3 md:py-4 md:px-6 text-center font-black text-xs text-amber-400">${holder.worth.toLocaleString()} XRP</td>
                     <td class="hidden md:table-cell py-4 px-6">
                         <div class="flex items-center justify-center gap-1.5">${badgeHtml}</div>
                     </td>
@@ -680,6 +736,14 @@
                                 }
                             });
 
+                            let worth = 0;
+                            parsedNfts.forEach(nft => {
+                                if (nft.rank <= 100) worth += tierFloors.mythical;
+                                else if (nft.rank <= 500) worth += tierFloors.epic;
+                                else if (nft.rank <= 1500) worth += tierFloors.rare;
+                                else worth += tierFloors.common;
+                            });
+
                             parsedNfts.sort((a, b) => a.rank - b.rank);
                             results = [{
                                 address: search,
@@ -687,7 +751,8 @@
                                 nfts: parsedNfts,
                                 mythicalCount,
                                 epicCount,
-                                rareCount
+                                rareCount,
+                                worth: Math.round(worth)
                             }];
                         }
                     }
