@@ -145,42 +145,62 @@
 </head>
 <body class="min-h-screen pb-12">
 
-    <!-- Top Navigation Header -->
-    <header class="border-b border-purple-900/40 glass-panel sticky top-0 z-40 mb-6">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-                <a href="index.html" class="p-2.5 rounded-xl bg-purple-950/60 border border-purple-800/40 text-purple-300 hover:text-white hover:bg-purple-900/50 transition-all" title="Back to Marketplace">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </a>
-                <div>
-                    <h1 class="text-lg font-black tracking-tight text-white flex items-center gap-2">
-                        <span>🌸 Dropchan Rarity Floors</span>
-                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">Twitter Studio (1200x675)</span>
-                    </h1>
-                    <p class="text-xs text-purple-300/70">Click any NFT card to view on XRP Cafe, Bidds, Bithomp, or Kawaii Market.</p>
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-white/10 px-4 lg:px-8 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <a href="index.html" class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <i class="fa-solid fa-droplet text-white text-sm"></i>
                 </div>
-            </div>
+                <div>
+                    <span class="font-black text-lg tracking-wide bg-gradient-to-r from-cyan-400 via-purple-300 to-pink-400 bg-clip-text text-transparent block leading-tight">
+                        KawaiiMarket
+                    </span>
+                    <span class="block text-[8px] text-purple-300 font-bold tracking-wider uppercase">
+                        Rarity Dashboard
+                    </span>
+                </div>
+            </a>
+        </div>
+        <nav class="flex items-center space-x-2 md:space-x-4">
+            <a href="index.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Home</a>
+            <a href="rarity-floors.html" class="text-xs md:text-sm font-bold text-pink-400 bg-pink-500/10 border border-pink-500/30 px-3 py-1.5 rounded-lg transition">Rarity Floors</a>
+            <a href="siblings.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Siblings Finder</a>
+            <a href="#" onclick="openLeaderboard()" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Leaderboard</a>
+        </nav>
+    </header>
 
-            <!-- Theme Switcher & Export -->
-            <div class="flex items-center gap-3">
-                <div class="flex items-center bg-purple-950/80 p-1 rounded-xl border border-purple-700/50">
-                    <button id="themeBtnDropchan" onclick="setTheme('dropchan')" class="px-3 py-1.5 rounded-lg text-xs font-black transition-all bg-pink-500 text-white shadow-md shadow-pink-500/30 flex items-center gap-1.5">
-                        <span>🌸 Dropchan Kawaii</span>
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 flex flex-col items-center gap-6 pt-6">
+
+        <!-- Action Control Bar -->
+        <div class="w-full max-w-[1200px] flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-3xl bg-purple-950/40 border border-purple-800/40 shadow-xl backdrop-blur-md">
+            <div>
+                <h1 class="text-xl font-black text-white flex items-center gap-2">
+                    <span>🌸 Twitter Graphic Studio</span>
+                    <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase">1200x675 (16:9)</span>
+                </h1>
+                <p class="text-xs text-purple-300/70 mt-1">Export high-resolution floor price cards for sharing on Twitter/X.</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Theme Switcher -->
+                <div class="flex items-center bg-purple-955/80 p-1 rounded-xl border border-purple-800/60 shadow-inner">
+                    <button id="themeBtnDropchan" onclick="setTheme('dropchan')" class="px-3.5 py-1.5 rounded-lg text-xs font-black transition-all bg-pink-500 text-white shadow-md shadow-pink-500/30 flex items-center gap-1.5">
+                        <span>🌸 Dropchan</span>
                     </button>
-                    <button id="themeBtnCyber" onclick="setTheme('cyber')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-purple-300 hover:text-white flex items-center gap-1.5">
+                    <button id="themeBtnCyber" onclick="setTheme('cyber')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-purple-300 hover:text-white flex items-center gap-1.5">
                         <span>🌌 Cyber Dark</span>
                     </button>
                 </div>
 
-                <button id="downloadBtn" onclick="downloadGraphic()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 text-white font-black text-xs flex items-center gap-2 shadow-xl shadow-purple-600/30 hover:opacity-95 transition-all transform hover:scale-105 active:scale-95">
+                <!-- Export Button -->
+                <button id="downloadBtn" onclick="downloadGraphic()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 text-white font-black text-xs flex items-center gap-2 shadow-xl shadow-purple-600/30 hover:opacity-95 transition-all transform hover:scale-[1.03] active:scale-[0.97]">
                     <i class="fa-solid fa-camera"></i>
-                    <span>Save Twitter Image (PNG)</span>
+                    <span>Export PNG</span>
                 </button>
             </div>
         </div>
-    </header>
-
-    <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-4 flex flex-col items-center gap-6">
 
         <!-- Status Indicator -->
         <div id="statusNotice" class="w-full max-w-[1200px] p-3 rounded-xl bg-purple-950/40 border border-purple-800/40 text-xs text-purple-300 flex items-center justify-between">
@@ -773,6 +793,15 @@
             } finally {
                 btn.innerHTML = origText;
                 btn.disabled = false;
+            }
+        }
+
+        function openLeaderboard() {
+            const addr = localStorage.getItem('xaman_address');
+            if (addr) {
+                window.location.href = `leaderboard?address=${addr}`;
+            } else {
+                window.location.href = 'leaderboard';
             }
         }
 
