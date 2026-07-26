@@ -564,6 +564,11 @@
                 return;
             }
 
+            topSiblings.forEach(sib => {
+                const rankData = window.DROPCHAN_RANKS ? window.DROPCHAN_RANKS[sib.id] : null;
+                const rank = rankData ? rankData.standard_rank : (sib.id % 9999 + 1);
+                const badge = getRarityBadgeInfo(rank);
+
                 const tokenId = tokenToIdMap[sib.id];
                 const price = tokenId ? activeSellPrices[tokenId] : null;
                 const priceBadgeHtml = price ? `<span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-black bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 shadow-lg">${price.toFixed(0)} XRP</span>` : "";
