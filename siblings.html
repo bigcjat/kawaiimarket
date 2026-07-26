@@ -85,6 +85,7 @@
             <a href="index.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Home</a>
             <a href="rarity-floors.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Rarity Floors</a>
             <a href="siblings.html" class="text-xs md:text-sm font-bold text-pink-400 bg-pink-500/10 border border-pink-500/30 px-3 py-1.5 rounded-lg transition">Siblings Finder</a>
+            <a href="#" onclick="openLeaderboard()" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Leaderboard</a>
         </nav>
     </header>
 
@@ -600,6 +601,15 @@
             } catch (err) {
                 carousel.innerHTML = `<div class="text-xs text-red-400 py-2">Failed to query XRPL wallet.</div>`;
                 inspectNft(23);
+            }
+        }
+
+        function openLeaderboard() {
+            const addr = localStorage.getItem('xaman_address');
+            if (addr) {
+                window.location.href = `leaderboard?address=${addr}`;
+            } else {
+                window.location.href = 'leaderboard';
             }
         }
 

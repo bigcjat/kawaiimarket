@@ -185,6 +185,10 @@
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
                             <i class="fa-solid fa-users text-pink-400"></i> Trait & Sibling Inspector
                         </button>
+                        <button id="btnLeaderboardStudio" onclick="openLeaderboard()"
+                            class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-purple-200 hover:text-white hover:bg-purple-950/40 rounded-lg transition-colors cursor-pointer w-full font-bold">
+                            <i class="fa-solid fa-trophy text-yellow-400"></i> Collectors Leaderboard
+                        </button>
                         <div class="h-[1px] bg-purple-900/20 my-0.5"></div>
                         <button id="btnDisconnectWallet" onclick="disconnectXamanWallet()"
                             class="flex items-center gap-2 px-3 py-2 text-left text-[10px] text-red-400 hover:text-red-300 hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer w-full font-bold">
@@ -211,6 +215,11 @@
                 </p>
             </div>
             <div class="flex items-center gap-2 shrink-0">
+                <a href="#" onclick="openLeaderboard()" class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-yellow-500/20 via-amber-600/20 to-orange-500/20 border border-yellow-600/40 text-purple-200 hover:text-white hover:border-yellow-400 font-extrabold text-xs flex items-center gap-2 transition-all shrink-0 shadow-lg shadow-purple-950/40">
+                    <i class="fa-solid fa-trophy text-yellow-400"></i>
+                    <span>Leaderboard</span>
+                    <i class="fa-solid fa-arrow-right text-[10px] text-yellow-400"></i>
+                </a>
                 <a href="rarity-floors.html" class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500/20 via-purple-600/20 to-cyan-500/20 border border-purple-600/40 text-purple-200 hover:text-white hover:border-pink-400 font-extrabold text-xs flex items-center gap-2 transition-all shrink-0 shadow-lg shadow-purple-950/40">
                     <i class="fa-solid fa-gem text-pink-400"></i>
                     <span>Rarity Floors Studio</span>
@@ -2893,6 +2902,17 @@
             if (dropdown) dropdown.classList.add('hidden');
             const addr = connectedWallet || localStorage.getItem('xaman_address') || MY_WALLET;
             window.location.href = `tweet-image.html?wallet=${addr}`;
+        }
+
+        function openLeaderboard() {
+            const dropdown = document.getElementById('walletDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+            const addr = connectedWallet || localStorage.getItem('xaman_address');
+            if (addr) {
+                window.location.href = `leaderboard?address=${addr}`;
+            } else {
+                window.location.href = 'leaderboard';
+            }
         }
 
         // Close dropdown when clicking outside

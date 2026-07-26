@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Dropchan Collectors Leaderboard | KawaiiMarket</title>
+    <meta name="description" content="View the top Dropchan NFT collectors on the XRP Ledger. Interactive Mario Kart style leaderboard with rarity tier tracking.">
+    
+    <!-- OpenGraph & Twitter -->
+    <meta property="og:title" content="Dropchan Collectors Leaderboard | KawaiiMarket">
+    <meta property="og:description" content="View the top Dropchan NFT collectors on the XRP Ledger. Interactive Mario Kart style leaderboard.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kawaii.market/leaderboard">
+
+    <!-- Tailwind CSS (CDN) & Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+
+    <!-- Load Dropchan Precompiled Ranks Database -->
+    <script src="dropchan_ranks.js"></script>
+
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #080314;
+            color: #f3f4f6;
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(244, 114, 182, 0.3);
+        }
+        .gold-border {
+            border: 2px solid rgba(251, 191, 36, 0.5);
+            box-shadow: 0 0 25px -5px rgba(251, 191, 36, 0.25);
+        }
+        .silver-border {
+            border: 2px solid rgba(156, 163, 175, 0.4);
+            box-shadow: 0 0 20px -5px rgba(156, 163, 175, 0.2);
+        }
+        .bronze-border {
+            border: 2px solid rgba(180, 83, 9, 0.4);
+            box-shadow: 0 0 15px -5px rgba(180, 83, 9, 0.15);
+        }
+        .badge-mythical { background: linear-gradient(135deg, #ff7bb0 0%, #e6005c 100%); color: #ffffff; }
+        .badge-epic { background: linear-gradient(135deg, #ffd043 0%, #ff9500 100%); color: #4a3200; }
+        .badge-rare { background: linear-gradient(135deg, #36d6c3 0%, #009688 100%); color: #003d36; }
+        .badge-common { background: linear-gradient(135deg, #a370ff 0%, #6200ea 100%); color: #ffffff; }
+    </style>
+</head>
+<body class="antialiased selection:bg-pink-500 selection:text-white pb-20">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-white/10 px-4 lg:px-8 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <a href="index.html" class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <i class="fa-solid fa-droplet text-white text-sm"></i>
+                </div>
+                <div>
+                    <span class="font-black text-lg tracking-wide bg-gradient-to-r from-cyan-400 via-purple-300 to-pink-400 bg-clip-text text-transparent block leading-tight">
+                        KawaiiMarket
+                    </span>
+                    <span class="block text-[8px] text-purple-300 font-bold tracking-wider uppercase">
+                        Rarity Dashboard
+                    </span>
+                </div>
+            </a>
+        </div>
+        <nav class="flex items-center space-x-2 md:space-x-4">
+            <a href="index.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Home</a>
+            <a href="rarity-floors.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Rarity Floors</a>
+            <a href="siblings.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Siblings Finder</a>
+            <a href="leaderboard" class="text-xs md:text-sm font-bold text-pink-400 bg-pink-500/10 border border-pink-500/30 px-3 py-1.5 rounded-lg transition">Leaderboard</a>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 flex flex-col gap-8">
+
+        <!-- Title Banner -->
+        <div class="text-center">
+            <h1 class="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-400 tracking-tight">
+                Dropchans Collectors Leaderboard
+            </h1>
+            <p class="mt-2 text-sm sm:text-base text-gray-400 max-w-2xl mx-auto">
+                Discover the top Dropchans NFT collectors on the XRP Ledger. Grouped live, showcasing their rarest tiers.
+            </p>
+        </div>
+
+        <!-- Loader Skeleton -->
+        <div id="loader" class="flex flex-col gap-6 items-center justify-center py-20">
+            <div class="animate-spin text-pink-500 text-4xl"><i class="fa-solid fa-circle-notch"></i></div>
+            <p class="text-xs text-purple-300/80 font-bold tracking-wider uppercase animate-pulse">Loading Leaderboard Portfolios...</p>
+        </div>
+
+        <!-- Leaderboard Dashboard (Hidden on start) -->
+        <div id="dashboard" class="hidden flex flex-col gap-8">
+            
+            <!-- Mario Kart Podiums -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end mt-4">
+                
+                <!-- 2nd Place -->
+                <div class="order-2 md:order-1 flex flex-col items-center">
+                    <div class="glass-card silver-border rounded-3xl p-6 w-full max-w-sm flex flex-col items-center gap-4 relative overflow-hidden">
+                        <div class="absolute top-3 left-3 text-slate-400 font-extrabold text-sm border border-slate-500/30 bg-slate-950/60 rounded-lg px-2 h-6 flex items-center justify-center">2nd</div>
+                        <img id="podium2Avatar" src="" class="w-16 h-16 bg-slate-900 shadow-md" alt="2nd Place">
+                        <div class="text-center w-full">
+                            <div id="podium2Address" class="font-black text-sm tracking-tight text-white truncate px-4">...</div>
+                            <div class="text-xs text-slate-400 mt-0.5">Holds <span id="podium2Count" class="font-extrabold text-slate-300">0</span> Dropchans</div>
+                        </div>
+                        <div id="podium2Badges" class="flex items-center gap-2"></div>
+                        <button onclick="togglePodiumDetails(1)" class="w-full py-2 bg-slate-900/60 hover:bg-slate-800/80 text-[10px] font-black uppercase tracking-wider rounded-xl transition text-slate-300">Expand Collection</button>
+                    </div>
+                </div>
+
+                <!-- 1st Place -->
+                <div class="order-1 md:order-2 flex flex-col items-center transform md:-translate-y-4">
+                    <div class="glass-card gold-border rounded-3xl p-7 w-full max-w-sm flex flex-col items-center gap-4 relative">
+                        <div class="absolute top-4 left-4 text-amber-400 font-extrabold text-sm border border-amber-500/40 bg-amber-950/60 rounded-lg px-2.5 h-6 flex items-center justify-center">1st</div>
+                        <div class="absolute -top-5 right-3 text-amber-400 text-3xl animate-bounce z-20"><i class="fa-solid fa-crown"></i></div>
+                        <img id="podium1Avatar" src="" class="w-20 h-20 bg-slate-900 shadow-lg" alt="1st Place">
+                        <div class="text-center w-full">
+                            <div id="podium1Address" class="font-black text-base tracking-tight text-white truncate px-4">...</div>
+                            <div class="text-xs text-amber-400/90 mt-0.5 font-bold">Holds <span id="podium1Count" class="font-black text-amber-300 text-sm">0</span> Dropchans</div>
+                        </div>
+                        <div id="podium1Badges" class="flex items-center gap-2"></div>
+                        <button onclick="togglePodiumDetails(0)" class="w-full py-2.5 bg-amber-950/30 hover:bg-amber-900/40 border border-amber-500/20 text-[10px] font-black uppercase tracking-wider rounded-xl transition text-amber-300">Expand Collection</button>
+                    </div>
+                </div>
+
+                <!-- 3rd Place -->
+                <div class="order-3 flex flex-col items-center">
+                    <div class="glass-card bronze-border rounded-3xl p-6 w-full max-w-sm flex flex-col items-center gap-4 relative overflow-hidden">
+                        <div class="absolute top-3 left-3 text-amber-700 font-extrabold text-sm border border-amber-700/30 bg-amber-950/60 rounded-lg px-2 h-6 flex items-center justify-center">3rd</div>
+                        <img id="podium3Avatar" src="" class="w-16 h-16 bg-slate-900 shadow-md" alt="3rd Place">
+                        <div class="text-center w-full">
+                            <div id="podium3Address" class="font-black text-sm tracking-tight text-white truncate px-4">...</div>
+                            <div class="text-xs text-amber-700/80 mt-0.5">Holds <span id="podium3Count" class="font-extrabold text-amber-600">0</span> Dropchans</div>
+                        </div>
+                        <div id="podium3Badges" class="flex items-center gap-2"></div>
+                        <button onclick="togglePodiumDetails(2)" class="w-full py-2 bg-slate-900/60 hover:bg-slate-800/80 text-[10px] font-black uppercase tracking-wider rounded-xl transition text-slate-300">Expand Collection</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Podium Expanded Details Area -->
+            <div id="podiumDetailsPanel" class="hidden glass-panel rounded-2xl p-6 border-pink-500/20">
+                <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-gem text-pink-400"></i>
+                        <span id="podiumDetailsTitle" class="font-black text-sm uppercase tracking-wide">Owner Portfolio</span>
+                    </div>
+                    <button onclick="closePodiumDetails()" class="text-gray-400 hover:text-white text-xs"><i class="fa-solid fa-xmark"></i> Close</button>
+                </div>
+                <div id="podiumDetailsGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4"></div>
+            </div>
+
+            <!-- Search, Filters, and Stats -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel rounded-2xl p-4">
+                <!-- Search -->
+                <div class="relative flex-grow max-w-md">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-purple-400">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" id="searchInput" oninput="handleFilterChange()" placeholder="Search by holder address..." 
+                           class="w-full bg-slate-950/60 border border-purple-800/30 text-purple-200 text-xs rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:border-pink-500 transition">
+                </div>
+
+                <!-- Filters -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="toggleFilterType('mythical')" id="filterBtnMythical" 
+                            class="px-3.5 py-2 border border-pink-500/20 hover:border-pink-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition">
+                        <span>⚡ Mythical</span>
+                    </button>
+                    <button onclick="toggleFilterType('epic')" id="filterBtnEpic" 
+                            class="px-3.5 py-2 border border-yellow-500/20 hover:border-yellow-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition">
+                        <span>🔥 Epic</span>
+                    </button>
+                    <button onclick="toggleFilterType('rare')" id="filterBtnRare" 
+                            class="px-3.5 py-2 border border-cyan-500/20 hover:border-cyan-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition">
+                        <span>💎 Rare</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Leaderboard Table -->
+            <div class="glass-panel rounded-2xl overflow-hidden border-white/5">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-white/5 text-[10px] font-black uppercase text-purple-300 tracking-wider border-b border-white/5">
+                                <th class="py-3 px-3 md:py-4 md:px-6 text-center w-12 md:w-16">Pos</th>
+                                <th class="py-3 px-3 md:py-4 md:px-6">Collector Address</th>
+                                <th class="py-3 px-3 md:py-4 md:px-6 text-center w-16 md:w-24">Holds</th>
+                                <th class="hidden md:table-cell py-4 px-6 text-center w-64">Rarity Distribution</th>
+                                <th class="hidden md:table-cell py-4 px-6 text-center w-32">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        const ISSUER = 'rDropCHANEgmG7FBz1nzPpG27BGzWjnCnn';
+        const TAXON = 0;
+        
+        let allHolders = []; // Parsed sorted list of all owners
+        let filteredHolders = []; // Holds filtered subset
+        let idToTokenMap = {}; // Maps NFTokenID -> sequence number (integer)
+        let activeFilterTypes = new Set(); // Holds selected filters
+        let expandedRowAddress = null; // Currently expanded address
+        let activeSellPrices = {}; // Maps NFTokenID -> lowest price (number)
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const highlightAddress = urlParams.get('address');
+
+        // String decoders
+        function hexToString(hex) {
+            let str = '';
+            for (let i = 0; i < hex.length; i += 2) {
+                str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+            }
+            return str;
+        }
+
+        function getWalletName(address) {
+            return address.slice(0, 6) + '...' + address.slice(-6);
+        }
+
+        // 1. Initial Data Fetching
+        async function loadLeaderboard() {
+            try {
+                // Fetch minted list and offers from public XRPData API in parallel
+                const [mintedRes, offersRes] = await Promise.all([
+                    fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/issuer/${ISSUER}/taxon/${TAXON}`),
+                    fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/offers/issuer/${ISSUER}/taxon/${TAXON}`)
+                ]);
+                if (!mintedRes.ok) throw new Error("Failed to load minted data list.");
+                const mintedJson = await mintedRes.json();
+                const nfts = mintedJson.data?.nfts || [];
+
+                // Parse active sell offers
+                activeSellPrices = {};
+                if (offersRes.ok) {
+                    try {
+                        const offersJson = await offersRes.json();
+                        const offersList = offersJson.data?.offers || [];
+                        const RIPPLE_EPOCH_OFFSET = 946684800;
+                        const rippleNow = Math.floor(Date.now() / 1000) - RIPPLE_EPOCH_OFFSET;
+
+                        offersList.forEach(item => {
+                            const tokenId = item.NFTokenID;
+                            const ownerOfNft = item.NFTokenOwner;
+                            if (!tokenId) return;
+
+                            const activeSell = (item.sell || []).filter(offer => {
+                                if (ownerOfNft && offer.Owner !== ownerOfNft) return false;
+                                if (typeof offer.Amount !== 'string') return false;
+                                if (offer.Expiration) {
+                                    const exp = parseInt(offer.Expiration);
+                                    if (!isNaN(exp) && exp <= rippleNow) return false;
+                                }
+                                return true;
+                            });
+
+                            if (activeSell.length > 0) {
+                                let lowestPrice = Infinity;
+                                activeSell.forEach(offer => {
+                                    const p = parseFloat(offer.Amount) / 1000000;
+                                    if (p > 0 && p < lowestPrice) lowestPrice = p;
+                                });
+                                if (lowestPrice !== Infinity) {
+                                    activeSellPrices[tokenId] = lowestPrice;
+                                }
+                            }
+                        });
+                    } catch (e) {
+                        console.error("Failed to parse offers:", e);
+                    }
+                }
+
+                // Group NFTs by owner
+                const ownersMap = {};
+                nfts.forEach(nft => {
+                    const owner = nft.Owner || nft.owner || nft.Account;
+                    const tokenId = nft.NFTokenID || nft.nftoken_id;
+                    if (!owner || !tokenId) return;
+
+                    let seq = nft.nft_serial || nft.Sequence || 0;
+                    if (nft.URI) {
+                        try {
+                            const decoded = hexToString(nft.URI);
+                            const parsed = parseInt(decoded.split('/').pop().split('.')[0]);
+                            if (!isNaN(parsed)) {
+                                seq = parsed;
+                                idToTokenMap[tokenId] = parsed;
+                            }
+                        } catch (e) {}
+                    }
+
+                    const rankData = window.DROPCHAN_RANKS[seq];
+                    const rank = rankData ? rankData.xrplto_rank || rankData.standard_rank : 9999;
+
+                    if (!ownersMap[owner]) {
+                        ownersMap[owner] = {
+                            address: owner,
+                            count: 0,
+                            nfts: [],
+                            mythicalCount: 0,
+                            epicCount: 0,
+                            rareCount: 0
+                        };
+                    }
+                    ownersMap[owner].count++;
+                    ownersMap[owner].nfts.push({ tokenId, seq, rank });
+
+                    if (rank <= 100) ownersMap[owner].mythicalCount++;
+                    else if (rank <= 500) ownersMap[owner].epicCount++;
+                    else if (rank <= 1500) ownersMap[owner].rareCount++;
+                });
+
+                // Convert to array and sort by count descending
+                allHolders = Object.values(ownersMap).sort((a, b) => b.count - a.count);
+
+                // Sort individual holders' collections by rank ascending
+                allHolders.forEach(h => {
+                    h.nfts.sort((a, b) => a.rank - b.rank);
+                });
+
+                // Set initial views
+                filteredHolders = [...allHolders];
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+
+                // Render podiums and table
+                renderPodiums();
+                renderTable();
+
+                // Scroll to and highlight address if passed
+                if (highlightAddress) {
+                    setTimeout(() => {
+                        const targetRow = document.getElementById(`row-${highlightAddress}`);
+                        if (targetRow) {
+                            targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            const expandBtn = targetRow.querySelector('button');
+                            if (expandBtn) {
+                                toggleExpandRow(highlightAddress, expandBtn);
+                            }
+                        }
+                    }, 500);
+                }
+
+            } catch (err) {
+                console.error("Leaderboard init failed:", err);
+                document.getElementById('loader').innerHTML = `
+                    <div class="text-red-500 text-4xl mb-2"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <p class="text-xs font-bold text-red-400">Failed to hydrate leaderboard. Check connection.</p>
+                `;
+            }
+        }
+
+        // 2. Render Mario Kart Podiums
+        function renderPodiums() {
+            const getPodiumBadgeHTML = (holder) => {
+                let html = "";
+                if (holder.mythicalCount > 0) html += `<span class="px-2 py-0.5 rounded text-[8px] font-black uppercase badge-mythical">⚡ ${holder.mythicalCount}</span>`;
+                if (holder.epicCount > 0) html += `<span class="px-2 py-0.5 rounded text-[8px] font-black uppercase badge-epic">🔥 ${holder.epicCount}</span>`;
+                if (holder.rareCount > 0) html += `<span class="px-2 py-0.5 rounded text-[8px] font-black uppercase badge-rare">💎 ${holder.rareCount}</span>`;
+                return html || '<span class="text-[9px] text-gray-500">No Rares</span>';
+            };
+
+            // Podium 1
+            if (allHolders[0]) {
+                document.getElementById('podium1Avatar').src = `https://xumm.app/avatar/${allHolders[0].address}.png`;
+                document.getElementById('podium1Address').innerText = getWalletName(allHolders[0].address);
+                document.getElementById('podium1Count').innerText = allHolders[0].count;
+                document.getElementById('podium1Badges').innerHTML = getPodiumBadgeHTML(allHolders[0]);
+            }
+            // Podium 2
+            if (allHolders[1]) {
+                document.getElementById('podium2Avatar').src = `https://xumm.app/avatar/${allHolders[1].address}.png`;
+                document.getElementById('podium2Address').innerText = getWalletName(allHolders[1].address);
+                document.getElementById('podium2Count').innerText = allHolders[1].count;
+                document.getElementById('podium2Badges').innerHTML = getPodiumBadgeHTML(allHolders[1]);
+            }
+            // Podium 3
+            if (allHolders[2]) {
+                document.getElementById('podium3Avatar').src = `https://xumm.app/avatar/${allHolders[2].address}.png`;
+                document.getElementById('podium3Address').innerText = getWalletName(allHolders[2].address);
+                document.getElementById('podium3Count').innerText = allHolders[2].count;
+                document.getElementById('podium3Badges').innerHTML = getPodiumBadgeHTML(allHolders[2]);
+            }
+        }
+
+        // 3. Render Table
+        function renderTable() {
+            const body = document.getElementById('leaderboardBody');
+            body.innerHTML = "";
+
+            filteredHolders.forEach((holder, idx) => {
+                // Find original global rank
+                const originalRank = allHolders.findIndex(h => h.address === holder.address) + 1;
+
+                const tr = document.createElement('tr');
+                tr.id = `row-${holder.address}`;
+                tr.style.cursor = 'pointer';
+                
+                let highlightClass = "border-b border-white/5 hover:bg-white/[0.02] transition-colors";
+                if (holder.address.toLowerCase() === (highlightAddress || '').toLowerCase()) {
+                    highlightClass = "border-b border-pink-500/20 bg-pink-500/10 hover:bg-pink-500/15 transition-colors border-l-4 border-l-pink-500";
+                }
+                tr.className = highlightClass;
+                
+                tr.onclick = (e) => {
+                    if (e.target.closest('button') || e.target.closest('a')) return;
+                    toggleExpandRow(holder.address, tr.querySelector('.expand-btn'));
+                };
+
+                let rankLabel = `#${originalRank}`;
+                if (originalRank === 1) rankLabel = `🥇 1`;
+                else if (originalRank === 2) rankLabel = `🥈 2`;
+                else if (originalRank === 3) rankLabel = `🥉 3`;
+
+                let badgeHtml = "";
+                if (holder.mythicalCount > 0) badgeHtml += `<span class="px-2 py-0.5 rounded text-[8px] font-black uppercase badge-mythical">⚡ ${holder.mythicalCount}</span>`;
+                if (holder.epicCount > 0) badgeHtml += `<span class="px-2 py-0.5 rounded text-[8px] font-black uppercase badge-epic">🔥 ${holder.epicCount}</span>`;
+                if (holder.rareCount > 0) badgeHtml += `<span class="px-2 py-0.5 rounded text-[8px] font-black uppercase badge-rare">💎 ${holder.rareCount}</span>`;
+                if (!badgeHtml) badgeHtml = `<span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">Common Only</span>`;
+
+                let addressLabelFull = holder.address;
+                let addressLabelShort = getWalletName(holder.address);
+                if (holder.address.toLowerCase() === (highlightAddress || '').toLowerCase()) {
+                    addressLabelFull += ` <span class="text-[9px] font-black uppercase bg-pink-500 text-white px-1.5 py-0.5 rounded ml-2">You</span>`;
+                    addressLabelShort += ` <span class="text-[9px] font-black uppercase bg-pink-500 text-white px-1.5 py-0.5 rounded ml-2">You</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3 md:py-4 md:px-6 text-center font-black text-xs text-purple-300">${rankLabel}</td>
+                    <td class="py-3 px-3 md:py-4 md:px-6">
+                        <div class="flex items-center gap-2 md:gap-3">
+                            <img src="https://xumm.app/avatar/${holder.address}.png" class="w-7 h-7 md:w-8 md:h-8 bg-slate-900" alt="Avatar">
+                            <span class="font-extrabold text-[11px] md:text-xs text-white font-mono hidden sm:inline">${addressLabelFull}</span>
+                            <span class="font-extrabold text-[11px] md:text-xs text-white font-mono sm:hidden">${addressLabelShort}</span>
+                            <div class="flex items-center gap-1 md:hidden">
+                                ${badgeHtml}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-3 md:py-4 md:px-6 text-center font-black text-sm text-cyan-400">${holder.count}</td>
+                    <td class="hidden md:table-cell py-4 px-6">
+                        <div class="flex items-center justify-center gap-1.5">${badgeHtml}</div>
+                    </td>
+                    <td class="hidden md:table-cell py-4 px-6 text-center">
+                        <button onclick="toggleExpandRow('${holder.address}', this)" class="expand-btn px-3.5 py-1.5 bg-purple-900/30 hover:bg-purple-800/50 border border-purple-700/20 text-[10px] font-black uppercase tracking-wider rounded-xl transition text-purple-200">
+                            Expand
+                        </button>
+                    </td>
+                `;
+                body.appendChild(tr);
+
+                // Expanded row container
+                const detailTr = document.createElement('tr');
+                detailTr.id = `detail-${holder.address}`;
+                detailTr.className = "hidden bg-black/40 border-b border-white/5";
+                detailTr.innerHTML = `
+                    <td colspan="5" class="p-6">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4" id="grid-${holder.address}"></div>
+                    </td>
+                `;
+                body.appendChild(detailTr);
+            });
+
+            if (filteredHolders.length === 0) {
+                body.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-xs text-purple-300 italic">No collectors match the current filters or search query.</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // 4. Toggle Expansions
+        function toggleExpandRow(address, btn) {
+            const detailRow = document.getElementById(`detail-${address}`);
+            const grid = document.getElementById(`grid-${address}`);
+
+            if (expandedRowAddress && expandedRowAddress !== address) {
+                const prevRow = document.getElementById(`detail-${expandedRowAddress}`);
+                if (prevRow) prevRow.classList.add('hidden');
+            }
+
+            if (detailRow.classList.contains('hidden')) {
+                detailRow.classList.remove('hidden');
+                btn.innerText = 'Collapse';
+                expandedRowAddress = address;
+
+                // Load holding grid
+                const holder = allHolders.find(h => h.address === address);
+                grid.innerHTML = "";
+
+                holder.nfts.forEach(nft => {
+                    const card = document.createElement('div');
+                    card.className = "glass-card rounded-xl overflow-hidden border border-white/5 hover:border-pink-500/30 cursor-pointer flex flex-col relative";
+                    card.onclick = () => openNftModal(nft.seq, nft.rank, nft.tokenId);
+
+                    let badgeClass = 'badge-common';
+                    let badgeLabel = 'Common';
+                    if (nft.rank <= 100) { badgeClass = 'badge-mythical'; badgeLabel = 'Mythic'; }
+                    else if (nft.rank <= 500) { badgeClass = 'badge-epic'; badgeLabel = 'Epic'; }
+                    else if (nft.rank <= 1500) { badgeClass = 'badge-rare'; badgeLabel = 'Rare'; }
+
+                    const price = activeSellPrices[nft.tokenId];
+                    const priceBadgeHtml = price ? `<span class="absolute bottom-1.5 right-1.5 text-[9px] font-black bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 px-1.5 py-0.5 rounded shadow-lg shadow-cyan-950/50">${price.toFixed(0)} XRP</span>` : "";
+
+                    card.innerHTML = `
+                        <div class="relative w-full aspect-square bg-slate-900 overflow-hidden">
+                            <img src="https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${nft.seq}.svg" alt="#${nft.seq}" class="w-full h-full object-cover" referrerpolicy="no-referrer">
+                            <span class="absolute top-1.5 left-1.5 text-[9px] font-black bg-black/85 text-white border border-white/10 px-1.5 py-0.5 rounded">#${nft.seq}</span>
+                            ${priceBadgeHtml}
+                        </div>
+                        <div class="p-2 flex flex-col items-center justify-center gap-1">
+                            <span class="text-[9px] font-black uppercase rounded py-0.5 w-full text-center ${badgeClass}">Rank #${nft.rank}</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+            } else {
+                detailRow.classList.add('hidden');
+                btn.innerText = 'Expand';
+                expandedRowAddress = null;
+            }
+        }
+
+        function togglePodiumDetails(index) {
+            const holder = allHolders[index];
+            if (!holder) return;
+
+            const panel = document.getElementById('podiumDetailsPanel');
+            const title = document.getElementById('podiumDetailsTitle');
+            const grid = document.getElementById('podiumDetailsGrid');
+
+            title.innerText = `${getWalletName(holder.address)}'s Dropchans Portfolio`;
+            grid.innerHTML = "";
+
+            holder.nfts.forEach(nft => {
+                const card = document.createElement('div');
+                card.className = "glass-card rounded-xl overflow-hidden border border-white/5 hover:border-pink-500/30 cursor-pointer flex flex-col relative";
+                card.onclick = () => openNftModal(nft.seq, nft.rank, nft.tokenId);
+
+                let badgeClass = 'badge-common';
+                if (nft.rank <= 100) badgeClass = 'badge-mythical';
+                else if (nft.rank <= 500) badgeClass = 'badge-epic';
+                else if (nft.rank <= 1500) badgeClass = 'badge-rare';
+
+                const price = activeSellPrices[nft.tokenId];
+                const priceBadgeHtml = price ? `<span class="absolute bottom-1.5 right-1.5 text-[9px] font-black bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 px-1.5 py-0.5 rounded shadow-lg shadow-cyan-950/50">${price.toFixed(0)} XRP</span>` : "";
+
+                card.innerHTML = `
+                    <div class="relative w-full aspect-square bg-slate-900 overflow-hidden">
+                        <img src="https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${nft.seq}.svg" alt="#${nft.seq}" class="w-full h-full object-cover" referrerpolicy="no-referrer">
+                        <span class="absolute top-1.5 left-1.5 text-[9px] font-black bg-black/85 text-white border border-white/10 px-1.5 py-0.5 rounded">#${nft.seq}</span>
+                        ${priceBadgeHtml}
+                    </div>
+                    <div class="p-2 flex flex-col items-center justify-center gap-1">
+                        <span class="text-[9px] font-black uppercase rounded py-0.5 w-full text-center ${badgeClass}">Rank #${nft.rank}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            panel.classList.remove('hidden');
+            // Smooth scroll to details panel
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closePodiumDetails() {
+            document.getElementById('podiumDetailsPanel').classList.add('hidden');
+        }
+
+        // 5. Searching and Filters
+        function toggleFilterType(type) {
+            const btn = document.getElementById('filterBtn' + type.charAt(0).toUpperCase() + type.slice(1));
+            
+            let activeColor = 'border-pink-500/40 text-white bg-pink-500/10';
+            if (type === 'epic') activeColor = 'border-yellow-500/40 text-white bg-yellow-500/10';
+            if (type === 'rare') activeColor = 'border-cyan-500/40 text-white bg-cyan-500/10';
+
+            if (activeFilterTypes.has(type)) {
+                activeFilterTypes.delete(type);
+                btn.className = btn.className.replace(activeColor, 'border-white/20 text-purple-300 bg-transparent');
+            } else {
+                activeFilterTypes.add(type);
+                btn.className += ' ' + activeColor;
+            }
+
+            handleFilterChange();
+        }
+
+        async function handleFilterChange() {
+            const search = document.getElementById('searchInput').value.trim().toLowerCase();
+            
+            // Filter list
+            let results = allHolders.filter(holder => {
+                // Search match
+                const matchSearch = !search || holder.address.toLowerCase().includes(search);
+                if (!matchSearch) return false;
+
+                // Rarity type filters match (must possess at least one matching tier)
+                if (activeFilterTypes.size > 0) {
+                    let hasMatch = false;
+                    if (activeFilterTypes.has('mythical') && holder.mythicalCount > 0) hasMatch = true;
+                    if (activeFilterTypes.has('epic') && holder.epicCount > 0) hasMatch = true;
+                    if (activeFilterTypes.has('rare') && holder.rareCount > 0) hasMatch = true;
+                    if (!hasMatch) return false;
+                }
+
+                return true;
+            });
+
+            // If searched address is a valid r-address length and not in our top list, load via API directly!
+            if (search.startsWith('r') && search.length >= 25 && results.length === 0) {
+                try {
+                    const searchRes = await fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/owner/${search}`);
+                    if (searchRes.ok) {
+                        const searchJson = await searchRes.json();
+                        const nfts = searchJson.data?.nfts || [];
+                        if (nfts.length > 0) {
+                            let mythicalCount = 0;
+                            let epicCount = 0;
+                            let rareCount = 0;
+                            let parsedNfts = [];
+
+                            nfts.forEach(nft => {
+                                let seq = idToTokenMap[nft.NFTokenID];
+                                if (seq === undefined && nft.URI) {
+                                    try {
+                                        const decoded = hexToString(nft.URI);
+                                        const parsed = parseInt(decoded.split('/').pop().split('.')[0]);
+                                        if (!isNaN(parsed)) seq = parsed;
+                                    } catch (e) {}
+                                }
+                                if (seq !== undefined) {
+                                    const rankData = window.DROPCHAN_RANKS[seq];
+                                    const rank = rankData ? rankData.xrplto_rank || rankData.standard_rank : 9999;
+                                    
+                                    if (rank <= 100) mythicalCount++;
+                                    else if (rank <= 500) epicCount++;
+                                    else if (rank <= 1500) rareCount++;
+
+                                    parsedNfts.push({ tokenId: nft.NFTokenID, seq, rank });
+                                }
+                            });
+
+                            parsedNfts.sort((a, b) => a.rank - b.rank);
+                            results = [{
+                                address: search,
+                                count: nfts.length,
+                                nfts: parsedNfts,
+                                mythicalCount,
+                                epicCount,
+                                rareCount
+                            }];
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            filteredHolders = results;
+            renderTable();
+        }
+
+        function openNftModal(id, rank, nftTokenId) {
+            document.getElementById('modalNftTitle').innerText = `Dropchan #${id}`;
+            document.getElementById('modalNftRank').innerText = `Rank #${rank}`;
+            
+            const price = activeSellPrices[nftTokenId];
+            if (price) {
+                document.getElementById('modalNftPrice').innerText = `${price.toFixed(0)} XRP`;
+                document.getElementById('modalNftPrice').classList.remove('hidden');
+            } else {
+                document.getElementById('modalNftPrice').innerText = "Not Listed";
+                document.getElementById('modalNftPrice').classList.remove('hidden');
+            }
+            
+            document.getElementById('modalNftImg').src = `https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${id}.svg`;
+
+            const tokenHex = nftTokenId || '';
+
+            document.getElementById('btnXrpCafe').href = tokenHex ? `https://xrp.cafe/nft/${tokenHex}` : `https://xrp.cafe`;
+            document.getElementById('btnBidds').href = tokenHex ? `https://bidds.com/nft/${tokenHex}` : `https://bidds.com`;
+            document.getElementById('btnBithomp').href = tokenHex ? `https://bithomp.com/nft/${tokenHex}` : `https://bithomp.com`;
+            document.getElementById('btnKawaii').href = `index.html?id=${id}`;
+
+            document.getElementById('nftModal').classList.remove('hidden');
+        }
+
+        function closeNftModal() {
+            document.getElementById('nftModal').classList.add('hidden');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLeaderboard();
+        });
+    </script>
+
+    <!-- Platform Selector Modal -->
+    <div id="nftModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-gradient-to-b from-[#180e38] to-[#0c051a] border border-purple-500/40 rounded-3xl p-6 max-w-md w-full shadow-2xl relative text-white flex flex-col gap-5">
+            
+            <!-- Close Button -->
+            <button onclick="closeNftModal()" class="absolute top-4 right-4 text-purple-300 hover:text-white bg-purple-950/60 p-2 rounded-full border border-purple-800/40 transition-all">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- NFT Card Header -->
+            <div class="flex items-center gap-4 border-b border-purple-800/40 pb-4">
+                <img id="modalNftImg" src="" alt="" class="w-16 h-16 rounded-2xl object-cover border-2 border-purple-500/50 shadow-md" referrerpolicy="no-referrer">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 id="modalNftTitle" class="text-xl font-black text-white">Dropchan #--</h3>
+                        <span id="modalNftRank" class="text-xs font-black uppercase px-2.5 py-0.5 rounded-full bg-pink-500 text-white">Rank #--</span>
+                    </div>
+                    <p id="modalNftPrice" class="text-sm font-bold text-cyan-300 mt-1">-- XRP</p>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-xs font-black uppercase tracking-wider text-purple-300 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-compass text-cyan-400"></i> Select Platform to View NFT:
+                </h4>
+
+                <!-- 4 Platform Option Buttons Grid -->
+                <div class="grid grid-cols-1 gap-2.5">
+                    <a id="btnXrpCafe" href="#" target="_blank" class="flex items-center justify-between p-3 rounded-2xl bg-purple-950/60 hover:bg-pink-600/20 border border-purple-800/50 hover:border-pink-500/60 text-white font-bold transition-all group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-xl bg-pink-500/20 border border-pink-500/40 flex items-center justify-center shrink-0">
+                                <svg viewBox="0 0 100 100" class="w-5 h-5 fill-pink-400">
+                                    <path d="M 22,40 A 28,28 0 0,0 78,40 A 8,8 0 0,0 62,40 A 12,12 0 0,1 38,40 A 8,8 0 0,0 22,40 Z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-white group-hover:text-pink-300">XRP Cafe</p>
+                                <p class="text-[11px] text-purple-300/70">Leading XRPL NFT Marketplace</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs text-purple-400 group-hover:text-pink-300"></i>
+                    </a>
+
+                    <a id="btnBidds" href="#" target="_blank" class="flex items-center justify-between p-3 rounded-2xl bg-purple-950/60 hover:bg-cyan-600/20 border border-purple-800/50 hover:border-cyan-500/60 text-white font-bold transition-all group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0">
+                                <svg viewBox="0 0 50 40" class="w-5 h-4 fill-cyan-400">
+                                    <path d="M43.2557 16.4929H39.8786V6.45244C39.8786 2.8945 36.9929 0 33.4457 0H6.43286C2.88571 0 0 2.8945 0 6.45244V33.549C0 37.1069 2.88571 40.0014 6.43286 40.0014H43.2571C46.8043 40.0014 49.69 37.1069 49.69 33.549V22.9468C49.69 19.3889 46.8043 16.4944 43.2571 16.4944L43.2557 16.4929ZM35.5929 33.1664C35.5929 34.5664 34.4614 35.7012 33.0657 35.7012C31.67 35.7012 30.5386 34.5664 30.5386 33.1664V22.9454C30.5386 21.756 31.5 20.7917 32.6857 20.7917H35.5929V33.1664ZM35.5929 16.4929H32.6857C29.1386 16.4929 26.2529 19.3874 26.2529 22.9454V33.5476C26.2529 34.3027 26.3843 35.0263 26.6229 35.7012H6.43286C5.24857 35.7012 4.28571 34.7354 4.28571 33.5476V6.45244C4.28571 5.26455 5.24857 4.29876 6.43286 4.29876H33.4471C34.6314 4.29876 35.5943 5.26455 35.5943 6.45244V16.4929H35.5929ZM45.4029 33.5476C45.4029 34.7354 44.44 35.7012 43.2557 35.7012H39.5086C39.7471 35.0278 39.8786 34.3027 39.8786 33.5476V20.7917H43.2557C44.44 20.7917 45.4029 21.7575 45.4029 22.9454V33.5476Z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-white group-hover:text-cyan-300">Bidds</p>
+                                <p class="text-[11px] text-purple-300/70">XRPL NFT Auctions & Trades</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs text-purple-400 group-hover:text-cyan-300"></i>
+                    </a>
+
+                    <a id="btnBithomp" href="#" target="_blank" class="flex items-center justify-between p-3 rounded-2xl bg-purple-950/60 hover:bg-purple-600/20 border border-purple-800/50 hover:border-purple-500/60 text-white font-bold transition-all group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-xl bg-[#23aabb]/20 border border-[#23aabb]/40 flex items-center justify-center shrink-0 overflow-hidden p-1.5">
+                                <img src="bithomp.svg" alt="Bithomp" class="w-full h-full object-contain filter drop-shadow">
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-white group-hover:text-purple-300">Bithomp</p>
+                                <p class="text-[11px] text-purple-300/70">Official XRPL Ledger Explorer</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs text-purple-400 group-hover:text-purple-300"></i>
+                    </a>
+
+                    <a id="btnKawaii" href="index.html" class="flex items-center justify-between p-3 rounded-2xl bg-purple-950/60 hover:bg-pink-500/20 border border-purple-800/50 hover:border-pink-400/60 text-white font-bold transition-all group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-xl bg-pink-500/20 border border-pink-500/40 flex items-center justify-center shrink-0 text-lg">
+                                🌸
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-white group-hover:text-pink-300">Kawaii Market</p>
+                                <p class="text-[11px] text-purple-300/70">Live On-Chain Direct Marketplace</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs text-purple-400 group-hover:text-pink-300"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
