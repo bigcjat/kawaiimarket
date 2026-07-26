@@ -402,8 +402,13 @@
                     owner.worth = Math.round(worth);
                 });
 
-                // Convert to array and sort by count descending
-                allHolders = Object.values(ownersMap).sort((a, b) => b.count - a.count);
+                // Convert to array and sort by count descending, with worth as a tie-breaker descending
+                allHolders = Object.values(ownersMap).sort((a, b) => {
+                    if (b.count !== a.count) {
+                        return b.count - a.count;
+                    }
+                    return b.worth - a.worth;
+                });
 
                 // Sort individual holders' collections by rank ascending
                 allHolders.forEach(h => {
