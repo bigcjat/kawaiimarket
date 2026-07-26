@@ -154,7 +154,7 @@
             <!-- Left: Hero NFT Display -->
             <div class="lg:col-span-4 flex flex-col items-center">
                 <div class="glass-panel p-4 rounded-3xl w-full border border-pink-500/20 glow-pink relative">
-                    <div class="aspect-square rounded-2xl overflow-hidden bg-indigo-950/60 relative group">
+                    <div onclick="openHeroMarketplaceModal()" class="aspect-square rounded-2xl overflow-hidden bg-indigo-950/60 relative group cursor-pointer border border-white/5 hover:border-pink-500/30">
                         <img id="heroNftImage" src="" alt="Dropchan NFT" referrerpolicy="no-referrer" class="w-full h-full object-cover transition transform group-hover:scale-105 duration-300" />
                     </div>
                     <div class="mt-4 flex items-center justify-between">
@@ -247,6 +247,75 @@
         const DEFAULT_WALLET = "raMenv8MTe6nBk9C5iFk6Gh6vZLs5MoYcg";
         const ISSUER = "rDropCHANEgmG7FBz1nzPpG27BGzWjnCnn";
         const TRAIT_COUNTS = {}; // Trait value occurrence counts across collection
+
+        let tokenToIdMap = {}; // Maps sequence number -> NFTokenID
+        let activeSellPrices = {}; // Maps NFTokenID -> price (number)
+
+        async function loadCollectionData() {
+            try {
+                const [mintedRes, offersRes] = await Promise.all([
+                    fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/issuer/${ISSUER}/taxon/0`),
+                    fetch(`https://api.xrpldata.com/api/v1/xls20-nfts/offers/issuer/${ISSUER}/taxon/0`)
+                ]);
+                
+                if (mintedRes.ok) {
+                    const mintedJson = await mintedRes.json();
+                    const nfts = mintedJson.data?.nfts || [];
+                    nfts.forEach(nft => {
+                        const tokenId = nft.NFTokenID;
+                        if (!tokenId) return;
+                        let seq = nft.nft_serial || nft.Sequence || 0;
+                        if (nft.URI) {
+                            try {
+                                let decoded = "";
+                                for (let i = 0; i < nft.URI.length; i += 2) {
+                                    decoded += String.fromCharCode(parseInt(nft.URI.substr(i, 2), 16));
+                                }
+                                const parsed = parseInt(decoded.split('/').pop().split('.')[0]);
+                                if (!isNaN(parsed)) seq = parsed;
+                            } catch (e) {}
+                        }
+                        tokenToIdMap[seq] = tokenId;
+                    });
+                }
+
+                if (offersRes.ok) {
+                    const offersJson = await offersRes.json();
+                    const offersList = offersJson.data?.offers || [];
+                    const RIPPLE_EPOCH_OFFSET = 946684800;
+                    const rippleNow = Math.floor(Date.now() / 1000) - RIPPLE_EPOCH_OFFSET;
+
+                    offersList.forEach(item => {
+                        const tokenId = item.NFTokenID;
+                        const ownerOfNft = item.NFTokenOwner;
+                        if (!tokenId) return;
+
+                        const activeSell = (item.sell || []).filter(offer => {
+                            if (ownerOfNft && offer.Owner !== ownerOfNft) return false;
+                            if (typeof offer.Amount !== 'string') return false;
+                            if (offer.Expiration) {
+                                const exp = parseInt(offer.Expiration);
+                                if (!isNaN(exp) && exp <= rippleNow) return false;
+                            }
+                            return true;
+                        });
+
+                        if (activeSell.length > 0) {
+                            let lowestPrice = Infinity;
+                            activeSell.forEach(offer => {
+                                const p = parseFloat(offer.Amount) / 1000000;
+                                if (p > 0 && p < lowestPrice) lowestPrice = p;
+                            });
+                            if (lowestPrice !== Infinity) {
+                                activeSellPrices[tokenId] = lowestPrice;
+                            }
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to load collection data:", err);
+            }
+        }
 
         // Configurable Trait Categories & Default Weights
         const TRAIT_WEIGHTS = {
@@ -402,7 +471,11 @@
             const rank = rankData ? rankData.standard_rank : ((tokenId % 9999) + 1);
             const score = rankData ? rankData.standard_score.toFixed(1) : '120.5';
 
-            document.getElementById('heroRarityScore').innerText = `Standard Rank #${rank} • Score: ${score}`;
+            const nftTokenId = tokenToIdMap[tokenId];
+            const price = nftTokenId ? activeSellPrices[nftTokenId] : null;
+            const priceHtml = price ? ` • <span class="text-cyan-400 font-extrabold">${price.toFixed(0)} XRP</span>` : "";
+
+            document.getElementById('heroRarityScore').innerHTML = `Standard Rank #${rank} • Score: ${score}${priceHtml}`;
             
             const badgeInfo = getRarityBadgeInfo(rank);
             const badgeEl = document.getElementById('heroRarityBadge');
@@ -491,10 +564,9 @@
                 return;
             }
 
-            topSiblings.forEach(sib => {
-                const rankData = window.DROPCHAN_RANKS ? window.DROPCHAN_RANKS[sib.id] : null;
-                const rank = rankData ? rankData.standard_rank : (sib.id % 9999 + 1);
-                const badge = getRarityBadgeInfo(rank);
+                const tokenId = tokenToIdMap[sib.id];
+                const price = tokenId ? activeSellPrices[tokenId] : null;
+                const priceBadgeHtml = price ? `<span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-black bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 shadow-lg">${price.toFixed(0)} XRP</span>` : "";
 
                 const card = document.createElement('div');
                 card.className = 'glass-card p-3 rounded-2xl cursor-pointer border border-white/10 group';
@@ -510,6 +582,7 @@
                         <span class="absolute bottom-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-black bg-pink-500 text-white shadow-lg">
                             Score: ${sib.totalScore}
                         </span>
+                        ${priceBadgeHtml}
                     </div>
                     <div class="flex items-center justify-between">
                         <h4 class="text-sm font-extrabold text-white group-hover:text-pink-300 transition">#${sib.id}</h4>
@@ -579,6 +652,10 @@
                     const rankData = window.DROPCHAN_RANKS ? window.DROPCHAN_RANKS[id] : null;
                     const rank = rankData ? rankData.standard_rank : (id % 9999 + 1);
 
+                    const tokenId = tokenToIdMap[id];
+                    const price = tokenId ? activeSellPrices[tokenId] : null;
+                    const priceBadgeHtml = price ? `<span class="absolute bottom-1.5 left-1.5 text-[8px] font-black bg-cyan-950/90 text-cyan-300 border border-cyan-500/30 px-1 rounded shadow">${price.toFixed(0)} XRP</span>` : "";
+
                     const itemBtn = document.createElement('button');
                     itemBtn.id = `owned-card-${id}`;
                     itemBtn.className = 'owned-card-btn glass-card p-2 rounded-2xl shrink-0 w-28 border border-white/10 text-left hover:border-pink-500 transition group';
@@ -588,6 +665,7 @@
                         <div class="aspect-square rounded-xl overflow-hidden bg-indigo-950/40 relative mb-1.5">
                             <img src="https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${id}.svg" alt="Dropchan #${id}" referrerpolicy="no-referrer" 
                                 class="w-full h-full object-cover group-hover:scale-105 transition" />
+                            ${priceBadgeHtml}
                         </div>
                         <div class="text-[11px] font-black text-white truncate">#${id}</div>
                         <div class="text-[9px] font-bold text-gray-400">Rank #${rank}</div>
@@ -604,6 +682,42 @@
             }
         }
 
+        function openHeroMarketplaceModal() {
+            const rankData = window.DROPCHAN_RANKS ? window.DROPCHAN_RANKS[currentInspectId] : null;
+            const rank = rankData ? rankData.standard_rank : ((currentInspectId % 9999) + 1);
+            const tokenId = tokenToIdMap[currentInspectId];
+            openNftModal(currentInspectId, rank, tokenId);
+        }
+
+        function openNftModal(id, rank, nftTokenId) {
+            document.getElementById('modalNftTitle').innerText = `Dropchan #${id}`;
+            document.getElementById('modalNftRank').innerText = `Rank #${rank}`;
+            
+            const price = activeSellPrices[nftTokenId];
+            if (price) {
+                document.getElementById('modalNftPrice').innerText = `${price.toFixed(0)} XRP`;
+                document.getElementById('modalNftPrice').classList.remove('hidden');
+            } else {
+                document.getElementById('modalNftPrice').innerText = "Not Listed";
+                document.getElementById('modalNftPrice').classList.remove('hidden');
+            }
+            
+            document.getElementById('modalNftImg').src = `https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${id}.svg`;
+
+            const tokenHex = nftTokenId || '';
+
+            document.getElementById('btnXrpCafe').href = tokenHex ? `https://xrp.cafe/nft/${tokenHex}` : `https://xrp.cafe`;
+            document.getElementById('btnBidds').href = tokenHex ? `https://bidds.com/nft/${tokenHex}` : `https://bidds.com`;
+            document.getElementById('btnBithomp').href = tokenHex ? `https://bithomp.com/nft/${tokenHex}` : `https://bithomp.com`;
+            document.getElementById('btnKawaii').href = `index.html?id=${id}`;
+
+            document.getElementById('nftModal').classList.remove('hidden');
+        }
+
+        function closeNftModal() {
+            document.getElementById('nftModal').classList.add('hidden');
+        }
+
         function openLeaderboard() {
             const addr = localStorage.getItem('xaman_address');
             if (addr) {
@@ -614,10 +728,13 @@
         }
 
         // Initialize UI Event Handlers
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             initTraitFrequencies();
             renderWeightControls();
-            loadUserOwnedDropchans(); // Auto-load Xaman connected owned NFTs
+
+            // Load collection data (token mapping and offers) first in parallel with wallet sync
+            await loadCollectionData();
+            await loadUserOwnedDropchans(); // Auto-load Xaman connected owned NFTs
 
             document.getElementById('btnLoadNft').onclick = () => {
                 const val = document.getElementById('nftIdInput').value;
@@ -637,6 +754,92 @@
                 inspectNft(randId);
             };
         });
-    </script>
+    <!-- Platform Selector Modal -->
+    <div id="nftModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-gradient-to-b from-[#180e38] to-[#0c051a] border border-purple-500/40 rounded-3xl p-6 max-w-md w-full shadow-2xl relative text-white flex flex-col gap-5">
+            
+            <!-- Close Button -->
+            <button onclick="closeNftModal()" class="absolute top-4 right-4 text-purple-300 hover:text-white bg-purple-950/60 p-2 rounded-full border border-purple-800/40 transition-all">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- NFT Card Header -->
+            <div class="flex items-center gap-4 border-b border-purple-800/40 pb-4">
+                <img id="modalNftImg" src="" alt="" class="w-16 h-16 rounded-2xl object-cover border-2 border-purple-500/50 shadow-md" referrerpolicy="no-referrer">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 id="modalNftTitle" class="text-xl font-black text-white">Dropchan #--</h3>
+                        <span id="modalNftRank" class="text-xs font-black uppercase px-2.5 py-0.5 rounded-full bg-pink-500 text-white">Rank #--</span>
+                    </div>
+                    <p id="modalNftPrice" class="text-sm font-bold text-cyan-300 mt-1">-- XRP</p>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-xs font-black uppercase tracking-wider text-purple-300 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-compass text-cyan-400"></i> Select Platform to View NFT:
+                </h4>
+
+                <!-- 4 Platform Option Buttons Grid -->
+                <div class="grid grid-cols-1 gap-2.5">
+                    <a id="btnXrpCafe" href="#" target="_blank" class="flex items-center justify-between p-3 rounded-2xl bg-purple-950/60 hover:bg-pink-600/20 border border-purple-800/50 hover:border-pink-500/60 text-white font-bold transition-all group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-xl bg-pink-500/20 border border-pink-500/40 flex items-center justify-center shrink-0">
+                                <svg viewBox="0 0 100 100" class="w-5 h-5 fill-pink-400">
+                                    <path d="M 22,40 A 28,28 0 0,0 78,40 A 8,8 0 0,0 62,40 A 12,12 0 0,1 38,40 A 8,8 0 0,0 22,40 Z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-white group-hover:text-pink-300">XRP Cafe</p>
+                                <p class="text-[11px] text-purple-300/70">Leading XRPL NFT Marketplace</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs text-purple-400 group-hover:text-pink-300"></i>
+                    </a>
+
+                    <a id="btnBidds" href="#" target="_blank" class="flex items-center justify-between p-3 rounded-2xl bg-purple-950/60 hover:bg-cyan-600/20 border border-purple-800/50 hover:border-cyan-500/60 text-white font-bold transition-all group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0">
+                                <svg viewBox="0 0 50 40" class="w-5 h-4 fill-cyan-400">
+                                    <path d="M43.2557 16.4929H39.8786V6.45244C39.8786 2.8945 36.9929 0 33.4457 0H6.43286C2.88571 0 0 2.8945 0 6.45244V33.549C0 37.1069 2.88571 40.0014 6.43286 40.0014H43.2571C46.8043 40.0014 49.69 37.1069 49.69 33.549V22.9468C49.69 19.3889 46.8043 16.4944 43.2571 16.4944L43.2557 16.4929ZM35.5929 33.1664C35.5929 34.5664 34.4614 35.7012 33.0657 35.7012C31.67 35.7012 30.5386 34.5664 30.5386 33.1664V22.9454C30.5386 21.756 31.5 20.7917 32.6857 20.7917H35.5929V33.1664ZM35.5929 16.4929H32.6857C29.1386 16.4929 26.2529 19.3874 26.2529 22.9454V33.5476C26.2529 34.3027 26.3843 35.0263 26.6229 35.7012H6.43286C5.24857 35.7012 4.28571 34.7354 4.28571 33.5476V6.45244C4.28571 5.26455 5.24857 4.29876 6.43286 4.29876H33.4471C34.6314 4.29876 35.5943 5.26455 35.5943 6.45244V16.4929H35.5929ZM45.4029 33.5476C45.4029 34.7354 44.44 35.7012 43.2557 35.7012H39.5086C39.7471 35.0278 39.8786 34.3027 39.8786 33.5476V20.7917H43.2557C44.44 20.7917 45.4029 21.7575 45.4029 22.9454V33.5476Z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-white group-hover:text-cyan-300">Bidds</p>
+                                <p class="text-[11px] text-purple-300/70">XRPL NFT Auctions & Trades</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs text-purple-400 group-hover:text-cyan-300"></i>
+                    </a>
+
+                    <a id="btnBithomp" href="#" target="_blank" class="flex items-center justify-between p-3 rounded-2xl bg-purple-950/60 hover:bg-purple-600/20 border border-purple-800/50 hover:border-purple-500/60 text-white font-bold transition-all group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-xl bg-[#23aabb]/20 border border-[#23aabb]/40 flex items-center justify-center shrink-0 overflow-hidden p-1.5">
+                                <img src="bithomp.svg" alt="Bithomp" class="w-full h-full object-contain filter drop-shadow">
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-white group-hover:text-purple-300">Bithomp</p>
+                                <p class="text-[11px] text-purple-300/70">Official XRPL Ledger Explorer</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs text-purple-400 group-hover:text-purple-300"></i>
+                    </a>
+
+                    <a id="btnKawaii" href="index.html" class="flex items-center justify-between p-3 rounded-2xl bg-purple-950/60 hover:bg-pink-500/20 border border-purple-800/50 hover:border-pink-400/60 text-white font-bold transition-all group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-xl bg-pink-500/20 border border-pink-500/40 flex items-center justify-center shrink-0 text-lg">
+                                🌸
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-white group-hover:text-pink-300">Kawaii Market</p>
+                                <p class="text-[11px] text-purple-300/70">View item details & buy offer</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs text-purple-400 group-hover:text-pink-300"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
