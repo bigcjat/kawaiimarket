@@ -142,36 +142,57 @@
 </head>
 <body class="min-h-screen pb-16">
 
-    <!-- Header -->
-    <header class="border-b border-purple-900/40 glass-panel sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <a href="index.html" class="p-2.5 rounded-xl bg-purple-950/60 border border-purple-800/40 text-purple-300 hover:text-white hover:bg-purple-900/50 transition-all cursor-pointer">
-                    <i class="fa-solid fa-arrow-left"></i>
-                </a>
-                <div>
-                    <h1 class="text-lg font-black tracking-tight text-white flex items-center gap-2">
-                        <i class="fa-solid fa-wand-magic-sparkles text-yellow-400"></i> Dropchan Banner Studio <span class="px-2.5 py-0.5 text-[9px] bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-400 rounded-full font-black tracking-widest uppercase text-white shadow-lg shadow-purple-500/30">ULTRA v3.0</span>
-                    </h1>
-                    <p class="text-[11px] text-purple-300/70">Craft professional 1500×500 Twitter headers with 12 layouts, VFX overlays & custom gradients</p>
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-white/10 px-4 lg:px-8 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <a href="index.html" class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <i class="fa-solid fa-droplet text-white text-sm"></i>
                 </div>
-            </div>
+                <div>
+                    <span class="font-black text-lg tracking-wide bg-gradient-to-r from-cyan-400 via-purple-300 to-pink-400 bg-clip-text text-transparent block leading-tight">
+                        KawaiiMarket
+                    </span>
+                    <span class="block text-[8px] text-purple-300 font-bold tracking-wider uppercase">
+                        Rarity Dashboard
+                    </span>
+                </div>
+            </a>
+        </div>
+        <nav class="flex items-center space-x-2 md:space-x-4">
+            <a href="index.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Home</a>
+            <a href="rarity-floors.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Rarity Floors</a>
+            <a href="siblings.html" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Siblings Finder</a>
+            <a href="#" onclick="openLeaderboard()" class="text-xs md:text-sm font-semibold text-gray-300 hover:text-white px-3 py-1.5 rounded-lg transition">Leaderboard</a>
+        </nav>
+    </header>
 
-            <div class="flex items-center gap-3">
-                <div id="walletBadge" class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-purple-950/90 border border-purple-700/50 text-xs font-mono font-bold text-purple-200">
+    <main class="max-w-7xl mx-auto px-4 mt-6">
+
+        <!-- Action Control Bar -->
+        <div class="w-full max-w-[1200px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-3xl bg-purple-950/40 border border-purple-800/40 shadow-xl backdrop-blur-md mb-6">
+            <div>
+                <h1 class="text-xl font-black text-white flex items-center gap-2">
+                    <span>🌸 Dropchan Banner Studio</span>
+                    <span class="text-[10px] font-black px-2.5 py-0.5 bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-400 rounded-full font-black tracking-widest uppercase text-white shadow-lg shadow-purple-500/30 leading-none">ULTRA v3.0</span>
+                </h1>
+                <p class="text-xs text-purple-300/70 mt-1">Craft professional 1500×500 Twitter headers with 12 layouts, VFX overlays & custom gradients.</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Wallet Badge -->
+                <div id="walletBadge" class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-purple-955/90 border border-purple-700/50 text-xs font-mono font-bold text-purple-200">
                     <i class="fa-solid fa-wallet text-green-400"></i>
                     <span id="walletAddressText">Loading...</span>
                     <span id="nftCountBadge" class="px-2 py-0.5 rounded-full bg-purple-800/80 text-[10px] text-purple-200 font-black">0 NFTs</span>
                 </div>
 
-                <button id="btnExport" onclick="exportBannerPNG()" class="px-4 py-2.5 bg-gradient-to-r from-purple-600 via-pink-500 to-kawaii-accentAqua hover:from-purple-500 hover:to-cyan-400 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-purple-500/25 active:scale-95 transition-all cursor-pointer flex items-center gap-2">
+                <!-- Export Button -->
+                <button id="btnExport" onclick="exportBannerPNG()" class="px-5 py-2.5 bg-gradient-to-r from-purple-600 via-pink-500 to-kawaii-accentAqua hover:from-purple-500 hover:to-cyan-400 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-purple-500/25 active:scale-95 transition-all cursor-pointer flex items-center gap-2">
                     <i class="fa-solid fa-download"></i> Export 1500×500 PNG
                 </button>
             </div>
         </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 mt-6">
 
         <!-- Quick Preset Style Kits -->
         <div class="glass-panel p-3.5 rounded-2xl mb-6 flex flex-wrap items-center justify-between gap-3 border border-purple-800/40">
@@ -1230,6 +1251,14 @@
             } catch (err) {
                 console.error("Canvas export error:", err);
                 alert("Security Error exporting canvas: " + err.message + "\n\nPlease view this page on http://localhost:5556/banner.html instead of file://");
+            }
+        }
+        function openLeaderboard() {
+            const addr = localStorage.getItem('xaman_address');
+            if (addr) {
+                window.location.href = `leaderboard?address=${addr}`;
+            } else {
+                window.location.href = 'leaderboard';
             }
         }
     </script>
