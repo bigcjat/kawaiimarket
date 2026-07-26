@@ -670,7 +670,9 @@
                         <div class="aspect-square rounded-xl overflow-hidden bg-indigo-950/40 relative mb-1.5">
                             <img src="https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${id}.svg" alt="Dropchan #${id}" referrerpolicy="no-referrer" 
                                 class="w-full h-full object-cover group-hover:scale-105 transition" />
-                            ${priceBadgeHtml}
+                            <div class="price-container">
+                                ${priceBadgeHtml}
+                            </div>
                         </div>
                         <div class="text-[11px] font-black text-white truncate">#${id}</div>
                         <div class="text-[9px] font-bold text-gray-400">Rank #${rank}</div>
@@ -732,14 +734,36 @@
             }
         }
 
+        function updateCarouselPrices() {
+            document.querySelectorAll('.owned-card-btn').forEach(btn => {
+                const id = parseInt(btn.id.replace('owned-card-', ''));
+                if (isNaN(id)) return;
+                const tokenId = tokenToIdMap[id];
+                const price = tokenId ? activeSellPrices[tokenId] : null;
+                if (price) {
+                    const container = btn.querySelector('.price-container');
+                    if (container) {
+                        container.innerHTML = `<span class="absolute bottom-1.5 left-1.5 text-[8px] font-black bg-cyan-950/90 text-cyan-300 border border-cyan-500/30 px-1 rounded shadow">${price.toFixed(0)} XRP</span>`;
+                    }
+                }
+            });
+        }
+
         // Initialize UI Event Handlers
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             initTraitFrequencies();
             renderWeightControls();
 
-            // Load collection data (token mapping and offers) first in parallel with wallet sync
-            await loadCollectionData();
-            await loadUserOwnedDropchans(); // Auto-load Xaman connected owned NFTs
+            // Load user owned dropchans immediately (non-blocking)
+            loadUserOwnedDropchans(); 
+
+            // Load collection data (token mapping and offers) asynchronously in the background
+            loadCollectionData().then(() => {
+                if (currentInspectId) {
+                    inspectNft(currentInspectId);
+                }
+                updateCarouselPrices();
+            });
 
             document.getElementById('btnLoadNft').onclick = () => {
                 const val = document.getElementById('nftIdInput').value;
