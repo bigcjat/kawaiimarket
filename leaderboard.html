@@ -189,20 +189,35 @@
                            class="w-full bg-slate-950/60 border border-purple-800/30 text-purple-200 text-xs rounded-xl pl-9 pr-4 py-2.5 focus:outline-none focus:border-pink-500 transition">
                 </div>
 
-                <!-- Filters -->
-                <div class="flex flex-wrap items-center gap-2">
-                    <button onclick="toggleFilterType('mythical')" id="filterBtnMythical" 
-                            class="px-3.5 py-2 border border-pink-500/20 hover:border-pink-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition">
-                        <span>⚡ Mythical</span>
-                    </button>
-                    <button onclick="toggleFilterType('epic')" id="filterBtnEpic" 
-                            class="px-3.5 py-2 border border-yellow-500/20 hover:border-yellow-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition">
-                        <span>🔥 Epic</span>
-                    </button>
-                    <button onclick="toggleFilterType('rare')" id="filterBtnRare" 
-                            class="px-3.5 py-2 border border-cyan-500/20 hover:border-cyan-500/40 text-purple-300 hover:text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition">
-                        <span>💎 Rare</span>
-                    </button>
+                <!-- Filters & Sorting Controls -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Rarity Tier Filters -->
+                    <div class="flex flex-wrap items-center gap-1.5 border-r border-purple-800/30 pr-3">
+                        <button onclick="toggleFilterType('mythical')" id="filterBtnMythical" 
+                                class="px-3 py-1.5 border border-pink-500/20 hover:border-pink-500/40 text-purple-300 hover:text-white rounded-xl text-[10px] font-extrabold flex items-center gap-1 transition">
+                            <span>⚡ Mythical</span>
+                        </button>
+                        <button onclick="toggleFilterType('epic')" id="filterBtnEpic" 
+                                class="px-3 py-1.5 border border-yellow-500/20 hover:border-yellow-500/40 text-purple-300 hover:text-white rounded-xl text-[10px] font-extrabold flex items-center gap-1 transition">
+                            <span>🔥 Epic</span>
+                        </button>
+                        <button onclick="toggleFilterType('rare')" id="filterBtnRare" 
+                                class="px-3 py-1.5 border border-cyan-500/20 hover:border-cyan-500/40 text-purple-300 hover:text-white rounded-xl text-[10px] font-extrabold flex items-center gap-1 transition">
+                            <span>💎 Rare</span>
+                        </button>
+                    </div>
+
+                    <!-- Metric Sort Toggle -->
+                    <div class="flex items-center bg-slate-950/60 border border-purple-800/30 rounded-xl p-0.5 shrink-0">
+                        <button onclick="setSortMode('qty')" id="sortBtnQty" 
+                                class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all bg-pink-500 text-white shadow">
+                            Quantity
+                        </button>
+                        <button onclick="setSortMode('worth')" id="sortBtnWorth" 
+                                class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all text-purple-300 hover:text-white">
+                            Worth
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -240,6 +255,7 @@
         let expandedRowAddress = null; // Currently expanded address
         let activeSellPrices = {}; // Maps NFTokenID -> lowest price (number)
         let tierFloors = { mythical: 100, epic: 100, rare: 100, common: 100 };
+        let activeSortMode = 'qty'; // 'qty' or 'worth'
         
         const urlParams = new URLSearchParams(window.location.search);
         const highlightAddress = urlParams.get('address');
@@ -402,13 +418,9 @@
                     owner.worth = Math.round(worth);
                 });
 
-                // Convert to array and sort by count descending, with worth as a tie-breaker descending
-                allHolders = Object.values(ownersMap).sort((a, b) => {
-                    if (b.count !== a.count) {
-                        return b.count - a.count;
-                    }
-                    return b.worth - a.worth;
-                });
+                // Convert to array and sort according to the active sorting mode
+                allHolders = Object.values(ownersMap);
+                sortAllHolders();
 
                 // Sort individual holders' collections by rank ascending
                 allHolders.forEach(h => {
@@ -791,6 +803,42 @@
             document.getElementById('btnKawaii').href = `index.html?id=${id}`;
 
             document.getElementById('nftModal').classList.remove('hidden');
+        }
+
+        function sortAllHolders() {
+            if (activeSortMode === 'qty') {
+                allHolders.sort((a, b) => {
+                    if (b.count !== a.count) return b.count - a.count;
+                    return b.worth - a.worth;
+                });
+            } else {
+                allHolders.sort((a, b) => {
+                    if (b.worth !== a.worth) return b.worth - a.worth;
+                    return b.count - a.count;
+                });
+            }
+        }
+
+        function setSortMode(mode) {
+            if (activeSortMode === mode) return;
+            activeSortMode = mode;
+
+            // Toggle active classes on buttons
+            const btnQty = document.getElementById('sortBtnQty');
+            const btnWorth = document.getElementById('sortBtnWorth');
+
+            if (mode === 'qty') {
+                btnQty.className = "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all bg-pink-500 text-white shadow";
+                btnWorth.className = "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all text-purple-300 hover:text-white";
+            } else {
+                btnQty.className = "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all text-purple-300 hover:text-white";
+                btnWorth.className = "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all bg-pink-500 text-white shadow";
+            }
+
+            // Re-sort and re-render
+            sortAllHolders();
+            renderPodiums();
+            handleFilterChange();
         }
 
         function closeNftModal() {
