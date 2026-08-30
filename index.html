@@ -711,10 +711,13 @@
                                     activeBuyOffersMap[tokenIdNum] = activeBuy;
                                     activeSellOffersMap[tokenIdNum] = activeSell;
 
-                                    if (activeSell.length > 0) {
+                                    // Exclude XRP.cafe auction reserve offers from direct buy listings
+                                    const directSell = activeSell.filter(offer => offer.Destination !== "rKWCPCDKbn3cLRSFpUgqS5Nc3z3s6UUTu6");
+
+                                    if (directSell.length > 0) {
                                         let lowestSell = Infinity;
                                         let bestOffer = null;
-                                        activeSell.forEach(offer => {
+                                        directSell.forEach(offer => {
                                             const priceXrp = parseFloat(offer.Amount) / 1000000;
                                             if (priceXrp > 0 && priceXrp < lowestSell) {
                                                 lowestSell = priceXrp;
