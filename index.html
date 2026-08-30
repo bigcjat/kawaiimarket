@@ -380,16 +380,14 @@
                     </select>
                 </div>
 
-                <!-- Listing & Auction Filter -->
-                <div class="lg:col-span-2 flex flex-col gap-1.5">
-                    <label class="text-[11px] font-bold text-purple-300 uppercase tracking-wide">Market Filter</label>
-                    <select id="marketFilter" onchange="onControlChange()" 
-                        class="w-full bg-purple-950/40 border border-purple-900/40 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-300">
-                        <option value="all">All Items</option>
-                        <option value="listed">⚡ Buy Now Only</option>
-                        <option value="auctions">🔨 Live Auctions Only</option>
-                        <option value="any_market">Any (Listed or Auction)</option>
-                    </select>
+                <!-- Filter listed toggle -->
+                <div class="lg:col-span-2 flex items-center justify-center lg:justify-end pb-1.5">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="listedOnly" onchange="onControlChange()"
+                            class="w-4 h-4 rounded accent-kawaii-500 bg-purple-950/50 border-purple-900/50">
+                        <span class="text-xs font-bold text-purple-300 uppercase tracking-wide"
+                            data-i18n="listed_only">Listed Only</span>
+                    </label>
                 </div>
 
             </div>
@@ -480,12 +478,8 @@
         const IMAGE_BASE_URL = "./svgs/";
         const IPFS_GATEWAY_URL = `https://ipfs.io/ipfs/${IMAGE_CID}/`;
 
-        const XRP_CAFE_AUCTION_BROKER = "rKWCPCDKbn3cLRSFpUgqS5Nc3z3s6UUTu6";
-        const XRP_CAFE_MARKET_BROKER = "rpx9JThQ2y37FaGeeJP7PXDUVEXY3PHZSC";
-
         let fullCollection = [];   // Loaded from dropchan_ranks.json
         let activeListings = {};   // NFTokenID -> lowestSellPrice (XRP)
-        let activeAuctions = {};   // NFTokenID -> { isAuction: true, reservePrice, reserveOffer, highestBid, highestBidder, bidCount, bids, minNextBid }
         let tokenToIdMap = {};     // Collection token number -> NFTokenID
         let mintedOwners = {};     // Collection token number -> Owner Address
         let activeOffersDetails = {}; // Collection token number -> Active Sell Offer details
@@ -717,53 +711,10 @@
                                     activeBuyOffersMap[tokenIdNum] = activeBuy;
                                     activeSellOffersMap[tokenIdNum] = activeSell;
 
-                                    // Check for XRP.cafe Auction
-                                    const auctionReserveOffer = activeSell.find(o => o.Destination === XRP_CAFE_AUCTION_BROKER);
-                                    if (auctionReserveOffer) {
-                                        const reserveAmtStr = auctionReserveOffer.Amount;
-                                        const reservePriceXrp = parseFloat(reserveAmtStr) / 1000000;
-                                        
-                                        const auctionBids = [];
-                                        activeBuy.forEach(b => {
-                                            if (b.Destination === XRP_CAFE_AUCTION_BROKER) {
-                                                const bAmt = parseFloat(b.Amount) / 1000000;
-                                                if (bAmt > 0) {
-                                                    auctionBids.push({
-                                                        amountXrp: bAmt,
-                                                        amountDrops: b.Amount,
-                                                        bidder: b.Owner,
-                                                        offerId: b.OfferID || b.nft_offer_index,
-                                                        expiration: b.Expiration
-                                                    });
-                                                }
-                                            }
-                                        });
-                                        
-                                        auctionBids.sort((a, b) => b.amountXrp - a.amountXrp);
-                                        const highestBid = auctionBids.length > 0 ? auctionBids[0].amountXrp : 0;
-                                        const highestBidder = auctionBids.length > 0 ? auctionBids[0].bidder : null;
-                                        const minIncrement = highestBid > 0 ? Math.max(1, Math.round(highestBid * 0.05 * 100) / 100) : 0;
-                                        const minNextBid = highestBid > 0 ? (Math.round((highestBid + minIncrement) * 100) / 100) : reservePriceXrp;
-
-                                        activeAuctions[tokenIdNum] = {
-                                            isAuction: true,
-                                            reservePrice: reservePriceXrp,
-                                            reserveOffer: auctionReserveOffer,
-                                            highestBid: highestBid,
-                                            highestBidder: highestBidder,
-                                            bidCount: auctionBids.length,
-                                            bids: auctionBids,
-                                            minNextBid: minNextBid,
-                                            isReserveMet: highestBid >= reservePriceXrp
-                                        };
-                                    }
-
-                                    // Direct Buy Listings (exclude auctions)
-                                    const directSellOffers = activeSell.filter(o => !o.Destination || o.Destination === XRP_CAFE_MARKET_BROKER);
-                                    if (directSellOffers.length > 0) {
+                                    if (activeSell.length > 0) {
                                         let lowestSell = Infinity;
                                         let bestOffer = null;
-                                        directSellOffers.forEach(offer => {
+                                        activeSell.forEach(offer => {
                                             const priceXrp = parseFloat(offer.Amount) / 1000000;
                                             if (priceXrp > 0 && priceXrp < lowestSell) {
                                                 lowestSell = priceXrp;
@@ -784,10 +735,8 @@
                         }
                     });
 
-                    let auctionCount = Object.keys(activeAuctions).length;
-                    const activeLabel = currentLang === 'ja' ? '点出品中' : (currentLang === 'ko' ? '개 판매 중' : ' Listed');
-                    const auctionLabel = currentLang === 'ja' ? '件オークション' : (currentLang === 'ko' ? '개 경매' : ' Auctions');
-                    document.getElementById('statActiveListings').innerHTML = `${listingCount}${activeLabel} <span class="text-xs text-amber-400 font-mono font-bold ml-1">• ${auctionCount} ${auctionLabel}</span>`;
+                    const activeLabel = currentLang === 'ja' ? '点出品中' : (currentLang === 'ko' ? '개 판매 중' : ' Active');
+                    document.getElementById('statActiveListings').innerText = `${listingCount}${activeLabel}`;
                     document.getElementById('statFloorPrice').innerText = lowestOverallFloor !== Infinity ? `${lowestOverallFloor.toFixed(2)} XRP` : 'N/A';
                 }
 
@@ -1078,7 +1027,7 @@
         function updateProcessList() {
             const model = document.getElementById('rarityModel').value;
             const sort = document.getElementById('sortOrder').value;
-            const marketFilter = document.getElementById('marketFilter') ? document.getElementById('marketFilter').value : 'all';
+            const onlyListed = document.getElementById('listedOnly').checked;
 
             // 1. Filter
             let list = [...fullCollection];
@@ -1091,13 +1040,8 @@
             } else if (ownedNftsSet !== null) {
                 list = list.filter(item => ownedNftsSet.has(item.id));
             }
-            
-            if (marketFilter === 'listed') {
+            if (onlyListed) {
                 list = list.filter(item => item.id in activeListings);
-            } else if (marketFilter === 'auctions') {
-                list = list.filter(item => item.id in activeAuctions);
-            } else if (marketFilter === 'any_market') {
-                list = list.filter(item => (item.id in activeListings) || (item.id in activeAuctions));
             }
 
             // Rarity Tier Filter
@@ -1204,7 +1148,6 @@
             const rank = item[rankKey];
             const score = item[scoreKey];
             const price = activeListings[item.id];
-            const auction = activeAuctions[item.id];
 
             const buyOffers = activeBuyOffersMap[item.id] || [];
             let bestBid = 0;
@@ -1218,23 +1161,14 @@
             let priceVal = dict.not_listed;
             let priceClass = 'text-slate-400';
 
-            if (auction) {
-                priceLabel = '🔨 Auction';
-                if (auction.highestBid > 0) {
-                    priceVal = `${auction.highestBid.toLocaleString()} XRP Bid`;
-                    priceClass = 'text-amber-400 font-black';
-                } else {
-                    priceVal = `Reserve ${auction.reservePrice.toLocaleString()} XRP`;
-                    priceClass = 'text-amber-300 font-bold';
-                }
-            } else if (price !== undefined) {
+            if (price !== undefined) {
                 priceLabel = dict.list_price;
                 priceVal = `${price.toLocaleString()} XRP`;
-                priceClass = 'text-kawaii-accentAqua font-bold';
+                priceClass = 'text-kawaii-accentAqua';
             } else if (bestBid > 0) {
                 priceLabel = dict.best_bid;
                 priceVal = `${bestBid.toLocaleString()} XRP`;
-                priceClass = 'text-green-400 font-bold';
+                priceClass = 'text-green-400';
             }
 
             // Broker fee resolution for listed NFTs
@@ -2143,18 +2077,7 @@
             document.getElementById('modalCardHp').innerText = `${rankLabel} #${rank.toLocaleString()}`;
             document.getElementById('modalDetailOwner').innerText = ownerFriendly;
             document.getElementById('modalDetailOwner').title = owner || '';
-            const auction = activeAuctions[targetIdNum];
-            if (auction) {
-                const topBidStr = auction.highestBid > 0 ? `${auction.highestBid.toLocaleString()} XRP (Top Bid)` : 'No bids yet';
-                document.getElementById('modalDetailPrice').innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="text-amber-400 font-black text-sm flex items-center gap-1"><i class="fa-solid fa-gavel"></i> ${topBidStr}</span>
-                        <span class="text-[10px] text-amber-300/80 font-mono">Reserve: ${auction.reservePrice.toLocaleString()} XRP • ${auction.bidCount} Bids</span>
-                    </div>
-                `;
-            } else {
-                document.getElementById('modalDetailPrice').innerText = price !== undefined ? `${price.toLocaleString()} XRP` : dict.not_listed;
-            }
+            document.getElementById('modalDetailPrice').innerText = price !== undefined ? `${price.toLocaleString()} XRP` : dict.not_listed;
             renderModalActions(targetIdNum);
 
             // Populate NFTokenID & External links
@@ -3028,21 +2951,10 @@
             const price = activeListings[id];
             const dict = I18N_DICTS[currentLang];
 
-            const auction = activeAuctions[id];
             actionsRow.innerHTML = '';
 
             if (isMinted && connectedWallet && owner === connectedWallet) {
-                if (auction) {
-                    const reserveOfferId = auction.reserveOffer?.OfferID || auction.reserveOffer?.nft_offer_index || '';
-                    actionsRow.innerHTML = `
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-amber-400 font-bold px-3 py-2 bg-amber-950/40 rounded-xl border border-amber-500/30">🔨 Auction Active (${auction.bidCount} Bids)</span>
-                            <button onclick="cancelOfferExecute(${id}, '${reserveOfferId}', 'listing')" class="px-4 py-2 bg-red-950/40 hover:bg-red-900/60 border border-red-500/25 rounded-xl text-xs font-bold text-red-300 transition-all cursor-pointer">
-                                Cancel Auction
-                            </button>
-                        </div>
-                    `;
-                } else if (price !== undefined) {
+                if (price !== undefined) {
                     const offerDetail = activeOffersDetails[id];
                     const offerID = (offerDetail && offerDetail.OfferID) ? offerDetail.OfferID : '';
                     actionsRow.innerHTML = `
@@ -3058,54 +2970,32 @@
                     `;
                 }
             } else {
-                if (auction) {
-                    const myAuctionBid = (auction.bids || []).find(b => b.bidder === connectedWallet);
-                    const bidBtnText = myAuctionBid 
-                        ? `Increase Bid (Your Bid: ${myAuctionBid.amountXrp} XRP)` 
-                        : `🔨 Place Bid (Min ${auction.minNextBid} XRP)`;
-                    
-                    let cancelMyBidHtml = '';
-                    if (myAuctionBid && myAuctionBid.offerId) {
-                        cancelMyBidHtml = `
-                            <button onclick="cancelOfferExecute(${id}, '${myAuctionBid.offerId}', 'buy')" class="px-4 py-2.5 bg-red-950/40 hover:bg-red-900/60 border border-red-500/25 rounded-xl text-xs font-bold text-red-300 transition-all cursor-pointer flex items-center gap-1.5">
-                                <i class="fa-solid fa-xmark"></i> Cancel Bid
-                            </button>
-                        `;
-                    }
-
-                    actionsRow.innerHTML = `
-                        <button onclick="openBidModal(${id}, true)" class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-950/50 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5">
-                            <i class="fa-solid fa-gavel text-slate-950"></i> ${bidBtnText}
+                let buyBtnHtml = '';
+                if (price !== undefined) {
+                    buyBtnHtml = `
+                        <button onclick="openBuyConfirmModal(${id})" class="px-5 py-2.5 bg-gradient-to-r from-kawaii-accentPink to-pink-500 hover:from-pink-500 hover:to-kawaii-accentPink text-white font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-cart-shopping"></i> ${dict.buy_now} (${price.toLocaleString()} XRP)
                         </button>
-                        ${cancelMyBidHtml}
+                    `;
+                }
+
+                // Check if user has an active buy offer (bid)
+                const myBuyOffer = (activeBuyOffersMap[id] || []).find(offer => offer.Owner === connectedWallet);
+
+                if (myBuyOffer) {
+                    actionsRow.innerHTML = `
+                        ${buyBtnHtml}
+                        <button onclick="cancelOfferExecute(${id}, '${myBuyOffer.OfferID}', 'buy')" class="px-5 py-2.5 bg-red-950/40 hover:bg-red-900/60 border border-red-500/25 rounded-xl text-xs font-bold text-red-300 transition-all cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-xmark"></i> ${dict.cancel_buy_offer}
+                        </button>
                     `;
                 } else {
-                    let buyBtnHtml = '';
-                    if (price !== undefined) {
-                        buyBtnHtml = `
-                            <button onclick="openBuyConfirmModal(${id})" class="px-5 py-2.5 bg-gradient-to-r from-kawaii-accentPink to-pink-500 hover:from-pink-500 hover:to-kawaii-accentPink text-white font-extrabold text-xs rounded-xl shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-1.5">
-                                <i class="fa-solid fa-cart-shopping"></i> ${dict.buy_now} (${price.toLocaleString()} XRP)
-                            </button>
-                        `;
-                    }
-
-                    const myBuyOffer = (activeBuyOffersMap[id] || []).find(offer => offer.Owner === connectedWallet);
-
-                    if (myBuyOffer) {
-                        actionsRow.innerHTML = `
-                            ${buyBtnHtml}
-                            <button onclick="cancelOfferExecute(${id}, '${myBuyOffer.OfferID}', 'buy')" class="px-5 py-2.5 bg-red-950/40 hover:bg-red-900/60 border border-red-500/25 rounded-xl text-xs font-bold text-red-300 transition-all cursor-pointer flex items-center gap-1.5">
-                                <i class="fa-solid fa-xmark"></i> ${dict.cancel_buy_offer}
-                            </button>
-                        `;
-                    } else {
-                        actionsRow.innerHTML = `
-                            ${buyBtnHtml}
-                            <button onclick="openBidModal(${id}, false)" class="px-5 py-2.5 bg-purple-900/40 hover:bg-purple-900/60 border border-purple-500/20 rounded-xl text-xs font-bold text-purple-200 transition-all cursor-pointer flex items-center gap-1.5">
-                                <i class="fa-solid fa-hand-holding-dollar"></i> ${dict.make_buy_offer}
-                            </button>
-                        `;
-                    }
+                    actionsRow.innerHTML = `
+                        ${buyBtnHtml}
+                        <button onclick="openBidModal(${id})" class="px-5 py-2.5 bg-purple-900/40 hover:bg-purple-900/60 border border-purple-500/20 rounded-xl text-xs font-bold text-purple-200 transition-all cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-hand-holding-dollar"></i> ${dict.make_buy_offer}
+                        </button>
+                    `;
                 }
             }
         }
@@ -3136,87 +3026,177 @@
                 NFTokenOffers: [offerID]
             };
 
-        // Make Buy Offer / Place Auction Bid
-        async function openBidModal(id, isAuction = false) {
+            try {
+                const requestBody = { txjson };
+                const userToken = localStorage.getItem('xaman_user_token');
+                if (userToken) requestBody.user_token = userToken;
+
+                const payload = await getXummPayload(requestBody);
+
+                // Re-render actions row immediately to remove loading spinner from the details modal card
+                renderModalActions(id);
+
+                openXamanSignModal(
+                    "Cancel Offer",
+                    "Sign to revoke this active offer from the XRP Ledger.",
+                    payload,
+                    (checkData) => {
+                        if (type === 'listing') {
+                            delete activeListings[id];
+                            delete activeOffersDetails[id];
+                            document.getElementById('modalDetailPrice').innerText = 'Not Listed';
+
+                            if (activeSellOffersMap[id]) {
+                                activeSellOffersMap[id] = activeSellOffersMap[id].filter(off => off.OfferID !== offerID);
+                            }
+                        } else {
+                            if (activeBuyOffersMap[id]) {
+                                activeBuyOffersMap[id] = activeBuyOffersMap[id].filter(off => off.OfferID !== offerID);
+                            }
+                        }
+
+                        renderModalActions(id);
+                        updateProcessList();
+                        updateWalletButtonLabel();
+                        renderTopDeals();
+
+                        // Re-render offers tab if active
+                        if (activeDetailTab === 'offers') {
+                            setDetailTab('offers');
+                        }
+
+                        showToast("Offer cancelled successfully on-ledger!", "success");
+                    }
+                );
+
+            } catch (e) {
+                console.error(e);
+                alert("Failed to create cancellation payload: " + e.message);
+                renderModalActions(id);
+            }
+        }
+
+        // Dynamic fetch for current ledger open fee (drops converted to XRP)
+        async function fetchCurrentLedgerFee() {
+            try {
+                const response = await fetch('https://xrplcluster.com/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ method: 'fee', params: [{}] })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const openLedgerFeeDrops = parseInt(data.result?.drops?.open_ledger_fee);
+                    if (!isNaN(openLedgerFeeDrops)) {
+                        return openLedgerFeeDrops / 1000000;
+                    }
+                }
+            } catch (e) {
+                console.warn("Failed to fetch ledger fee, using fallback", e);
+            }
+            return 0.000012; // Fallback 12 drops
+        }
+
+        // List / Private Sale / Transfer Multi-mode Logic
+        let currentListMode = 'public';
+
+        function setListMode(mode) {
+            currentListMode = mode;
+
+            const btnPublic = document.getElementById('btnListModePublic');
+            const btnPrivate = document.getElementById('btnListModePrivate');
+            const btnTransfer = document.getElementById('btnListModeTransfer');
+
+            const priceGroup = document.getElementById('listPriceGroup');
+            const destGroup = document.getElementById('listDestinationGroup');
+            const submitBtn = document.getElementById('listSubmitBtn');
+
+            const activeClass = "flex-1 py-1.5 rounded-lg text-white bg-purple-900/50 cursor-pointer transition-all";
+            const inactiveClass = "flex-1 py-1.5 rounded-lg text-purple-300 hover:text-white cursor-pointer transition-all";
+
+            if (btnPublic) btnPublic.className = mode === 'public' ? activeClass : inactiveClass;
+            if (btnPrivate) btnPrivate.className = mode === 'private' ? activeClass : inactiveClass;
+            if (btnTransfer) btnTransfer.className = mode === 'transfer' ? activeClass : inactiveClass;
+
+            const dict = I18N_DICTS[currentLang];
+            if (mode === 'public') {
+                if (priceGroup) priceGroup.classList.remove('hidden');
+                if (destGroup) destGroup.classList.add('hidden');
+                if (submitBtn) submitBtn.innerText = dict.list_nft_btn || 'List NFT';
+            } else if (mode === 'private') {
+                if (priceGroup) priceGroup.classList.remove('hidden');
+                if (destGroup) destGroup.classList.remove('hidden');
+                if (submitBtn) submitBtn.innerText = dict.create_private_offer_btn || 'Create Private Offer';
+            } else if (mode === 'transfer') {
+                if (priceGroup) priceGroup.classList.add('hidden');
+                if (destGroup) destGroup.classList.remove('hidden');
+                if (submitBtn) submitBtn.innerText = dict.transfer_nft_btn || 'Transfer NFT';
+            }
+        }
+
+        async function openListSaleModal(id) {
             if (!connectedWallet) {
                 alert("Please connect your Xaman wallet first!");
                 return;
             }
             activeNftId = id;
-            const auction = activeAuctions[id];
-            const isItemAuction = isAuction || !!auction;
+            if (document.getElementById('listPriceInput')) document.getElementById('listPriceInput').value = '';
+            if (document.getElementById('listDestinationInput')) document.getElementById('listDestinationInput').value = '';
+            setListMode('public');
 
-            const modalTitle = document.getElementById("bidModalTitle");
-            const modalDesc = document.getElementById("bidModalDesc");
-            const bidInput = document.getElementById("bidAmountInput");
-
-            if (isItemAuction && auction) {
-                bidInput.value = auction.minNextBid;
-                if (modalTitle) {
-                    modalTitle.innerHTML = `<i class="fa-solid fa-gavel text-amber-400"></i> Place Auction Bid (xrp.cafe)`;
-                }
-                if (modalDesc) {
-                    const topBidStr = auction.highestBid > 0 ? `${auction.highestBid.toLocaleString()} XRP` : "None";
-                    modalDesc.innerHTML = `This NFT is listed on English Auction. Top Bid: <strong class="text-amber-400">${topBidStr}</strong> • Reserve: <strong>${auction.reservePrice.toLocaleString()} XRP</strong>. Minimum next bid is <strong>${auction.minNextBid} XRP</strong>.`;
-                }
-            } else {
-                bidInput.value = "";
-                if (modalTitle) {
-                    modalTitle.innerHTML = `<i class="fa-solid fa-hand-holding-dollar text-purple-400"></i> Make Buy Offer`;
-                }
-                if (modalDesc) {
-                    modalDesc.innerHTML = `Submit a peer-to-peer buy offer for this NFT on the XRP Ledger.`;
-                }
-            }
-
-            document.getElementById("bidExpiryInput").value = "10m";
-            document.getElementById("bidNetworkFee").innerText = "Querying ledger...";
-            document.getElementById("bidProcessing").classList.add("hidden");
-            document.getElementById("bidActions").classList.remove("hidden");
-            document.getElementById("makeBidModal").classList.remove("hidden");
+            document.getElementById('listProcessing').classList.add('hidden');
+            document.getElementById('listActions').classList.remove('hidden');
+            document.getElementById('listSaleModal').classList.remove('hidden');
 
             const fee = await fetchCurrentLedgerFee();
-            document.getElementById("bidNetworkFee").innerText = `${fee.toFixed(6)} XRP`;
+            document.getElementById('listNetworkFee').innerText = `${fee.toFixed(6)} XRP`;
         }
 
-        function closeBidModal() {
-            document.getElementById("makeBidModal").classList.add("hidden");
+        function closeListSaleModal() {
+            document.getElementById('listSaleModal').classList.add('hidden');
             if (activePollInterval) {
                 clearInterval(activePollInterval);
                 activePollInterval = null;
             }
         }
 
-        async function confirmBidExecute() {
+        async function confirmListExecute() {
             if (!connectedWallet) {
                 alert("Please connect your Xaman wallet first.");
                 return;
             }
-            const val = parseFloat(document.getElementById("bidAmountInput").value);
-            if (isNaN(val) || val <= 0) {
-                alert("Please enter a valid bid amount greater than 0");
-                return;
+
+            let val = 0;
+            let destination = '';
+
+            if (currentListMode !== 'transfer') {
+                val = parseFloat(document.getElementById('listPriceInput').value);
+                if (isNaN(val) || val <= 0) {
+                    alert("Please enter a valid price greater than 0");
+                    return;
+                }
             }
 
-            const auction = activeAuctions[activeNftId];
-            if (auction && val < auction.reservePrice && auction.highestBid === 0) {
-                alert(`Your bid must be at least the reserve price of ${auction.reservePrice} XRP`);
-                return;
-            }
-            if (auction && auction.highestBid > 0 && val <= auction.highestBid) {
-                alert(`Your bid must be higher than the current top bid of ${auction.highestBid} XRP`);
-                return;
+            if (currentListMode !== 'public') {
+                destination = document.getElementById('listDestinationInput').value.trim();
+                if (!destination) {
+                    alert("Please enter the recipient's wallet address.");
+                    return;
+                }
+                if (!destination.startsWith('r')) {
+                    alert("Invalid XRPL wallet address format.");
+                    return;
+                }
             }
 
-            document.getElementById("bidProcessing").classList.remove("hidden");
-            document.getElementById("bidActions").classList.add("hidden");
+            document.getElementById('listProcessing').classList.remove('hidden');
+            document.getElementById('listActions').classList.add('hidden');
 
             const tokenID = tokenToIdMap[activeNftId];
-            const owner = mintedOwners[activeNftId];
-            if (!tokenID || !owner) {
-                alert("Token ID or Owner not found.");
-                document.getElementById("bidProcessing").classList.add("hidden");
-                document.getElementById("bidActions").classList.remove("hidden");
+            if (!tokenID) {
+                alert("Token ID not found for this NFT.");
+                document.getElementById('listProcessing').classList.add('hidden');
+                document.getElementById('listActions').classList.remove('hidden');
                 return;
             }
 
@@ -3224,12 +3204,76 @@
                 TransactionType: "NFTokenCreateOffer",
                 NFTokenID: tokenID,
                 Amount: String(Math.round(val * 1000000)),
-                Owner: owner
+                Flags: 1 // tfSellNFToken
             };
 
-            if (auction) {
-                txjson.Destination = XRP_CAFE_AUCTION_BROKER;
+            if (destination) {
+                txjson.Destination = destination;
             }
+
+            try {
+                const requestBody = { txjson };
+                const userToken = localStorage.getItem('xaman_user_token');
+                if (userToken) requestBody.user_token = userToken;
+
+                const payload = await getXummPayload(requestBody);
+
+                // Close list modal first
+                closeListSaleModal();
+
+                const actionTitle = currentListMode === 'transfer' ? "Confirm Transfer" : "Confirm Listing";
+                const actionDesc = currentListMode === 'transfer' ? "Sign to transfer this NFT to the destination address." : `Sign to list this NFT for sale at ${val} XRP.`;
+
+                openXamanSignModal(
+                    actionTitle,
+                    actionDesc,
+                    payload,
+                    (checkData) => {
+                        let successMsg = "";
+                        if (currentListMode === 'public') {
+                            activeListings[activeNftId] = val;
+                            activeOffersDetails[activeNftId] = {
+                                OfferID: checkData.response?.txid || 'simulated-offer-id',
+                                Destination: ''
+                            };
+                            document.getElementById('modalDetailPrice').innerText = `${val.toLocaleString()} XRP`;
+                            successMsg = `NFT listed for sale at ${val} XRP!`;
+                        } else if (currentListMode === 'private') {
+                            activeListings[activeNftId] = val;
+                            activeOffersDetails[activeNftId] = {
+                                OfferID: checkData.response?.txid || 'simulated-offer-id',
+                                Destination: destination
+                            };
+                            document.getElementById('modalDetailPrice').innerText = `${val.toLocaleString()} XRP (Private)`;
+                            successMsg = `Private sell offer for ${val} XRP created!`;
+                        } else {
+                            mintedOwners[activeNftId] = destination;
+                            delete activeListings[activeNftId];
+                            delete activeOffersDetails[activeNftId];
+
+                            const ownerFriendly = `${destination.substring(0, 8)}...${destination.substring(destination.length - 8)}`;
+                            document.getElementById('modalDetailOwner').innerText = ownerFriendly;
+                            document.getElementById('modalDetailOwner').title = destination;
+                            document.getElementById('modalDetailPrice').innerText = 'Not Listed';
+                            successMsg = `NFT successfully transferred to ${ownerFriendly}!`;
+                        }
+
+                        renderModalActions(activeNftId);
+                        updateProcessList();
+                        updateWalletButtonLabel();
+                        renderTopDeals();
+
+                        showToast(successMsg, "success");
+                    }
+                );
+
+            } catch (e) {
+                console.error(e);
+                alert("Failed to create Xaman payload: " + e.message);
+                document.getElementById('listProcessing').classList.add('hidden');
+                document.getElementById('listActions').classList.remove('hidden');
+            }
+        }
 
         // Make Buy Offer / Bid
         async function openBidModal(id) {
