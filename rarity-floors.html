@@ -511,6 +511,7 @@
                                 const activeSell = (nft.sell || []).filter(offer => {
                                     if (nft.NFTokenOwner && offer.Owner !== nft.NFTokenOwner) return false;
                                     if (typeof offer.Amount !== 'string') return false;
+                                    if (offer.Destination === 'rKWCPCDKbn3cLRSFpUgqS5Nc3z3s6UUTu6') return false; // Exclude auction reserves from rarity floor
                                     if (offer.Expiration) {
                                         const exp = parseInt(offer.Expiration);
                                         if (!isNaN(exp) && exp <= rippleNow) return false;
