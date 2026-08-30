@@ -1164,8 +1164,12 @@
                         activeFilters.push(`category "${selectedType}"`);
                     }
                 }
-                if (onlyListed) {
-                    activeFilters.push("listed only");
+                if (marketFilter === "listed") {
+                    activeFilters.push("buy now only");
+                } else if (marketFilter === "auctions") {
+                    activeFilters.push("live auctions only");
+                } else if (marketFilter === "any_market") {
+                    activeFilters.push("all market items");
                 }
 
                 if (activeFilters.length > 0) {
