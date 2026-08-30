@@ -380,14 +380,16 @@
                     </select>
                 </div>
 
-                <!-- Filter listed toggle -->
-                <div class="lg:col-span-2 flex items-center justify-center lg:justify-end pb-1.5">
-                    <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <input type="checkbox" id="listedOnly" onchange="onControlChange()"
-                            class="w-4 h-4 rounded accent-kawaii-500 bg-purple-950/50 border-purple-900/50">
-                        <span class="text-xs font-bold text-purple-300 uppercase tracking-wide"
-                            data-i18n="listed_only">Listed Only</span>
-                    </label>
+                <!-- Market Filter (Direct vs Auction) -->
+                <div class="lg:col-span-2 flex flex-col gap-1.5">
+                    <label class="text-[11px] font-bold text-purple-300 uppercase tracking-wide">Market Filter</label>
+                    <select id="marketFilter" onchange="onControlChange()" 
+                        class="w-full bg-purple-950/40 border border-purple-900/40 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-kawaii-300">
+                        <option value="all">All Items</option>
+                        <option value="listed">⚡ Buy Now Only</option>
+                        <option value="auctions">🔨 Live Auctions Only</option>
+                        <option value="any_market">Any (Listed or Auction)</option>
+                    </select>
                 </div>
 
             </div>
@@ -774,8 +776,11 @@
                         }
                     });
 
-                    const activeLabel = currentLang === 'ja' ? '点出品中' : (currentLang === 'ko' ? '개 판매 중' : ' Active');
-                    document.getElementById('statActiveListings').innerText = `${listingCount}${activeLabel}`;
+                    const auctionCount = Object.keys(activeAuctions).length;
+                    const activeLabel = currentLang === 'ja' ? '点出品中' : (currentLang === 'ko' ? '개 판매 중' : ' Listed');
+                    const auctionLabel = currentLang === 'ja' ? '件オークション' : (currentLang === 'ko' ? '개 경매' : ' Auctions');
+                    const auctionSpan = auctionCount > 0 ? `<span class="text-xs text-amber-400 font-mono font-bold ml-1">• ${auctionCount} ${auctionLabel}</span>` : '';
+                    document.getElementById('statActiveListings').innerHTML = `${listingCount}${activeLabel} ${auctionSpan}`;
                     document.getElementById('statFloorPrice').innerText = lowestOverallFloor !== Infinity ? `${lowestOverallFloor.toFixed(2)} XRP` : 'N/A';
                 }
 
@@ -1066,7 +1071,7 @@
         function updateProcessList() {
             const model = document.getElementById('rarityModel').value;
             const sort = document.getElementById('sortOrder').value;
-            const onlyListed = document.getElementById('listedOnly').checked;
+            const marketFilter = document.getElementById('marketFilter') ? document.getElementById('marketFilter').value : 'all';
 
             // 1. Filter
             let list = [...fullCollection];
@@ -1079,8 +1084,13 @@
             } else if (ownedNftsSet !== null) {
                 list = list.filter(item => ownedNftsSet.has(item.id));
             }
-            if (onlyListed) {
+            
+            if (marketFilter === 'listed') {
                 list = list.filter(item => item.id in activeListings);
+            } else if (marketFilter === 'auctions') {
+                list = list.filter(item => item.id in activeAuctions);
+            } else if (marketFilter === 'any_market') {
+                list = list.filter(item => (item.id in activeListings) || (item.id in activeAuctions));
             }
 
             // Rarity Tier Filter
@@ -1187,6 +1197,7 @@
             const rank = item[rankKey];
             const score = item[scoreKey];
             const price = activeListings[item.id];
+            const auction = activeAuctions[item.id];
 
             const buyOffers = activeBuyOffersMap[item.id] || [];
             let bestBid = 0;
@@ -1200,14 +1211,23 @@
             let priceVal = dict.not_listed;
             let priceClass = 'text-slate-400';
 
-            if (price !== undefined) {
+            if (auction) {
+                priceLabel = '🔨 Auction';
+                if (auction.highestBid > 0) {
+                    priceVal = `${auction.highestBid.toLocaleString()} XRP Bid`;
+                    priceClass = 'text-amber-400 font-black';
+                } else {
+                    priceVal = `Reserve ${auction.reservePrice.toLocaleString()} XRP`;
+                    priceClass = 'text-amber-300 font-bold';
+                }
+            } else if (price !== undefined) {
                 priceLabel = dict.list_price;
                 priceVal = `${price.toLocaleString()} XRP`;
-                priceClass = 'text-kawaii-accentAqua';
+                priceClass = 'text-kawaii-accentAqua font-bold';
             } else if (bestBid > 0) {
                 priceLabel = dict.best_bid;
                 priceVal = `${bestBid.toLocaleString()} XRP`;
-                priceClass = 'text-green-400';
+                priceClass = 'text-green-400 font-bold';
             }
 
             // Broker fee resolution for listed NFTs
@@ -2388,27 +2408,49 @@
         function formatOffersList(id) {
             const buyOffers = activeBuyOffersMap[id] || [];
             const sellOffers = activeSellOffersMap[id] || [];
+            const auction = activeAuctions[id];
             const dict = I18N_DICTS[currentLang];
 
-            if (buyOffers.length === 0 && sellOffers.length === 0) {
+            if (buyOffers.length === 0 && sellOffers.length === 0 && !auction) {
                 return `<div class="text-[10px] text-purple-400 text-center py-8">${dict.no_offers_on_ledger}</div>`;
             }
 
             let html = `<div class="flex flex-col gap-3 max-h-[220px] overflow-y-auto pr-1">`;
+
+            if (auction) {
+                html += `
+                    <div class="flex flex-col gap-1.5 bg-amber-950/20 border border-amber-500/30 rounded-xl p-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-extrabold text-amber-400 flex items-center gap-1.5"><i class="fa-solid fa-gavel"></i> Live Auction (xrp.cafe)</span>
+                            <span class="text-[10px] text-amber-300/80 font-mono">Reserve: <strong>${auction.reservePrice} XRP</strong></span>
+                        </div>
+                        <div class="text-[10px] text-slate-300">
+                            Total bids on broker: <strong class="text-amber-400">${auction.bidCount}</strong> • Highest: <strong class="text-green-400">${auction.highestBid > 0 ? `${auction.highestBid} XRP` : 'None'}</strong>
+                        </div>
+                    </div>
+                `;
+            }
 
             if (sellOffers.length > 0) {
                 html += `<div class="flex flex-col gap-1.5">
                     <span class="text-[8px] text-purple-400 font-black uppercase tracking-wider">${dict.active_sell_listings}</span>`;
                 sellOffers.forEach(offer => {
                     const priceXrp = parseFloat(offer.Amount) / 1000000;
-                    const isPrivate = offer.Destination && offer.Destination !== '';
+                    const isAuctionReserve = offer.Destination === XRP_CAFE_AUCTION_BROKER;
+                    const isPrivate = offer.Destination && offer.Destination !== '' && !isAuctionReserve;
+                    
+                    let typeBadge = `<span class="text-[8px] text-purple-400 font-semibold">${isPrivate ? dict.private : dict.public}</span>`;
+                    if (isAuctionReserve) {
+                        typeBadge = `<span class="text-[8px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">🔨 Auction Reserve</span>`;
+                    }
+
                     html += `
                         <div class="flex justify-between items-center bg-[#220d18]/40 border border-pink-500/20 rounded-xl p-2.5 text-[10px]">
                             <div class="flex items-center gap-2">
                                 <span class="font-extrabold text-kawaii-accentPink">${priceXrp.toLocaleString()} XRP</span>
-                                <span class="text-[8px] text-purple-400 font-semibold">${isPrivate ? dict.private : dict.public}</span>
+                                ${typeBadge}
                             </div>
-                            <span class="font-mono text-purple-400 text-[8px]">${dict.seller}: ${offer.Owner.substring(0, 6)}...</span>
+                            <span class="font-mono text-purple-400 text-[8px]">${dict.seller}: ${(offer.Owner || '').substring(0, 6)}...</span>
                         </div>
                     `;
                 });
@@ -2421,9 +2463,10 @@
                 buyOffers.forEach(offer => {
                     const priceXrp = parseFloat(offer.Amount) / 1000000;
                     const isMyNft = mintedOwners[id] === connectedWallet;
+                    const isAuctionBid = offer.Destination === XRP_CAFE_AUCTION_BROKER;
 
                     let acceptBtnHtml = '';
-                    if (isMyNft) {
+                    if (isMyNft && !isAuctionBid) {
                         acceptBtnHtml = `
                             <button onclick="acceptBuyOfferExecute(${id}, '${offer.OfferID}', ${priceXrp})" class="px-2.5 py-1 bg-green-500 hover:bg-green-400 text-purple-950 font-black text-[9px] rounded-lg transition-all active:scale-95 cursor-pointer ml-2">
                                 ${dict.accept_btn}
@@ -2431,13 +2474,16 @@
                         `;
                     }
 
+                    let bidTypeBadge = isAuctionBid ? `<span class="text-[8px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">🔨 Auction Bid</span>` : '';
+
                     html += `
                         <div class="flex justify-between items-center bg-[#0e211b]/40 border border-green-500/20 rounded-xl p-2.5 text-[10px]">
                             <div class="flex items-center gap-2">
                                 <span class="font-extrabold text-green-400">${priceXrp.toLocaleString()} XRP</span>
+                                ${bidTypeBadge}
                                 ${acceptBtnHtml}
                             </div>
-                            <span class="font-mono text-purple-400 text-[8px]">${dict.bidder}: ${offer.Owner.substring(0, 6)}...</span>
+                            <span class="font-mono text-purple-400 text-[8px]">${dict.bidder}: ${(offer.Owner || '').substring(0, 6)}...</span>
                         </div>
                     `;
                 });
@@ -4212,8 +4258,8 @@
                 class="absolute top-4 right-4 text-purple-400 hover:text-white transition-colors cursor-pointer text-xl">
                 <i class="fa-solid fa-xmark"></i>
             </button>
-            <h3 class="kawaii-title font-extrabold text-lg text-white" data-i18n="make_buy_offer">Place Buy Offer (Bid)
-            </h3>
+            <h3 id="bidModalTitle" class="kawaii-title font-extrabold text-lg text-white" data-i18n="make_buy_offer">Place Buy Offer (Bid)</h3>
+            <p id="bidModalDesc" class="text-xs text-purple-300">Submit a peer-to-peer buy offer for this NFT on the XRP Ledger.</p>
 
             <div class="flex flex-col gap-3">
                 <div class="flex flex-col gap-1">
