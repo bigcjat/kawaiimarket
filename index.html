@@ -478,6 +478,8 @@
         const IMAGE_BASE_URL = "./svgs/";
         const IPFS_GATEWAY_URL = `https://ipfs.io/ipfs/${IMAGE_CID}/`;
 
+        const XRP_CAFE_AUCTION_BROKER = "rKWCPCDKbn3cLRSFpUgqS5Nc3z3s6UUTu6";
+        let activeAuctions = {};   // Collection token number -> Auction details
         let fullCollection = [];   // Loaded from dropchan_ranks.json
         let activeListings = {};   // NFTokenID -> lowestSellPrice (XRP)
         let tokenToIdMap = {};     // Collection token number -> NFTokenID
@@ -711,8 +713,42 @@
                                     activeBuyOffersMap[tokenIdNum] = activeBuy;
                                     activeSellOffersMap[tokenIdNum] = activeSell;
 
+                                    // Detect and parse XRP.cafe Auction
+                                    const auctionReserve = activeSell.find(offer => offer.Destination === XRP_CAFE_AUCTION_BROKER);
+                                    if (auctionReserve) {
+                                        const reservePrice = parseFloat(auctionReserve.Amount) / 1000000;
+                                        const auctionBids = [];
+                                        activeBuy.forEach(b => {
+                                            if (b.Destination === XRP_CAFE_AUCTION_BROKER) {
+                                                const amt = parseFloat(b.Amount) / 1000000;
+                                                if (amt > 0) {
+                                                    auctionBids.push({
+                                                        amountXrp: amt,
+                                                        bidder: b.Owner,
+                                                        offerId: b.OfferID || b.nft_offer_index
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        auctionBids.sort((a, b) => b.amountXrp - a.amountXrp);
+                                        const highestBid = auctionBids.length > 0 ? auctionBids[0].amountXrp : 0;
+                                        const minInc = highestBid > 0 ? Math.max(1, Math.round(highestBid * 0.05 * 100) / 100) : 0;
+                                        const minNextBid = highestBid > 0 ? Math.round((highestBid + minInc) * 100) / 100 : reservePrice;
+
+                                        activeAuctions[tokenIdNum] = {
+                                            isAuction: true,
+                                            reservePrice: reservePrice,
+                                            reserveOffer: auctionReserve,
+                                            highestBid: highestBid,
+                                            highestBidder: auctionBids.length > 0 ? auctionBids[0].bidder : null,
+                                            bidCount: auctionBids.length,
+                                            bids: auctionBids,
+                                            minNextBid: minNextBid
+                                        };
+                                    }
+
                                     // Exclude XRP.cafe auction reserve offers from direct buy listings
-                                    const directSell = activeSell.filter(offer => offer.Destination !== "rKWCPCDKbn3cLRSFpUgqS5Nc3z3s6UUTu6");
+                                    const directSell = activeSell.filter(offer => offer.Destination !== XRP_CAFE_AUCTION_BROKER);
 
                                     if (directSell.length > 0) {
                                         let lowestSell = Infinity;
@@ -2080,7 +2116,18 @@
             document.getElementById('modalCardHp').innerText = `${rankLabel} #${rank.toLocaleString()}`;
             document.getElementById('modalDetailOwner').innerText = ownerFriendly;
             document.getElementById('modalDetailOwner').title = owner || '';
-            document.getElementById('modalDetailPrice').innerText = price !== undefined ? `${price.toLocaleString()} XRP` : dict.not_listed;
+            const auction = activeAuctions[targetIdNum];
+            if (auction) {
+                const topBidStr = auction.highestBid > 0 ? `${auction.highestBid.toLocaleString()} XRP (Top Bid)` : 'No bids yet';
+                document.getElementById('modalDetailPrice').innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-amber-400 font-bold text-sm flex items-center gap-1"><i class="fa-solid fa-gavel"></i> ${topBidStr}</span>
+                        <span class="text-[10px] text-amber-300/80 font-mono">Reserve: ${auction.reservePrice.toLocaleString()} XRP • ${auction.bidCount} Bids</span>
+                    </div>
+                `;
+            } else {
+                document.getElementById('modalDetailPrice').innerText = price !== undefined ? `${price.toLocaleString()} XRP` : dict.not_listed;
+            }
             renderModalActions(targetIdNum);
 
             // Populate NFTokenID & External links
@@ -2954,9 +3001,22 @@
             const price = activeListings[id];
             const dict = I18N_DICTS[currentLang];
 
+            const auction = activeAuctions[id];
             actionsRow.innerHTML = '';
 
             if (isMinted && connectedWallet && owner === connectedWallet) {
+                if (auction) {
+                    const reserveOfferId = auction.reserveOffer?.OfferID || auction.reserveOffer?.nft_offer_index || '';
+                    actionsRow.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-amber-400 font-bold px-3 py-2 bg-amber-950/40 rounded-xl border border-amber-500/30">🔨 Auction Active (${auction.bidCount} Bids)</span>
+                            <button onclick="cancelOfferExecute(${id}, '${reserveOfferId}', 'listing')" class="px-4 py-2 bg-red-950/40 hover:bg-red-900/60 border border-red-500/25 rounded-xl text-xs font-bold text-red-300 transition-all cursor-pointer">
+                                Cancel Auction
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
                 if (price !== undefined) {
                     const offerDetail = activeOffersDetails[id];
                     const offerID = (offerDetail && offerDetail.OfferID) ? offerDetail.OfferID : '';
@@ -2973,6 +3033,30 @@
                     `;
                 }
             } else {
+                if (auction) {
+                    const myAuctionBid = (auction.bids || []).find(b => b.bidder === connectedWallet);
+                    const bidBtnText = myAuctionBid 
+                        ? `Increase Bid (Your Bid: ${myAuctionBid.amountXrp} XRP)` 
+                        : `🔨 Place Bid (Min ${auction.minNextBid} XRP)`;
+                    
+                    let cancelMyBidHtml = '';
+                    if (myAuctionBid && myAuctionBid.offerId) {
+                        cancelMyBidHtml = `
+                            <button onclick="cancelOfferExecute(${id}, '${myAuctionBid.offerId}', 'buy')" class="px-4 py-2.5 bg-red-950/40 hover:bg-red-900/60 border border-red-500/25 rounded-xl text-xs font-bold text-red-300 transition-all cursor-pointer flex items-center gap-1.5">
+                                <i class="fa-solid fa-xmark"></i> Cancel Bid
+                            </button>
+                        `;
+                    }
+
+                    actionsRow.innerHTML = `
+                        <button onclick="openBidModal(${id}, true)" class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-950/50 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5">
+                            <i class="fa-solid fa-gavel text-slate-950"></i> ${bidBtnText}
+                        </button>
+                        ${cancelMyBidHtml}
+                    `;
+                    return;
+                }
+
                 let buyBtnHtml = '';
                 if (price !== undefined) {
                     buyBtnHtml = `
@@ -3278,14 +3362,23 @@
             }
         }
 
-        // Make Buy Offer / Bid
-        async function openBidModal(id) {
+        // Make Buy Offer / Place Auction Bid
+        async function openBidModal(id, isAuction = false) {
             if (!connectedWallet) {
                 alert("Please connect your Xaman wallet first!");
                 return;
             }
             activeNftId = id;
-            document.getElementById('bidAmountInput').value = '';
+            const auction = activeAuctions[id];
+            const isItemAuction = isAuction || !!auction;
+
+            const bidInput = document.getElementById('bidAmountInput');
+            if (isItemAuction && auction) {
+                bidInput.value = auction.minNextBid;
+            } else {
+                bidInput.value = '';
+            }
+
             document.getElementById('bidExpiryInput').value = '10m';
             document.getElementById('bidNetworkFee').innerText = "Querying ledger...";
             document.getElementById('bidProcessing').classList.add('hidden');
@@ -3330,6 +3423,11 @@
                 Amount: String(Math.round(val * 1000000)),
                 Owner: owner
             };
+
+            const auction = activeAuctions[activeNftId];
+            if (auction) {
+                txjson.Destination = XRP_CAFE_AUCTION_BROKER;
+            }
 
             try {
                 const requestBody = { txjson };
