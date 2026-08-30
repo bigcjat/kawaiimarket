@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" fill="none">
+  <rect width="400" height="400" fill="#0F172A"/>
+  <rect width="400" height="400" fill="url(#grad)" opacity="0.15"/>
+  
+  <defs>
+    <radialGradient id="grad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </radialGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Play Circle Container -->
+  <circle cx="200" cy="180" r="44" fill="#1E293B" stroke="#334155" stroke-width="3" filter="url(#glow)"/>
+  
+  <!-- Play Icon -->
+  <path d="M188 158L224 180L188 202V158Z" fill="#818CF8"/>
+
+  <!-- Message Text -->
+  <text x="200" y="260" font-family="Outfit, system-ui, sans-serif" font-size="16" font-weight="700" fill="#94A3B8" text-anchor="middle" letter-spacing="0.5">Missing preview image</text>
+  <text x="200" y="282" font-family="Outfit, system-ui, sans-serif" font-size="12" font-weight="500" fill="#64748B" text-anchor="middle">Video / Media NFT</text>
+</svg>

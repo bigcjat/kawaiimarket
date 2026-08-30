@@ -615,7 +615,7 @@
 
                     card.innerHTML = `
                         <div class="relative w-full aspect-square bg-slate-900 overflow-hidden">
-                            <img src="https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${nft.seq}.svg" alt="#${nft.seq}" class="w-full h-full object-cover" referrerpolicy="no-referrer">
+                            <img src="./svgs/${nft.seq}.svg" alt="#${nft.seq}" class="w-full h-full object-cover" referrerpolicy="no-referrer">
                             <span class="absolute top-1.5 left-1.5 text-[9px] font-black bg-black/85 text-white border border-white/10 px-1.5 py-0.5 rounded">#${nft.seq}</span>
                             ${priceBadgeHtml}
                         </div>
@@ -659,7 +659,7 @@
 
                 card.innerHTML = `
                     <div class="relative w-full aspect-square bg-slate-900 overflow-hidden">
-                        <img src="https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${nft.seq}.svg" alt="#${nft.seq}" class="w-full h-full object-cover" referrerpolicy="no-referrer">
+                        <img src="./svgs/${nft.seq}.svg" alt="#${nft.seq}" class="w-full h-full object-cover" referrerpolicy="no-referrer">
                         <span class="absolute top-1.5 left-1.5 text-[9px] font-black bg-black/85 text-white border border-white/10 px-1.5 py-0.5 rounded">#${nft.seq}</span>
                         ${priceBadgeHtml}
                     </div>
@@ -793,7 +793,7 @@
                 document.getElementById('modalNftPrice').classList.remove('hidden');
             }
             
-            document.getElementById('modalNftImg').src = `https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${id}.svg`;
+            document.getElementById('modalNftImg').src = `./svgs/${id}.svg`;
 
             const tokenHex = nftTokenId || '';
 

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Kawaii Market - NFT Image Failure Diagnostic Console</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          colors: {
+            slate: {
+              955: '#0B0F19'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0B0F19;
+      font-family: 'Outfit', sans-serif;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen pb-12">
+
+  <!-- Navigation Bar -->
+  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-6 py-4 flex items-center justify-between shadow-xl">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-rose-500/20">
+        🛡️
+      </div>
+      <div>
+        <h1 class="text-lg font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400">
+          NFT Image Failure Inspector
+        </h1>
+        <p class="text-xs text-slate-400 font-medium">Real-time log analyzer & standard diagnostic console</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <label class="flex items-center gap-2 cursor-pointer bg-slate-800/60 hover:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700/60 transition-all text-xs font-semibold">
+        <input type="checkbox" id="autoRefresh" checked class="w-3.5 h-3.5 rounded bg-slate-900 border-slate-700 text-rose-500 focus:ring-0">
+        <span>Auto-Refresh (10s)</span>
+      </label>
+      <button id="refreshBtn" onclick="fetchLogs()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-lg shadow-rose-600/20 transition-all flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        Refresh
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-mx-auto px-6 pt-8 space-y-6">
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div class="glass-card rounded-2xl p-4 flex flex-col justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Logged</span>
+        <div class="flex items-baseline justify-between mt-2">
+          <span id="statTotal" class="text-3xl font-black text-white">0</span>
+          <span class="text-xs px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-mono">100%</span>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-amber-500">
+        <span class="text-xs font-bold uppercase tracking-wider text-amber-400">JSON in Image URL</span>
+        <div class="flex items-baseline justify-between mt-2">
+          <span id="statJson" class="text-3xl font-black text-amber-400">0</span>
+          <span class="text-xs px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 font-mono">Metadata</span>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-rose-500">
+        <span class="text-xs font-bold uppercase tracking-wider text-rose-400">Gateway Timeouts</span>
+        <div class="flex items-baseline justify-between mt-2">
+          <span id="statTimeout" class="text-3xl font-black text-rose-400">0</span>
+          <span class="text-xs px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-300 font-mono">IPFS</span>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-indigo-500">
+        <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Missing Image Field</span>
+        <div class="flex items-baseline justify-between mt-2">
+          <span id="statMissing" class="text-3xl font-black text-indigo-400">0</span>
+          <span class="text-xs px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 font-mono">Schema</span>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-4 flex flex-col justify-between border-l-4 border-l-purple-500">
+        <span class="text-xs font-bold uppercase tracking-wider text-purple-400">Sharp / Format Errors</span>
+        <div class="flex items-baseline justify-between mt-2">
+          <span id="statSharp" class="text-3xl font-black text-purple-400">0</span>
+          <span class="text-xs px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 font-mono">Binary</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Category Filters -->
+    <div class="glass-card rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="relative w-full md:w-96">
+        <svg class="w-4 h-4 absolute left-3.5 top-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Filter by Issuer, Taxon, CID, or Keyword..." class="w-full bg-slate-900 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2 text-xs font-medium text-slate-200 focus:outline-none focus:border-rose-500 transition-all">
+      </div>
+
+      <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+        <button onclick="setCategoryFilter('ALL')" class="category-btn active px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-rose-600 text-white shadow-md">All</button>
+        <button onclick="setCategoryFilter('JSON_IN_IMAGE')" class="category-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-800 hover:bg-slate-700 text-slate-300">JSON in Image</button>
+        <button onclick="setCategoryFilter('GATEWAY_TIMEOUT')" class="category-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-800 hover:bg-slate-700 text-slate-300">Gateway Timeout</button>
+        <button onclick="setCategoryFilter('MISSING_FIELD')" class="category-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-800 hover:bg-slate-700 text-slate-300">Missing Field</button>
+        <button onclick="setCategoryFilter('SHARP_FORMAT')" class="category-btn px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-800 hover:bg-slate-700 text-slate-300">Sharp Format</button>
+      </div>
+    </div>
+
+    <!-- Logs Container -->
+    <div id="logsContainer" class="space-y-4">
+      <div class="text-center py-16 text-slate-400">Loading diagnostic logs...</div>
+    </div>
+
+  </main>
+
+  <script>
+    let rawLogItems = [];
+    let activeCategory = 'ALL';
+
+    function getCategory(item) {
+      const err = (item.error || '').toLowerCase();
+      const metaStr = JSON.stringify(item.metadata || {}).toLowerCase();
+      
+      if (err.includes('.json') || metaStr.includes('.json"')) return 'JSON_IN_IMAGE';
+      if (err.includes('no recognized image url field')) return 'MISSING_FIELD';
+      if (err.includes('sharpening/conversion') || err.includes('unsupported image format')) return 'SHARP_FORMAT';
+      return 'GATEWAY_TIMEOUT';
+    }
+
+    function getBadge(category) {
+      switch (category) {
+        case 'JSON_IN_IMAGE':
+          return `<span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">📄 JSON in Image URL</span>`;
+        case 'MISSING_FIELD':
+          return `<span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">🚫 Missing Image Field</span>`;
+        case 'SHARP_FORMAT':
+          return `<span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">🖼️ Sharp Format Error</span>`;
+        default:
+          return `<span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">⚠️ Gateway Timeout</span>`;
+      }
+    }
+
+    async function fetchLogs() {
+      const btn = document.getElementById('refreshBtn');
+      btn.classList.add('opacity-70', 'cursor-not-allowed');
+      try {
+        const res = await fetch('/api/debug/failed-images?format=json');
+        if (res.ok) {
+          const data = await res.json();
+          rawLogItems = data.items || [];
+          updateStats();
+          applyFilters();
+        }
+      } catch (err) {
+        console.error('Failed to load logs', err);
+      } finally {
+        btn.classList.remove('opacity-70', 'cursor-not-allowed');
+      }
+    }
+
+    function updateStats() {
+      let jsonCount = 0, timeoutCount = 0, missingCount = 0, sharpCount = 0;
+
+      rawLogItems.forEach(item => {
+        const cat = getCategory(item);
+        if (cat === 'JSON_IN_IMAGE') jsonCount++;
+        else if (cat === 'MISSING_FIELD') missingCount++;
+        else if (cat === 'SHARP_FORMAT') sharpCount++;
+        else timeoutCount++;
+      });
+
+      document.getElementById('statTotal').innerText = rawLogItems.length;
+      document.getElementById('statJson').innerText = jsonCount;
+      document.getElementById('statTimeout').innerText = timeoutCount;
+      document.getElementById('statMissing').innerText = missingCount;
+      document.getElementById('statSharp').innerText = sharpCount;
+    }
+
+    function setCategoryFilter(cat) {
+      activeCategory = cat;
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('bg-rose-600', 'text-white', 'shadow-md');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      });
+      event.target.classList.remove('bg-slate-800', 'text-slate-300');
+      event.target.classList.add('bg-rose-600', 'text-white', 'shadow-md');
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+
+      const filtered = rawLogItems.filter(item => {
+        const cat = getCategory(item);
+        if (activeCategory !== 'ALL' && cat !== activeCategory) return false;
+
+        if (search) {
+          const haystack = `${item.issuer} ${item.taxon} ${item.index} ${item.token_id} ${item.error} ${item.uri} ${JSON.stringify(item.metadata || {})}`.toLowerCase();
+          if (!haystack.includes(search)) return false;
+        }
+        return true;
+      });
+
+      renderLogs(filtered);
+    }
+
+    function renderLogs(items) {
+      const container = document.getElementById('logsContainer');
+      if (items.length === 0) {
+        container.innerHTML = `<div class="glass-card rounded-2xl py-16 text-center text-slate-400 font-semibold">No failure log entries matching criteria.</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map((item, idx) => {
+        const cat = getCategory(item);
+        const badge = getBadge(cat);
+        const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A';
+        const hasMetadata = item.metadata && Object.keys(item.metadata).length > 0;
+
+        return `
+          <div class="glass-card rounded-2xl p-5 space-y-4 shadow-lg hover:border-slate-700/80 transition-all">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+              <div class="flex items-center gap-2.5">
+                ${badge}
+                <span class="text-xs font-extrabold text-slate-200">#${item.index || '?'}</span>
+                <span class="text-[11px] text-slate-400 font-medium">• Taxon ${item.taxon || 'N/A'}</span>
+              </div>
+              <span class="text-[11px] font-mono text-slate-400">${timeStr}</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div>
+                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Issuer Account</span>
+                <span class="mono text-slate-200 select-all font-semibold bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800 inline-block">${item.issuer || 'N/A'}</span>
+              </div>
+
+              <div>
+                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Token ID</span>
+                <span class="mono text-slate-300 select-all text-[11px] bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800 inline-block truncate max-w-full">${item.token_id || 'N/A'}</span>
+              </div>
+            </div>
+
+            <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-300 font-medium">
+              <strong class="font-bold">Error:</strong> ${item.error || 'N/A'}
+            </div>
+
+            ${hasMetadata ? `
+              <details class="group">
+                <summary class="cursor-pointer text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center gap-1.5 select-none">
+                  <span>View Raw Metadata Payload</span>
+                  <span class="text-[10px] font-mono text-slate-400">(click to expand)</span>
+                </summary>
+                <pre class="mt-2 p-3 bg-slate-955 rounded-xl border border-slate-800 text-[11px] font-mono text-slate-300 overflow-x-auto max-h-60">${JSON.stringify(item.metadata, null, 2)}</pre>
+              </details>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Auto-refresh interval
+    setInterval(() => {
+      if (document.getElementById('autoRefresh').checked) {
+        fetchLogs();
+      }
+    }, 10000);
+
+    // Initial fetch
+    fetchLogs();
+  </script>
+</body>
+</html>

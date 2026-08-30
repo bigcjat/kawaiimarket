@@ -80,6 +80,11 @@
         }
     </script>
     <style>
+        .pixelated, img.pixel-art {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #080914;
@@ -470,7 +475,8 @@
         const TAXON = 0;
         const MY_WALLET = "raMenv8MTe6nBk9C5iFk6Gh6vZLs5MoYcg";
         const IMAGE_CID = "bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy";
-        const IMAGE_BASE_URL = `https://favicon.bot/ipfs/${IMAGE_CID}/`;
+        const IMAGE_BASE_URL = "./svgs/";
+        const IPFS_GATEWAY_URL = `https://ipfs.io/ipfs/${IMAGE_CID}/`;
 
         let fullCollection = [];   // Loaded from dropchan_ranks.json
         let activeListings = {};   // NFTokenID -> lowestSellPrice (XRP)
@@ -1245,7 +1251,10 @@
             const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
             img.src = `${cleanBase}${item.id}.svg`;
             img.onerror = () => {
-                img.src = `https://placehold.co/400x400/180e38/ff69b4?text=dropchan+%23${item.id}`;
+                img.onerror = () => {
+                    img.src = `https://placehold.co/400x400/180e38/ff69b4?text=dropchan+%23${item.id}`;
+                };
+                img.src = `https://ipfs.io/ipfs/${IMAGE_CID}/${item.id}.svg`;
             };
 
             card.innerHTML = `
@@ -2181,12 +2190,12 @@
                 fallbackImg.style.opacity = '0';
                 modalImgContainer.appendChild(fallbackImg);
 
-                fallbackImg.src = `/cache/thumbnails/${ISSUER}/${TAXON}/${targetIdNum}.jpg`;
+                fallbackImg.src = `./svgs/${targetIdNum}.svg`;
                 fallbackImg.onload = () => {
                     fallbackImg.style.opacity = isMinted ? '1' : '0.4';
                 };
                 fallbackImg.onerror = () => {
-                    fallbackImg.src = `https://favicon.bot/ipfs/${DROPCHAN_IMG_CID}/${targetIdNum}.svg`;
+                    fallbackImg.src = `https://ipfs.io/ipfs/${IMAGE_CID}/${targetIdNum}.svg`;
                     fallbackImg.onload = () => {
                         fallbackImg.style.opacity = isMinted ? '1' : '0.4';
                     };
@@ -3769,7 +3778,7 @@
 
         async function fetchSvgFileContent(id) {
             const cleanBase = IMAGE_BASE_URL.endsWith('/') ? IMAGE_BASE_URL : IMAGE_BASE_URL + '/';
-            const url = IMAGE_BASE_URL.startsWith('http') ? `${cleanBase}${id}.svg` : `${cleanBase}${ISSUER}/${TAXON}/${id}.svg`;
+            const url = `${cleanBase}${id}.svg`;
 
             try {
                 const res = await fetch(url);
@@ -3778,7 +3787,17 @@
                     if (text && (text.includes('<svg') || text.includes('<?xml'))) return text;
                 }
             } catch (e) {
-                console.error(`[SVG FETCH ERROR] Failed to fetch ${url}:`, e);
+                console.warn(`[SVG FETCH] Local fetch failed for ${url}, trying IPFS gateway fallback...`, e);
+            }
+
+            try {
+                const res = await fetch(`https://ipfs.io/ipfs/${IMAGE_CID}/${id}.svg`);
+                if (res.ok) {
+                    const text = await res.text();
+                    if (text && (text.includes('<svg') || text.includes('<?xml'))) return text;
+                }
+            } catch (e) {
+                console.error(`[SVG FETCH ERROR] Failed to fetch SVG #${id}:`, e);
             }
 
             return null;

@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading xApp • Admin Collection Portal</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0B0E17;
+            --bg-card: rgba(22, 27, 46, 0.7);
+            --bg-card-hover: rgba(30, 37, 62, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --primary: #8B5CF6;
+            --primary-glow: rgba(139, 92, 246, 0.35);
+            --accent-green: #10B981;
+            --accent-green-bg: rgba(16, 185, 129, 0.15);
+            --accent-red: #EF4444;
+            --accent-red-bg: rgba(239, 68, 68, 0.15);
+            --accent-amber: #F59E0B;
+            --accent-amber-bg: rgba(245, 158, 11, 0.15);
+            --text-primary: #F3F4F6;
+            --text-secondary: #9CA3AF;
+            --text-muted: #6B7280;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image:
+                radial-gradient(circle at 15% 15%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.08) 0%, transparent 40%);
+        }
+
+        /* Top Bar */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            background: rgba(11, 14, 23, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-glass);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 20px;
+            font-family: 'Outfit', sans-serif;
+            color: white;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .brand-title h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-title span {
+            font-size: 12px;
+            color: var(--primary);
+            font-weight: 600;
+            background: rgba(139, 92, 246, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 6px;
+        }
+
+        .user-auth-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glass);
+            padding: 6px 14px;
+            border-radius: 30px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-green);
+        }
+
+        .wallet-addr {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #D1D5DB;
+        }
+
+        .badge-admin {
+            font-size: 10px;
+            font-weight: 700;
+            color: #8B5CF6;
+            background: rgba(139, 92, 246, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        /* Container Layout */
+        .container {
+            max-width: 1280px;
+            width: 100%;
+            margin: 24px auto;
+            padding: 0 24px;
+            flex: 1;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 18px 20px;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .stat-val {
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .stat-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Search Bar */
+        .manual-import-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        /* Tabs Navigation */
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-glass);
+            margin-bottom: 24px;
+            padding-bottom: 2px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-btn.active {
+            color: white;
+            background: rgba(139, 92, 246, 0.12);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px 3px 0 0;
+            box-shadow: 0 -2px 8px var(--primary);
+        }
+
+        .tab-count {
+            background: rgba(255, 255, 255, 0.1);
+            color: #D1D5DB;
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+
+        .tab-btn.active .tab-count {
+            background: var(--primary);
+            color: white;
+        }
+
+        .panel-section {
+            display: none;
+        }
+
+        .panel-section.active {
+            display: block;
+        }
+
+        .data-table-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 960px;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            background: rgba(15, 20, 32, 0.8);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #E5E7EB;
+            vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--bg-card-hover);
+        }
+
+        .collection-cell {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .col-thumb {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: #1F2937;
+            object-fit: cover;
+            border: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #9CA3AF;
+            font-size: 14px;
+        }
+
+        .col-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 2px;
+        }
+
+        .col-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .badge-risk {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .risk-low {
+            background: var(--accent-green-bg);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .risk-medium {
+            background: var(--accent-amber-bg);
+            color: var(--accent-amber);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .risk-high {
+            background: var(--accent-red-bg);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-action {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-glass);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-action:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border: 1px solid var(--primary);
+            color: white;
+            box-shadow: 0 2px 10px var(--primary-glow);
+        }
+
+        .btn-primary:hover {
+            background: #7C3AED;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #FCA5A5;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="brand">
+            <div class="brand-logo">T</div>
+            <div class="brand-title">
+                <h1>Trading xApp <span>ADMIN COLLECTION PORTAL</span></h1>
+            </div>
+        </div>
+
+        <div class="user-auth-badge" id="wsConnectionBadge"
+            style="background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3);">
+            <div class="status-dot" id="wsStatusDot"></div>
+            <span class="wallet-addr" id="wsStatusText" style="color:#10B981; font-weight:600;">WebSocket
+                Connecting...</span>
+            <span class="badge-admin">Admin Server</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+
+        <!-- Dashboard Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">XRPL Directory Feed</div>
+                <div class="stat-val" style="color: #60A5FA;" id="statXrplFeedCount">--</div>
+                <div class="stat-sub">All network collections (24h cache)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Discovered Queue (Option B)</div>
+                <div class="stat-val" style="color: #F59E0B;" id="statQueueCount">--</div>
+                <div class="stat-sub">Spotted in active user wallets</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Imported Collections</div>
+                <div class="stat-val" style="color: #10B981;" id="statImportedCount">--</div>
+                <div class="stat-sub">Visible in trading xApp</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Scam DB Indexed</div>
+                <div class="stat-val" style="color: #EC4899;" id="statScamCount">--</div>
+                <div class="stat-sub">Known scam issuer addresses</div>
+            </div>
+        </div>
+
+        <!-- Search & Sort Bar -->
+        <div class="manual-import-card">
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                <input type="text" id="globalSearchInput" class="form-input"
+                    placeholder="🔍 Search by Wallet Address (r...), Issuer Address, or Collection Name..."
+                    oninput="filterCurrentTab()"
+                    style="font-family:'JetBrains Mono', monospace; font-size:13px; flex:2; min-width:280px;">
+
+                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:260px;">
+                    <label
+                        style="font-size:13px; font-weight:600; color:var(--text-secondary); white-space:nowrap;">Sort
+                        By:</label>
+                    <select id="sortSelect" class="form-input" onchange="changeSortOrder(this.value)"
+                        style="font-size:13px; font-weight:600; cursor:pointer;">
+                        <option value="volume">💎 Total Volume (Highest → Lowest)</option>
+                        <option value="owners">👥 Holders / Owners (Most → Fewest)</option>
+                        <option value="user_accounts">👤 In User Accounts First</option>
+                        <option value="items">📦 Total Supply / Items (Largest → Smallest)</option>
+                        <option value="name">🏷 Collection Name (A → Z)</option>
+                        <option value="verified">🛡 Verified Status First</option>
+                    </select>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:240px;">
+                    <label
+                        style="font-size:13px; font-weight:600; color:var(--text-secondary); white-space:nowrap;">Fetch
+                        Limit:</label>
+                    <select id="limitSelect" class="form-input" onchange="changeFetchLimit(this.value)"
+                        style="font-size:13px; font-weight:600; cursor:pointer;">
+                        <option value="5000" selected>All Network Collections</option>
+                        <option value="100">Top 100 Collections</option>
+                        <option value="500">Top 500 Collections</option>
+                        <option value="1000">Top 1,000 Collections</option>
+                    </select>
+                </div>
+
+                <button class="btn-action" onclick="clearSearch()">Clear Filters</button>
+            </div>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('xrplFeedTab', this)">
+                <span>XRPL Directory (24h Feed)</span>
+                <span class="tab-count" style="background: rgba(59, 130, 246, 0.2); color:#93C5FD"
+                    id="tabXrplFeedBadge">--</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('discoveredTab', this)">
+                <span>Discovered Queue (Option B)</span>
+                <span class="tab-count" id="tabQueueBadge">--</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('importedTab', this)">
+                <span>Imported Collections</span>
+                <span class="tab-count" id="tabImportedBadge">--</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('manualTab', this)">
+                <span>Manual Import</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('scamDbTab', this)">
+                <span>Scam & Blacklist DB</span>
+                <span class="tab-count" style="background: rgba(239,68,68,0.2); color:#FCA5A5"
+                    id="tabScamBadge">--</span>
+            </button>
+        </div>
+
+        <!-- Tab 0: XRPL Network Directory Feed (24h Cached) -->
+        <div id="xrplFeedTab" class="panel-section active">
+            <div class="manual-import-card"
+                style="margin-bottom: 16px; padding: 16px 24px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h3 style="font-size:15px;">XRPL Network Directory Collections (Cached 24h)</h3>
+                    <p style="margin-bottom:0; font-size:13px; color:#9CA3AF">All network collections. Flagged with
+                        <code>👤 In User Account</code> if held in your users' wallets.</p>
+                </div>
+                <button class="btn-action btn-primary" onclick="syncXrplToFeed()">⚡ Force Refresh 24h Feed</button>
+            </div>
+
+            <div class="data-table-card">
+                <table style="table-layout: fixed; width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th style="width: 280px;">Collection / Issuer</th>
+                            <th style="width: 70px;">Taxon</th>
+                            <th style="width: 140px;">Floor & Vol</th>
+                            <th style="width: 150px;">Holders / Supply</th>
+                            <th style="width: 150px;">User Account Flag</th>
+                            <th style="width: 140px;">Status & Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="xrplFeedTableBody">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 1: Discovered Queue -->
+        <div id="discoveredTab" class="panel-section">
+            <div class="manual-import-card"
+                style="margin-bottom: 16px; padding: 16px 24px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h3 style="font-size:15px;">Pending Discovered Collections Queue</h3>
+                    <p style="margin-bottom:0; font-size:13px; color:#9CA3AF">All unimported collections spotted across
+                        every user's wallet account on XRPL.</p>
+                </div>
+                <button class="btn-action btn-primary" onclick="triggerScanAllWallets()">⚡ Scan All User Wallets
+                    Now</button>
+            </div>
+
+            <div class="data-table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Collection / Issuer</th>
+                            <th>Taxon</th>
+                            <th>First Spotted Via</th>
+                            <th>Spotted Count</th>
+                            <th>Risk & Scam DB Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="discoveredTableBody">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 2: Imported Collections -->
+        <div id="importedTab" class="panel-section">
+            <div class="data-table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Collection / Issuer</th>
+                            <th>Taxon</th>
+                            <th>On-Chain Supply</th>
+                            <th>DB Metadata JSONs</th>
+                            <th>Disk WebP Images</th>
+                            <th>Completeness & Render</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="importedTableBody">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 3: Manual Import -->
+        <div id="manualTab" class="panel-section">
+            <div class="manual-import-card">
+                <h3>Direct Collection Import (By Issuer & Taxon)</h3>
+                <p>Paste any XRPL Issuer Address and Taxon ID to import directly into the trading xApp.</p>
+                <div style="display:flex; gap:12px;">
+                    <input type="text" id="manualIssuer" class="form-input" placeholder="Issuer Address (r...)"
+                        style="flex:2">
+                    <input type="number" id="manualTaxon" class="form-input" placeholder="Taxon (e.g. 0)" style="flex:1"
+                        value="0">
+                    <input type="text" id="manualName" class="form-input" placeholder="Collection Name" style="flex:2">
+                    <button class="btn-action btn-primary" onclick="submitManualImport()">Import Collection</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Scam & Blacklist Database -->
+        <div id="scamDbTab" class="panel-section">
+            <div class="manual-import-card" style="margin-bottom: 16px; padding: 20px 24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+                    <div>
+                        <h3>Scam Issuer Wallet Search & Filter</h3>
+                        <p style="margin-bottom:0">Filter across all 3,745 indexed scam wallet addresses in real-time.
+                        </p>
+                    </div>
+                    <button class="btn-action btn-primary" onclick="syncScamDb()">⚡ Force Refresh Scam DB</button>
+                </div>
+                <div style="display:flex; gap: 12px; align-items:center;">
+                    <input type="text" id="scamWalletSearchInput" class="form-input"
+                        placeholder="🔍 Type Wallet Address to filter (e.g. r34HTq...)" oninput="filterScamDbList()"
+                        style="font-family:'JetBrains Mono', monospace; font-size:14px; padding: 12px 16px; flex:1;">
+                    <button class="btn-action" onclick="clearScamDbFilter()">Clear</button>
+                </div>
+                <div id="scamFilterMatchCount" style="font-size:13px; font-weight:600; margin-top:10px; color:#FCA5A5;">
+                </div>
+            </div>
+
+            <div class="data-table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Scam Issuer Wallet Address</th>
+                            <th>Source API</th>
+                            <th>Status & Enforcement</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scamTableBody">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let ws = null;
+        let activeJobsMap = {};
+        let currentDirectoryList = [];
+        let currentSortKey = 'volume';
+        let activeFetchLimit = 500;
+
+        const USER_WALLET_COLLECTIONS = [];
+
+        let wsPingTimer = null;
+
+        function initWebSocket() {
+            if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+                return;
+            }
+
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            let wsUrl;
+            if (window.location.port === '5173') {
+                wsUrl = `${wsProtocol}//${window.location.host}/xapp-ws`;
+            } else {
+                wsUrl = `${wsProtocol}//${window.location.host}`;
+            }
+
+            console.log("[WEBSOCKET] Connecting to xApp server:", wsUrl);
+            try {
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                    console.log("[WEBSOCKET] Connected to xApp server!");
+                    const statusDot = document.getElementById('wsStatusDot');
+                    const statusText = document.getElementById('wsStatusText');
+                    if (statusDot) {
+                        statusDot.style.background = '#10B981';
+                        statusDot.style.boxShadow = '0 0 8px #10B981';
+                    }
+                    if (statusText) {
+                        statusText.innerText = 'Connected (xApp Server WS)';
+                        statusText.style.color = '#10B981';
+                    }
+                    // Immediately request all feeds from server over socket
+                    try {
+                        ws.send(JSON.stringify({ action: 'REFRESH_DIRECTORY' }));
+                        ws.send(JSON.stringify({ action: 'REFRESH_IMPORTED' }));
+                        ws.send(JSON.stringify({ action: 'REFRESH_DISCOVERED' }));
+                        ws.send(JSON.stringify({ action: 'REFRESH_SCAM_LIST' }));
+                    } catch (e) { }
+
+                    if (wsPingTimer) clearInterval(wsPingTimer);
+                    wsPingTimer = setInterval(() => {
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            try { ws.send(JSON.stringify({ type: 'ping' })); } catch (e) { }
+                        }
+                    }, 15000);
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'DIRECTORY_FEED') {
+                            console.log("[WEBSOCKET] Received directory feed pushed from server:", data.collections ? data.collections.length : 0);
+                            processIncomingDirectoryData(data.collections || []);
+                        } else if (data.type === 'SCAM_LIST_FEED') {
+                            console.log("[WEBSOCKET] Received scam/banned issuer list pushed from server:", data.totalCount || 0);
+                            renderScamDb(data.scamIssuersList || []);
+                        } else if (data.type === 'IMPORTED_COLLECTIONS_FEED') {
+                            console.log("[WEBSOCKET] Received imported collections pushed from server:", data.collections ? data.collections.length : 0);
+                            renderImportedCollections(data.collections || []);
+                        } else if (data.type === 'DISCOVERED_QUEUE_FEED') {
+                            console.log("[WEBSOCKET] Received discovered queue pushed from server:", (data.queue || []).length);
+                            renderDiscoveredQueue(data.queue || []);
+                        } else if (data.type === 'BLACKLISTED_COLLECTIONS_FEED') {
+                            console.log("[WEBSOCKET] Received blacklisted collections pushed from server:", (data.collections || []).length);
+                            renderBlacklist(data.collections || []);
+                        } else if (data.type === 'IMPORT_PROGRESS') {
+                            console.log(`[IMPORT PROGRESS] ${data.name}: ${data.percent}% - ${data.status}`);
+                            const jobKey = `${data.issuer}:${data.taxon || 0}`;
+                            if (data.percent >= 100 || (data.status && data.status.startsWith('COMPLETE'))) {
+                                delete activeJobsMap[jobKey];
+                            } else {
+                                if (!activeJobsMap[jobKey]) {
+                                    activeJobsMap[jobKey] = { name: data.name, issuer: data.issuer, taxon: data.taxon || 0, percent: data.percent, status: data.status, logLines: [] };
+                                }
+                                activeJobsMap[jobKey].percent = data.percent;
+                                activeJobsMap[jobKey].status = data.status;
+                                activeJobsMap[jobKey].logLines.push(`[${data.percent}%] ${data.status}`);
+                            }
+                            renderImportedCollections(currentImportedList);
+                            updateIngestionProgressModal(data);
+                        }
+                    } catch (e) { }
+                };
+
+                ws.onclose = () => {
+                    if (wsPingTimer) { clearInterval(wsPingTimer); wsPingTimer = null; }
+                    ws = null;
+                    const statusDot = document.getElementById('wsStatusDot');
+                    const statusText = document.getElementById('wsStatusText');
+                    if (statusDot) {
+                        statusDot.style.background = '#EF4444';
+                        statusDot.style.boxShadow = '0 0 8px #EF4444';
+                    }
+                    if (statusText) {
+                        statusText.innerText = 'WebSocket Disconnected (Reconnecting...)';
+                        statusText.style.color = '#EF4444';
+                    }
+                    setTimeout(initWebSocket, 3000);
+                };
+
+                ws.onerror = () => {
+                    console.warn("[WEBSOCKET] Socket error encountered.");
+                };
+            } catch (e) {
+                setTimeout(initWebSocket, 2000);
+            }
+        }
+
+
+
+        function syncXrplToFeed() {
+            showToast("Syncing Feed", "Refreshing XRPL Directory Feed via WebSocket...", "info");
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: 'REFRESH_DIRECTORY' }));
+            }
+        }
+
+        function triggerScanAllWallets() {
+            showToast("Wallet Discovery", "Scanning user wallets via WebSocket...", "info");
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: 'REFRESH_DISCOVERED' }));
+            }
+        }
+
+        function submitManualImport() {
+            const issuer = (document.getElementById('manualIssuer')?.value || '').trim();
+            const taxon = parseInt(document.getElementById('manualTaxon')?.value || '0', 10);
+            const name = (document.getElementById('manualName')?.value || '').trim();
+
+            if (!issuer) {
+                showToast("Validation Error", "Issuer address is required.", "danger");
+                return;
+            }
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                showToast("Submitting Import", `Importing ${name || issuer} via WebSocket...`, "info");
+                ws.send(JSON.stringify({
+                    action: 'START_COLLECTION_IMPORT',
+                    name: name || `Collection ${issuer.slice(0, 8)}`,
+                    issuer,
+                    taxon,
+                    useIpfs: true,
+                    useWebp: true,
+                    useRarity: true
+                }));
+                document.getElementById('manualIssuer').value = '';
+                document.getElementById('manualName').value = '';
+                switchTab('importedTab', document.querySelectorAll('.tab-btn')[2]);
+            }
+        }
+
+        let currentBlacklist = [];
+        function renderBlacklist(list) {
+            currentBlacklist = Array.isArray(list) ? list : [];
+            const badgeEl = document.getElementById('tabBlacklistBadge');
+            const tbody = document.getElementById('blacklistedTableBody');
+
+            if (badgeEl) badgeEl.innerText = currentBlacklist.length.toLocaleString();
+            if (!tbody) return;
+
+            if (currentBlacklist.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:#9CA3AF">No blacklisted collections.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = currentBlacklist.map((item, idx) => `
+                <tr>
+                    <td><code style="color:#F87171;">${item.issuer}</code></td>
+                    <td><code>${item.taxon || 0}</code></td>
+                    <td><strong style="color:white;">${item.name || 'Blacklisted Counterfeit'}</strong></td>
+                    <td><span class="badge-risk risk-high">🚫 Blocked from Trades & Swaps</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function processIncomingDirectoryData(remoteCollections) {
+            const uniqueMap = new Map();
+            (remoteCollections || []).forEach(c => {
+                const issuer = c.issuer || c.account || '';
+                const taxon = c.taxon !== undefined ? c.taxon : 0;
+                const key = `${issuer}:${taxon}`;
+                if (!uniqueMap.has(key)) {
+                    uniqueMap.set(key, c);
+                }
+            });
+            const uniqueList = Array.from(uniqueMap.values());
+
+            const remoteSet = new Set(uniqueList.map(c => c.issuer || c.account));
+            const merged = [...uniqueList];
+
+            USER_WALLET_COLLECTIONS.forEach(uc => {
+                if (!remoteSet.has(uc.issuer)) {
+                    merged.push(uc);
+                } else {
+                    const found = merged.find(c => (c.issuer || c.account) === uc.issuer);
+                    if (found) found.inUserAccount = true;
+                }
+            });
+
+            currentDirectoryList = merged;
+            sortAndRenderDirectory();
+        }
+
+        let currentImportedList = [];
+
+        function renderImportedCollections(list) {
+            currentImportedList = Array.isArray(list) ? list : [];
+            const countEl = document.getElementById('statImportedCount');
+            const badgeEl = document.getElementById('tabImportedBadge');
+            const tbody = document.getElementById('importedTableBody');
+
+            if (countEl) countEl.innerText = currentImportedList.length.toLocaleString();
+            if (badgeEl) badgeEl.innerText = currentImportedList.length.toLocaleString();
+
+            if (!tbody) return;
+
+            if (currentImportedList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#9CA3AF">No collections imported yet. Use the XRPL Directory tab to inspect and import collections.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = currentImportedList.map((item, idx) => {
+                const key = `${item.issuer}:${item.taxon || 0}`;
+                const activeJob = activeJobsMap[key];
+                const cacheBtnHtml = activeJob ? `
+                    <button class="btn-action btn-primary" onclick="reopenProgressModal('${item.issuer}', ${item.taxon || 0})" style="background:linear-gradient(135deg, #F59E0B, #D97706); border-color:#F59E0B;">⏳ Caching (${activeJob.percent}%)</button>
+                ` : `
+                    <button class="btn-action btn-primary" onclick="startPrecacheImages('${item.issuer}', ${item.taxon || 0}, '${(item.name || 'Collection').replace(/'/g, "\\'")}')" style="background:linear-gradient(135deg, #10B981, #059669); border-color:#10B981;">🖼️ Cache WebP Images</button>
+                `;
+
+                const pixelBtnHtml = item.is_pixel_art ? `
+                    <button class="btn-action" onclick="togglePixelArt('${item.issuer}', ${item.taxon || 0}, 0)" style="background:rgba(167, 139, 250, 0.2); color:#C084FC; border:1px solid #A78BFA;" title="Click to disable crisp pixel art rendering">👾 Pixel Art (ON)</button>
+                ` : `
+                    <button class="btn-action btn-secondary" onclick="togglePixelArt('${item.issuer}', ${item.taxon || 0}, 1)" style="color:#9CA3AF;" title="Click to enable crisp pixel art rendering">🎨 Smooth Art (OFF)</button>
+                `;
+
+                const supply = item.total_minted || 0;
+                const dbJsons = item.db_json_count || 0;
+                const diskImgs = item.disk_image_count || 0;
+
+                const jsonPct = supply > 0 ? Math.min(100, Math.round((dbJsons / supply) * 100)) : 100;
+                const imgPct = supply > 0 ? Math.min(100, Math.round((diskImgs / supply) * 100)) : 100;
+                const isFullyComplete = (dbJsons >= supply || jsonPct >= 99) && (diskImgs >= supply || imgPct >= 99);
+
+                const completenessBadge = isFullyComplete ? `
+                    <span class="badge-risk risk-low" style="background:rgba(16, 185, 129, 0.15); color:#10B981; border-color:rgba(16, 185, 129, 0.3)">✓ 100% Complete</span>
+                ` : `
+                    <span class="badge-risk" style="background:rgba(245, 158, 11, 0.15); color:#F59E0B; border-color:rgba(245, 158, 11, 0.3)">⚡ Syncing (${jsonPct}% Meta / ${imgPct}% WebP)</span>
+                `;
+
+                return `
+                <tr>
+                    <td>
+                        <strong style="color:white; font-size:14px;">${item.name || 'Collection'}</strong>
+                        <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#9CA3AF;">${item.issuer}</div>
+                    </td>
+                    <td><code>${item.taxon || 0}</code></td>
+                    <td><strong style="color:white;">${supply.toLocaleString()} NFTs</strong></td>
+                    <td>
+                        <strong style="color:#A78BFA;">${dbJsons.toLocaleString()} / ${supply.toLocaleString()}</strong>
+                        <div style="font-size:11px; color:#9CA3AF;">(${jsonPct}% Ingested)</div>
+                    </td>
+                    <td>
+                        <strong style="color:#34D399;">${diskImgs.toLocaleString()} / ${supply.toLocaleString()}</strong>
+                        <div style="font-size:11px; color:#9CA3AF;">(${imgPct}% Cached)</div>
+                    </td>
+                    <td>
+                        <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+                            ${completenessBadge}
+                            ${pixelBtnHtml}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            ${cacheBtnHtml}
+                            <button class="btn-action btn-secondary" onclick="openImportModal('${(item.name || 'Collection').replace(/'/g, "\\'")}', '${item.issuer}', ${item.taxon || 0}, ${item.total_minted || 10000}, false, true)">🔄 Sync Metadata</button>
+                            <button class="btn-action btn-secondary" onclick="renameCollectionPrompt('${item.issuer}', ${item.taxon || 0}, '${(item.name || '').replace(/'/g, "\\'")}')">✏️ Rename</button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        function renameCollectionPrompt(issuer, taxon, currentName) {
+            const newName = prompt(`Enter new collection name for ${currentName || issuer}:`, currentName || '');
+            if (!newName || !newName.trim() || newName.trim() === currentName) return;
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: 'RENAME_COLLECTION', issuer, taxon, name: newName.trim() }));
+                showToast("Renaming Collection", `Sent rename request to "${newName.trim()}" via WebSocket...`, "info");
+            }
+        }
+
+        let currentDiscoveredQueue = [];
+
+        function renderDiscoveredQueue(list) {
+            currentDiscoveredQueue = Array.isArray(list) ? list : [];
+            const countEl = document.getElementById('statQueueCount');
+            const badgeEl = document.getElementById('tabQueueBadge');
+            const tbody = document.getElementById('discoveredTableBody');
+
+            if (countEl) countEl.innerText = currentDiscoveredQueue.length.toLocaleString();
+            if (badgeEl) badgeEl.innerText = currentDiscoveredQueue.length.toLocaleString();
+
+            if (!tbody) return;
+
+            if (currentDiscoveredQueue.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#9CA3AF">No pending discovered collections in queue. All user wallet collections are imported or indexed.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = currentDiscoveredQueue.map((item, idx) => {
+                const isVerified = Boolean(item.is_verified || item.verified);
+                const isXrplTo = Boolean(item.is_xrpl_to_directory);
+                const isBanned = Boolean(item.is_scam_db_match || item.risk_score >= 100);
+                const displayName = item.name || `Collection ${item.issuer.slice(0, 8)}`;
+
+                return `
+                    <tr>
+                        <td>
+                            <strong style="color:white; font-size:14px;">${displayName} ${isVerified ? '<span style="color:#3B82F6;" title="Verified Collection">✓</span>' : ''}</strong>
+                            ${isXrplTo ? '<span style="display:inline-block; margin-left:6px; font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(59,130,246,0.15); color:#60A5FA; border:1px solid rgba(59,130,246,0.3);">🌐 XRPL Directory</span>' : '<span style="display:inline-block; margin-left:6px; font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(156,163,175,0.15); color:#9CA3AF;">⚠️ Unlisted</span>'}
+                            <div style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#9CA3AF; margin-top:2px;">${item.issuer}</div>
+                        </td>
+                        <td><code>${item.taxon || 0}</code></td>
+                        <td><span style="font-size:12px; color:#9CA3AF">${item.first_spotted_via || 'User Wallet'}</span></td>
+                        <td><strong style="color:#F59E0B;">${(item.spotted_count || 1).toLocaleString()} Wallet(s)</strong></td>
+                        <td>
+                            ${isBanned
+                        ? '<span class="badge-risk risk-high" style="background:rgba(239,68,68,0.2); color:#EF4444; border:1px solid rgba(239,68,68,0.4); padding:3px 8px; border-radius:4px; font-weight:600;">🚨 BANNED (Scam DB Match)</span>'
+                        : '<span class="badge-risk risk-low" style="background:rgba(16,185,129,0.15); color:#10B981; border:1px solid rgba(16,185,129,0.3); padding:3px 8px; border-radius:4px;">✓ Clean (Not Banned)</span>'
+                    }
+                        </td>
+                        <td>
+                            <button class="btn-action btn-primary" onclick="openImportModal('${displayName.replace(/'/g, "\\'")}', '${item.issuer}', ${item.taxon || 0}, ${item.total_minted || 10000}, false, true)">Inspect & Import</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        let currentScamList = [];
+
+        function renderScamDb(list) {
+            currentScamList = Array.isArray(list) ? list : [];
+            const countEl = document.getElementById('statScamCount');
+            const badgeEl = document.getElementById('tabScamBadge');
+
+            if (countEl) countEl.innerText = currentScamList.length.toLocaleString();
+            if (badgeEl) badgeEl.innerText = currentScamList.length.toLocaleString();
+
+            filterScamDbList();
+        }
+
+        function filterScamDbList() {
+            const query = (document.getElementById('scamWalletSearchInput')?.value || '').trim().toLowerCase();
+            const tbody = document.getElementById('scamTableBody');
+            if (!tbody) return;
+
+            const filtered = query
+                ? currentScamList.filter(addr => addr.toLowerCase().includes(query))
+                : currentScamList.slice(0, 100);
+
+            const matchEl = document.getElementById('scamFilterMatchCount');
+            if (matchEl) {
+                matchEl.innerText = query
+                    ? `Found ${filtered.length.toLocaleString()} matching scam wallet address(es)`
+                    : `Displaying top 100 of ${currentScamList.length.toLocaleString()} scam issuer addresses (Use search box above to filter all ${currentScamList.length.toLocaleString()})`;
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:#9CA3AF">No matching scam issuer addresses found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map((addr, idx) => `
+                <tr>
+                    <td><code>#${idx + 1}</code></td>
+                    <td><code style="color:#F87171; font-weight:600;">${addr}</code></td>
+                    <td><span style="font-size:12px; color:#9CA3AF">XRPL.to API / Scam DB</span></td>
+                    <td><span class="badge-risk risk-high">🚫 Banned / Counterfeit Blocked</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function clearScamDbFilter() {
+            const input = document.getElementById('scamWalletSearchInput');
+            if (input) input.value = '';
+            filterScamDbList();
+        }
+
+        function syncScamDb() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: 'REFRESH_SCAM_LIST' }));
+                showToast("Refreshing Scam DB", "Sent REFRESH_SCAM_LIST command via WebSocket...", "info");
+            }
+        }
+
+        function startPrecacheImages(issuer, taxon, name) {
+            openIngestionProgressModal(name, issuer, taxon);
+            updateIngestionProgressModal({ percent: 5, status: `Starting WebP Image Pre-Cacher for ${name}...` });
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: 'PRECACHE_IMAGES', issuer, taxon, name }));
+            }
+        }
+
+        function togglePixelArt(issuer, taxon, is_pixel_art) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: 'TOGGLE_PIXEL_ART', issuer, taxon, is_pixel_art }));
+                showToast("Rendering Style Updated", `Pixel art rendering set to ${is_pixel_art ? 'ON' : 'OFF'}.`, "success");
+            }
+        }
+
+        function reopenProgressModal(issuer, taxon) {
+            const key = `${issuer}:${taxon || 0}`;
+            const activeJob = activeJobsMap[key];
+            if (!activeJob) return;
+
+            openIngestionProgressModal(activeJob.name, activeJob.issuer, activeJob.taxon);
+            const consoleEl = document.getElementById('ingestionLogConsole');
+            if (consoleEl && activeJob.logLines && activeJob.logLines.length > 0) {
+                consoleEl.innerHTML = '';
+                activeJob.logLines.forEach(txt => {
+                    const line = document.createElement('div');
+                    line.style.color = '#A78BFA';
+                    line.innerText = txt;
+                    consoleEl.appendChild(line);
+                });
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+            updateIngestionProgressModal({ percent: activeJob.percent, status: activeJob.status });
+        }
+
+        function renderDirectory(list) {
+            const tbody = document.getElementById('xrplFeedTableBody');
+
+            // Explicitly sort collections by highest total volume first
+            if (Array.isArray(list)) {
+                list.sort((a, b) => (b.totalVolume || 0) - (a.totalVolume || 0));
+            }
+
+            const statEl = document.getElementById('statXrplFeedCount');
+            const badgeEl = document.getElementById('tabXrplFeedBadge');
+            if (statEl) statEl.innerText = list.length.toLocaleString();
+            if (badgeEl) badgeEl.innerText = list.length.toLocaleString();
+
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:#9CA3AF">No directory collections returned.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = list.map((item, idx) => {
+                const name = item.name || `Collection ${(item.issuer || item.account || '').slice(0, 8)}`;
+                const issuer = item.issuer || item.account || '';
+                const taxon = item.taxon !== undefined ? item.taxon : 0;
+                const floor = item.floor !== null && item.floor !== undefined ? `${item.floor} XRP` : 'N/A';
+                const vol = item.totalVolume ? `${Math.round(item.totalVolume).toLocaleString()} XRP` : '0 XRP';
+                const owners = item.owners ? item.owners.toLocaleString() : '0';
+                const items = item.items ? item.items.toLocaleString() : '0';
+
+                return `
+                <tr>
+                    <td><code>#${idx + 1}</code></td>
+                    <td>
+                        <div class="collection-cell">
+                            <div class="col-thumb" style="background:#1E1B4B; color:#818CF8">${name.slice(0, 2).toUpperCase()}</div>
+                            <div class="col-info">
+                                <h4>${name} ${item.verified ? '✓' : ''}</h4>
+                                <p>${issuer}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td><code style="color:#A78BFA">${item.taxon !== undefined ? item.taxon : 0}</code></td>
+                    <td>
+                        <div><strong>${floor}</strong></div>
+                        <div style="font-size:11px; color:#9CA3AF">Vol: ${vol}</div>
+                    </td>
+                    <td>
+                        <div>👥 <strong>${owners}</strong> holders</div>
+                        <div style="font-size:11px; color:#9CA3AF">📦 ${items} items</div>
+                    </td>
+                    <td>
+                        ${item.inUserAccount
+                        ? `<span class="badge-risk risk-low" style="background:rgba(139,92,246,0.15); color:#A78BFA; border-color:rgba(139,92,246,0.3)">👤 In User Account</span>`
+                        : `<span style="font-size:12px; color:#6B7280">🌐 XRPL Directory</span>`}
+                    </td>
+                    <td>
+                        <button class="btn-action btn-primary" onclick="openImportModal('${name.replace(/'/g, "\\'")}', '${issuer}', ${taxon}, ${item.items || 10000}, ${item.verified ? 'true' : 'false'}, ${item.inUserAccount ? 'true' : 'false'})">Inspect & Import</button>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function changeSortOrder(sortKey) {
+            currentSortKey = sortKey;
+            sortAndRenderDirectory();
+        }
+
+        function sortAndRenderDirectory() {
+            if (!Array.isArray(currentDirectoryList)) return;
+
+            if (currentSortKey === 'volume') {
+                currentDirectoryList.sort((a, b) => (b.totalVolume || 0) - (a.totalVolume || 0));
+            } else if (currentSortKey === 'owners') {
+                currentDirectoryList.sort((a, b) => (b.owners || 0) - (a.owners || 0));
+            } else if (currentSortKey === 'user_accounts') {
+                currentDirectoryList.sort((a, b) => (b.inUserAccount ? 1 : 0) - (a.inUserAccount ? 1 : 0));
+            } else if (currentSortKey === 'items') {
+                currentDirectoryList.sort((a, b) => (b.items || 0) - (a.items || 0));
+            } else if (currentSortKey === 'name') {
+                currentDirectoryList.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            } else if (currentSortKey === 'verified') {
+                currentDirectoryList.sort((a, b) => (b.verified ? 1 : 0) - (a.verified ? 1 : 0));
+            }
+
+            renderDirectory(currentDirectoryList);
+        }
+
+        async function loadAdminPortal() {
+            const badgeEl = document.getElementById('tabXrplFeedBadge');
+            if (badgeEl && badgeEl.innerText === '--') badgeEl.innerText = "Loading...";
+
+            try {
+                const res = await fetch(`/api/admin/collections/xrpl-to-feed?limit=${activeFetchLimit}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Array.isArray(data.collections)) processIncomingDirectoryData(data.collections);
+                }
+            } catch (e) {}
+
+            try {
+                const resImp = await fetch('/api/admin/collections/imported');
+                if (resImp.ok) {
+                    const impData = await resImp.json();
+                    if (Array.isArray(impData)) renderImportedCollections(impData);
+                }
+            } catch (e) {}
+
+            try {
+                const resDisc = await fetch('/api/admin/collections/discovered');
+                if (resDisc.ok) {
+                    const discData = await resDisc.json();
+                    if (Array.isArray(discData)) renderDiscoveredQueue(discData);
+                }
+            } catch (e) {}
+
+            try {
+                const resScam = await fetch('/api/scam-list');
+                if (resScam.ok) {
+                    const scamData = await resScam.json();
+                    if (scamData && Array.isArray(scamData.scamIssuersList)) renderScamDb(scamData.scamIssuersList);
+                }
+            } catch (e) {}
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                try {
+                    ws.send(JSON.stringify({ action: 'REFRESH_DIRECTORY' }));
+                    ws.send(JSON.stringify({ action: 'REFRESH_IMPORTED' }));
+                    ws.send(JSON.stringify({ action: 'REFRESH_DISCOVERED' }));
+                    ws.send(JSON.stringify({ action: 'REFRESH_SCAM_LIST' }));
+                } catch(e) {}
+            }
+        }
+
+        async function changeFetchLimit(val) {
+            activeFetchLimit = parseInt(val) || 500;
+            await loadAdminPortal();
+        }
+
+        /* Import Modal Handlers */
+        let currentInspectedCollection = null;
+
+        function openImportModal(name, issuer, taxon, items, verified, inUserAccount) {
+            currentInspectedCollection = { name, issuer, taxon, items, verified, inUserAccount };
+
+            document.getElementById('modalColName').innerText = name;
+            document.getElementById('modalColIssuer').innerText = `Issuer: ${issuer} | Taxon: ${taxon}`;
+            document.getElementById('modalItemsCount').innerText = `${(items || 10000).toLocaleString()} NFTs`;
+            document.getElementById('modalVerified').innerText = verified ? '✓ Verified on xrpl.to' : 'Unverified';
+            document.getElementById('modalVerified').style.color = verified ? '#60A5FA' : '#9CA3AF';
+
+            const isKnownScam = currentScamList.includes(issuer);
+            const scamEl = document.getElementById('modalScamCheck');
+            if (scamEl) {
+                scamEl.innerText = isKnownScam ? '🚫 SCAM DB MATCH' : '✓ PASS (0 Matches)';
+                scamEl.style.color = isKnownScam ? '#EF4444' : '#10B981';
+            }
+
+            document.getElementById('importModal').style.display = 'flex';
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').style.display = 'none';
+        }
+
+        function showToast(title, desc, type) {
+            let container = document.getElementById('toastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toastContainer';
+                container.style.cssText = 'position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:10px; pointer-events:none;';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            const borderColor = type === 'success' ? '#10B981' : (type === 'danger' ? '#EF4444' : '#8B5CF6');
+            toast.style.cssText = `background:#10172A; border:1px solid ${borderColor}; color:white; padding:14px 20px; border-radius:12px; font-size:13px; box-shadow:0 10px 30px rgba(0,0,0,0.6); pointer-events:auto; transition:all 0.3s ease; opacity:0; transform:translateY(10px);`;
+            toast.innerHTML = `<strong style="font-size:14px;">${title}</strong><div style="font-size:12px; color:#9CA3AF; margin-top:2px;">${desc}</div>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            }, 10);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function confirmImportExecution() {
+            if (!currentInspectedCollection) return;
+            const useIpfs = document.getElementById('cfgIpfsCid').checked;
+            const useWebp = document.getElementById('cfgWebpOpt').checked;
+            const useRarity = document.getElementById('cfgRarityCalc').checked;
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    action: 'START_COLLECTION_IMPORT',
+                    name: currentInspectedCollection.name,
+                    issuer: currentInspectedCollection.issuer,
+                    taxon: currentInspectedCollection.taxon,
+                    useIpfs,
+                    useWebp,
+                    useRarity
+                }));
+                openIngestionProgressModal(currentInspectedCollection.name);
+            } else {
+                alert("WebSocket connection offline.");
+            }
+
+            closeImportModal();
+        }
+
+        function openIngestionProgressModal(colName) {
+            const modal = document.getElementById('ingestionProgressModal');
+            const title = document.getElementById('ingestionModalTitle');
+            const consoleEl = document.getElementById('ingestionLogConsole');
+            const bar = document.getElementById('ingestionProgressBar');
+            const percent = document.getElementById('ingestionProgressPercent');
+            const btn = document.getElementById('ingestionCloseBtn');
+            const badge = document.getElementById('ingestionStatusBadge');
+
+            if (title) title.innerText = `🚀 Ingesting: ${colName}`;
+            if (bar) bar.style.width = '5%';
+            if (percent) percent.innerText = '5%';
+            if (badge) {
+                badge.innerText = 'IN PROGRESS';
+                badge.style.background = 'rgba(139, 92, 246, 0.2)';
+                badge.style.color = '#A78BFA';
+            }
+            if (btn) {
+                btn.innerText = 'Close / Minimize';
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+                btn.className = 'btn-action btn-secondary';
+            }
+            if (consoleEl) {
+                consoleEl.innerHTML = `<div style="color:#6B7280;">[SYSTEM] Connected to xApp ingestion pipeline stream...</div>
+                <div>[0%] Task queued: Initializing bulk fetch & rarity calculation...</div>`;
+            }
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function updateIngestionProgressModal(data) {
+            const bar = document.getElementById('ingestionProgressBar');
+            const percent = document.getElementById('ingestionProgressPercent');
+            const consoleEl = document.getElementById('ingestionLogConsole');
+            const btn = document.getElementById('ingestionCloseBtn');
+            const badge = document.getElementById('ingestionStatusBadge');
+
+            const pctVal = Math.min(100, Math.max(0, data.percent || 0));
+            if (bar) bar.style.width = `${pctVal}%`;
+            if (percent) percent.innerText = `${pctVal}%`;
+
+            if (consoleEl) {
+                const line = document.createElement('div');
+                line.style.color = pctVal === 100 ? '#10B981' : '#A78BFA';
+                line.innerHTML = `[${pctVal}%] ${data.status || 'Processing...'}`;
+                consoleEl.appendChild(line);
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+
+            if (pctVal === 100) {
+                if (badge) {
+                    badge.innerText = 'COMPLETE ✓';
+                    badge.style.background = 'rgba(16, 185, 129, 0.2)';
+                    badge.style.color = '#10B981';
+                }
+                if (btn) {
+                    btn.innerText = 'Done & View Collection';
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                    btn.className = 'btn-action btn-primary';
+                }
+            }
+        }
+
+        function closeIngestionProgressModal() {
+            const modal = document.getElementById('ingestionProgressModal');
+            if (modal) modal.style.display = 'none';
+            switchTab('importedTab', document.querySelectorAll('.tab-btn')[2]);
+        }
+
+        function blacklistFromModal() {
+            if (!currentInspectedCollection) return;
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    action: 'BLACKLIST_COLLECTION',
+                    name: currentInspectedCollection.name,
+                    issuer: currentInspectedCollection.issuer,
+                    taxon: currentInspectedCollection.taxon
+                }));
+                showToast("Collection Blacklisted", `"${currentInspectedCollection.name}" added to counterfeit blacklist.`, "info");
+            }
+            closeImportModal();
+        }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.panel-section').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function filterCurrentTab() {
+            const query = document.getElementById('globalSearchInput').value.trim().toLowerCase();
+            const activePanel = document.querySelector('.panel-section.active');
+            if (!activePanel) return;
+
+            const rows = activePanel.querySelectorAll('tbody tr');
+            rows.forEach(tr => {
+                const text = tr.innerText.toLowerCase();
+                tr.style.display = (!query || text.includes(query)) ? '' : 'none';
+            });
+        }
+
+        function clearSearch() {
+            document.getElementById('globalSearchInput').value = '';
+            document.getElementById('sortSelect').value = 'volume';
+            changeSortOrder('volume');
+            filterCurrentTab();
+        }
+
+        initWebSocket();
+        loadAdminPortal();
+    </script>
+
+    <!-- Interactive Import Quality Inspection Modal -->
+    <div id="importModal"
+        style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(5, 7, 13, 0.85); backdrop-filter:blur(12px); z-index:1000; align-items:center; justify-content:center; padding:20px;">
+        <div
+            style="background:#0F1420; border:1px solid var(--border-glass); border-radius:20px; max-width:720px; width:100%; max-height:90vh; overflow-y:auto; padding:28px; box-shadow:0 20px 50px rgba(0,0,0,0.6); position:relative;">
+
+            <div
+                style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; border-bottom:1px solid var(--border-glass); padding-bottom:16px;">
+                <div>
+                    <h2 id="modalColName"
+                        style="font-family:'Outfit', sans-serif; font-size:22px; font-weight:700; color:white; margin-bottom:4px;">
+                        Collection Name</h2>
+                    <p id="modalColIssuer"
+                        style="font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-muted);">
+                        rIssuerAddress...</p>
+                </div>
+                <button onclick="closeImportModal()"
+                    style="background:none; border:none; color:var(--text-muted); font-size:24px; cursor:pointer; padding:4px;">✕</button>
+            </div>
+
+            <!-- Ingestion Pipeline Configuration -->
+            <div
+                style="background:rgba(22, 27, 46, 0.7); border:1px solid var(--border-glass); border-radius:14px; padding:18px; margin-bottom:20px;">
+                <h4
+                    style="font-size:14px; font-weight:700; color:#A78BFA; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                    ⚙️ INGESTION & QUALITY PIPELINE SETTINGS</h4>
+
+                <div style="display:flex; flex-direction:column; gap:12px; font-size:13px;">
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:#E5E7EB;">
+                        <input type="checkbox" id="cfgIpfsCid" checked
+                            style="accent-color:var(--primary); width:16px; height:16px;">
+                        <span><strong>Primary Source: IPFS Directory CID Bulk Download</strong> (0 API Quotas
+                            Used)</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:#E5E7EB;">
+                        <input type="checkbox" id="cfgWebpOpt" checked
+                            style="accent-color:var(--primary); width:16px; height:16px;">
+                        <span><strong>Image Processing: Convert & Cache to Google WebP / JPEG</strong> (512x512
+                            thumbnail optimization)</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:#E5E7EB;">
+                        <input type="checkbox" id="cfgRarityCalc" checked
+                            style="accent-color:var(--primary); width:16px; height:16px;">
+                        <span><strong>Rarity Engine: Auto-Compute Trait Frequencies & Rarity Ranks</strong></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Quality & Inspection Summary Badges -->
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:24px;">
+                <div
+                    style="background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); padding:14px; border-radius:10px; text-align:center;">
+                    <div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase;">Scam DB Check
+                    </div>
+                    <div id="modalScamCheck" style="font-weight:700; color:var(--accent-green); margin-top:4px;">✓ PASS
+                        (0 Matches)</div>
+                </div>
+                <div
+                    style="background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); padding:14px; border-radius:10px; text-align:center;">
+                    <div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase;">Total Items
+                    </div>
+                    <div id="modalItemsCount" style="font-weight:700; color:white; margin-top:4px;">10,000 NFTs</div>
+                </div>
+                <div
+                    style="background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); padding:14px; border-radius:10px; text-align:center;">
+                    <div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase;">xrpl.to Verified
+                    </div>
+                    <div id="modalVerified" style="font-weight:700; color:#60A5FA; margin-top:4px;">✓ Verified</div>
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:16px; border-top:1px solid var(--border-glass);">
+                <button class="btn-action btn-danger" onclick="blacklistFromModal()">🚫 Reject & Blacklist</button>
+                <div style="display:flex; gap:12px;">
+                    <button class="btn-action" onclick="closeImportModal()">Cancel</button>
+                    <button class="btn-action btn-primary" onclick="confirmImportExecution()">🚀 Approve & Start
+                        Ingestion</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Live Ingestion Progress Activity Modal -->
+    <div id="ingestionProgressModal"
+        style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(5, 7, 13, 0.88); backdrop-filter:blur(14px); z-index:1100; align-items:center; justify-content:center; padding:20px;">
+        <div
+            style="background:#0F1420; border:1px solid rgba(139, 92, 246, 0.4); border-radius:20px; max-width:680px; width:100%; padding:28px; box-shadow:0 20px 60px rgba(0,0,0,0.8); position:relative;">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                <div>
+                    <h3 id="ingestionModalTitle"
+                        style="font-family:'Outfit', sans-serif; font-size:20px; font-weight:700; color:white;">🚀
+                        Ingesting Collection...</h3>
+                    <p style="font-size:12px; color:var(--text-muted); margin-top:2px;">Live pipeline activity stream
+                        over WebSocket</p>
+                </div>
+                <div id="ingestionStatusBadge"
+                    style="background:rgba(139, 92, 246, 0.2); border:1px solid rgba(139, 92, 246, 0.4); color:#A78BFA; font-size:12px; font-weight:700; padding:6px 14px; border-radius:10px;">
+                    IN PROGRESS
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div
+                style="background:rgba(255,255,255,0.05); border-radius:12px; height:20px; width:100%; overflow:hidden; position:relative; margin-bottom:16px; border:1px solid var(--border-glass);">
+                <div id="ingestionProgressBar"
+                    style="background:linear-gradient(90deg, #7C3AED, #10B981); height:100%; width:0%; transition:width 0.4s ease; border-radius:12px;">
+                </div>
+                <div id="ingestionProgressPercent"
+                    style="position:absolute; top:0; left:0; right:0; bottom:0; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:white; text-shadow:0 1px 3px rgba(0,0,0,0.8);">
+                    0%</div>
+            </div>
+
+            <!-- Terminal Live Activity Log Console -->
+            <div style="background:#090D16; border:1px solid var(--border-glass); border-radius:12px; padding:14px; height:220px; overflow-y:auto; font-family:'JetBrains Mono', monospace; font-size:12px; color:#A78BFA; display:flex; flex-direction:column; gap:6px;"
+                id="ingestionLogConsole">
+                <div style="color:#6B7280;">[SYSTEM] Connected to xApp ingestion pipeline stream...</div>
+            </div>
+
+            <!-- Modal Footer Action -->
+            <div
+                style="display:flex; justify-content:flex-end; margin-top:20px; padding-top:16px; border-top:1px solid var(--border-glass);">
+                <button id="ingestionCloseBtn" class="btn-action" onclick="closeIngestionProgressModal()"
+                    style="opacity:0.5; pointer-events:none;">Ingesting...</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

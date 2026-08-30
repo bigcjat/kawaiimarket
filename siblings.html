@@ -465,7 +465,7 @@
             document.getElementById('heroNftTitle').innerText = `dropchan #${tokenId}`;
             const heroImg = document.getElementById('heroNftImage');
             heroImg.referrerPolicy = "no-referrer";
-            heroImg.src = `https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${tokenId}.svg`;
+            heroImg.src = `./svgs/${tokenId}.svg`;
             document.getElementById('siblingSourceTitle').innerText = `dropchan #${tokenId}`;
 
             const rank = rankData ? rankData.standard_rank : ((tokenId % 9999) + 1);
@@ -579,7 +579,7 @@
 
                 card.innerHTML = `
                     <div class="aspect-square rounded-xl overflow-hidden bg-indigo-950/40 relative mb-3">
-                        <img src="https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${sib.id}.svg" alt="Dropchan #${sib.id}" referrerpolicy="no-referrer" 
+                        <img src="./svgs/${sib.id}.svg" alt="Dropchan #${sib.id}" referrerpolicy="no-referrer" 
                             class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
                         <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${badge.class}">
                             Rank #${rank}
@@ -668,7 +668,7 @@
 
                     itemBtn.innerHTML = `
                         <div class="aspect-square rounded-xl overflow-hidden bg-indigo-950/40 relative mb-1.5">
-                            <img src="https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${id}.svg" alt="Dropchan #${id}" referrerpolicy="no-referrer" 
+                            <img src="./svgs/${id}.svg" alt="Dropchan #${id}" referrerpolicy="no-referrer" 
                                 class="w-full h-full object-cover group-hover:scale-105 transition" />
                             <div class="price-container">
                                 ${priceBadgeHtml}
@@ -709,7 +709,7 @@
                 document.getElementById('modalNftPrice').classList.remove('hidden');
             }
             
-            document.getElementById('modalNftImg').src = `https://favicon.bot/ipfs/bafybeigesgb5dft45uuazbz56k6cr7aps6bgbedkjbbopfmseb5rcj7cyy/${id}.svg`;
+            document.getElementById('modalNftImg').src = `./svgs/${id}.svg`;
 
             const tokenHex = nftTokenId || '';
 
